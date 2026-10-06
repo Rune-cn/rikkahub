@@ -51,12 +51,13 @@ val appModule = module {
         TTSManager(get())
     }
 
-    single {
-        Firebase.crashlytics
+    // Firebase 未配置（无 google-services.json）时返回 null，避免应用启动崩溃
+    single<com.google.firebase.crashlytics.Crashlytics?> {
+        runCatching { Firebase.crashlytics }.getOrNull()
     }
 
-    single {
-        Firebase.analytics
+    single<com.google.firebase.analytics.FirebaseAnalytics?> {
+        runCatching { Firebase.analytics }.getOrNull()
     }
 
     single {

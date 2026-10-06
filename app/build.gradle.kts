@@ -9,9 +9,13 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.google.services)
-    alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.baselineprofile)
+}
+
+// google-services.json 存在时才启用 Firebase 插件（没有 Firebase 配置也能构建，Firebase 功能自动禁用）
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
 }
 
 android {
@@ -23,7 +27,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "me.rerere.rikkahub"
+        applicationId = "app.ai.rune"
         minSdk = 26
         targetSdk = 37
         versionCode = 191

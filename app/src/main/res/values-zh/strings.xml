@@ -1187,6 +1187,9 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workspace_detail_enable_shell_desc">允许此工作区使用本地Rootfs运行终端环境</string>
   <string name="workspace_detail_tool_approval">工具审批</string>
   <string name="workspace_detail_tool_approval_desc">启用后，AI 调用此工具前需要用户确认</string>
+  <string name="workspace_detail_other_category">其他</string>
+  <string name="workspace_detail_tool_allow_all">全部允许</string>
+  <string name="workspace_detail_tool_allow_all_desc">无需确认，允许 AI 的全部工具调用</string>
   <string name="workspace_detail_tool_list_files">列出文件</string>
   <string name="workspace_detail_tool_read_file">读取文件</string>
   <string name="workspace_detail_tool_write_file">写入文件</string>

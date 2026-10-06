@@ -79,6 +79,7 @@ import me.rerere.hugeicons.stroke.Refresh01
 import me.rerere.hugeicons.stroke.Settings03
 import me.rerere.hugeicons.stroke.Share08
 import me.rerere.rikkahub.Screen
+import me.rerere.rikkahub.data.ai.tools.WORKSPACE_ALLOW_ALL_APPROVAL_KEY
 import me.rerere.rikkahub.data.ai.tools.resolveWorkspaceToolApproval
 import me.rerere.rikkahub.data.db.entity.WorkspaceEntity
 import androidx.compose.ui.res.stringResource
@@ -462,6 +463,42 @@ private fun WorkspaceBasicPage(
                 onToolApprovalChange = onToolApprovalChange,
             )
         }
+
+        item {
+            WorkspaceAllowAllCard(
+                workspace = workspace,
+                onToolApprovalChange = onToolApprovalChange,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WorkspaceAllowAllCard(
+    workspace: WorkspaceEntity?,
+    onToolApprovalChange: (String, Boolean) -> Unit,
+) {
+    val overrides = workspace?.toolApprovalOverrides().orEmpty()
+    CardGroup(
+        title = { Text(stringResource(R.string.workspace_detail_other_category)) },
+    ) {
+        item(
+            headlineContent = { Text(stringResource(R.string.workspace_detail_tool_allow_all)) },
+            supportingContent = {
+                Text(
+                    text = stringResource(R.string.workspace_detail_tool_allow_all_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+            trailingContent = {
+                Switch(
+                    checked = overrides[WORKSPACE_ALLOW_ALL_APPROVAL_KEY] == true,
+                    onCheckedChange = { onToolApprovalChange(WORKSPACE_ALLOW_ALL_APPROVAL_KEY, it) },
+                    enabled = workspace != null,
+                )
+            },
+        )
     }
 }
 
