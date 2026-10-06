@@ -549,17 +549,18 @@ class GenerationLoop(
             INITIAL_PROVIDER_RETRY_DELAY_MS shl retryCount
         }
         val maxRetries = if (isRateLimit) maxRateLimitRetries else MAX_PROVIDER_NETWORK_RETRIES
+        val statusMessage = if (isRateLimit) {
+            context.getString(R.string.chat_generation_rate_limit_error)
+        } else {
+            getNetworkErrorMessage(error as IOException)
+        }
         processingStatus.value = context.getString(
             if (isRateLimit) {
                 R.string.chat_generation_rate_limit_retrying
             } else {
                 R.string.chat_generation_network_retrying
             },
-            if (isRateLimit) {
-                context.getString(R.string.chat_generation_rate_limit_error)
-            } else {
-                getNetworkErrorMessage(error)
-            },
+            statusMessage,
             nextRetryCount,
             maxRetries,
         )
