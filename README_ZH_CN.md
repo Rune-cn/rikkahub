@@ -1,22 +1,23 @@
 <div align="center">
-  <img src="docs/icon.png" alt="App 图标" width="100" />
+  <img src="docs/icon.png" alt="App Icon" width="100" />
   <h1>RikkaHub</h1>
 
-一个原生Android LLM 聊天客户端，支持切换不同的供应商进行聊天 🤖💬
+原生 Android LLM 聊天客户端，支持在不同提供商之间切换对话 🤖💬
 
-[English](README.md) | [繁體中文](README_ZH_TW.md) | 简体中文
+基于 [rikkahub/rikkahub](https://github.com/rikkahub/rikkahub) 的二次开发版本，包名为 `app.ai.rune`
 
-点击链接加入群聊 👉 [【RikkaHub】](https://qm.qq.com/q/I8MSU0FkOu)
-
+[简体中文](README_ZH_CN.md) | [繁體中文](README_ZH_TW.md) | English
 </div>
 
 <div align="center">
   <img src="docs/img/poster.png" alt="RikkaHub" width="800" />
 </div>
 
+## 📦 发布版本
 
-## 🚀 下载
+自动构建的 APK 发布在 [Nightly Build](https://github.com/Rune-cn/rikkahub/releases/tag/nightly)：
 
+<<<<<<< HEAD
 🔗 [前往官网下载](https://rikka-ai.com/download)（推荐）
 
 🔗 [前往 Google Play 下载](https://play.google.com/store/apps/details?id=me.rerere.rikkahub)
@@ -52,16 +53,48 @@
 - 🧠 基于文件的记忆
 - 📝 AI翻译
 - 🌐 自定义HTTP请求头和请求体
+=======
+| APK | 说明 |
+|---|---|
+| `app-arm64-v8a-release.apk` | 手机（arm64 设备） |
+| `app-universal-release.apk` | 通用包 |
+| `app-x86_64-release.apk` | 模拟器 |
 
-## ✨ 开发
+> 每次推送到 `master` 或每天定时（UTC 09:00 / 18:00），GitHub Actions 会自动重新构建并更新以上 APK。
 
-> [!IMPORTANT]
-> 本项目不接受 Pull Request（PR）。
+## ✨ 功能特色
 
-本项目使用[Android Studio](https://developer.android.com/studio)开发。
+- [x] 🎨 现代化安卓APP设计（Material You / 预测性返回）和 🌙 暗色模式
+- [x] 📦 工作区：基于 proot 的 Linux 智能体环境
+- [x] 🖥️ Web多端访问支持
+- [x] 🛠️ MCP 支持
+- [x] 🔄 多种类型的供应商支持，自定义 API / URL / 模型（目前支持 OpenAI、Google、Anthropic）
+- [x] 🖼️ 多模态输入支持
+- [x] 📝 Markdown 渲染（支持代码高亮、数学公式、表格、Mermaid）
+- [x] 🪾 消息分支
+- [x] 🔍 搜索功能（Exa、Tavily、Zhipu、LinkUp、Brave、Perplexity、..）
+- [x] 🧩 Prompt 变量（模型名称、时间等）
+- [x] 🤳 二维码导出和导入提供商
+- [x] 🤖 Agent 定制
+- [x] 🧠 类 ChatGPT 记忆功能
+- [x] 📝 AI 翻译
+- [x] 🌐 自定义 HTTP 请求头和请求体
+- [x] 💌 Silly Tavern 角色卡导入
+>>>>>>> 018ab9e4 (feat: 二次开发收尾——其他分类移到工作区、README/关于页/许可证定制、上游同步文档)
 
-技术栈文档:
+### 本分支新增
 
+- [x] 📱 包名改为 `app.ai.rune`（应用显示名不变）
+- [x] 🔓 工具审批「全部允许」：AI 使用所有工具（含 MCP）不再弹确认框
+- [x] 🔁 限流自动重试（tpm/rpm）：支持固定间隔 / 指数退避 / 随机抖动，可配置最大重试次数
+- [x] 🔥 Firebase 可选：没有 `google-services.json` 也能构建运行
+- [x] 🤖 GitHub Actions 自动构建并签名 APK（Nightly Release）
+
+## 💻 开发
+
+本项目使用 [Android Studio](https://developer.android.com/studio) 开发。
+
+<<<<<<< HEAD
 - [Kotlin](https://kotlinlang.org/) (开发语言)
 - [Koin](https://insert-koin.io/) (依赖注入)
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) (UI 框架)
@@ -73,10 +106,23 @@
 - [Navigation 3](https://developer.android.com/guide/navigation/navigation-3) (导航)
 - [Okhttp](https://square.github.io/okhttp/) (HTTP 客户端)
 - [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) (Json序列化)
+=======
+技术栈：
+>>>>>>> 018ab9e4 (feat: 二次开发收尾——其他分类移到工作区、README/关于页/许可证定制、上游同步文档)
 
-> [!TIP]
-> 你需要在 `app` 文件夹下添加 `google-services.json` 文件才能构建应用。
+- [Kotlin](https://kotlinlang.org/)（开发语言）
+- [Koin](https://insert-koin.io/)（依赖注入）
+- [Jetpack Compose](https://developer.android.com/jetpack/compose)（UI 框架）
+- [DataStore](https://developer.android.com/topic/libraries/architecture/datastore)（偏好数据
+  存储）
+- [Room](https://developer.android.com/training/data-storage/room)（数据库）
+- [Coil](https://coil-kt.github.io/coil/)（图片加载）
+- [Material You](https://m3.material.io/)（界面设计）
+- [Navigation 3](https://developer.android.com/guide/navigation/navigation-3)（导航）
+- [Okhttp](https://square.github.io/okhttp/)（HTTP 客户端）
+- [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization)（JSON 序列化）
 
+<<<<<<< HEAD
 ## 💰 捐赠
 
 * [Ko-fi](https://ko-fi.com/reovodev)
@@ -93,7 +139,13 @@
    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=re-ovo/rikkahub&type=date&legend=top-left&sealed_token=qSytWeq7LkzQQViTjK0MYlvvA_qkfuwjOxOqgbRpLUZZwok5rO6LXhpVL7Mq-q3o89BfKpzE7g66BCy18H6eiqTsD8czD0J-HejLqmHy-npcvCTHu11wZw" />
  </picture>
 </a>
+=======
+> [!NOTE]
+> 本仓库为 [rikkahub/rikkahub](https://github.com/rikkahub/rikkahub) 的 fork，
+> 同步上游更新请参考 [FORK_SYNC.md](FORK_SYNC.md)。
+>>>>>>> 018ab9e4 (feat: 二次开发收尾——其他分类移到工作区、README/关于页/许可证定制、上游同步文档)
 
 ## 📄 许可证
 
-本项目基于 [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0) 开源。
+采用 [GNU Affero General Public License v3.0](LICENSE)（AGPL-3.0）许可。
+本仓库为 RikkaHub 的二次开发版本，原始版权归 RikkaHub 作者所有。

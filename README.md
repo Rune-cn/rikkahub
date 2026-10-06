@@ -5,7 +5,7 @@
 A native Android LLM chat client that supports switching between different providers for
 conversations 🤖💬
 
-Click to join our Discord server 👉 [【RikkaHub】](https://discord.gg/9weBqxe5c4)
+A fork of [rikkahub/rikkahub](https://github.com/rikkahub/rikkahub) with package name `app.ai.rune`
 
 [简体中文](README_ZH_CN.md) | [繁體中文](README_ZH_TW.md) | English
 </div>
@@ -14,12 +14,17 @@ Click to join our Discord server 👉 [【RikkaHub】](https://discord.gg/9weBqx
   <img src="docs/img/poster.png" alt="RikkaHub" width="800" />
 </div>
 
-## 🚀 Download
+## 📦 Releases
 
-🔗 [Download from Website](https://rikka-ai.com/download) (Recommended)
+Built APKs are published automatically to the [Nightly Build release](https://github.com/Rune-cn/rikkahub/releases/tag/nightly):
 
-🔗 [Download from Google Play](https://play.google.com/store/apps/details?id=me.rerere.rikkahub)
+| APK | Description |
+|---|---|
+| `app-arm64-v8a-release.apk` | Phones (arm64) |
+| `app-universal-release.apk` | Universal package |
+| `app-x86_64-release.apk` | Emulators (x86_64) |
 
+<<<<<<< HEAD
 > [!WARNING]
 > There are many forked versions of RikkaHub. Issues with forks are unrelated to RikkaHub, so please use forks with caution to avoid privacy leaks or excessive permission requests.
 
@@ -52,15 +57,42 @@ Click to join our Discord server 👉 [【RikkaHub】](https://discord.gg/9weBqx
 - 📝 AI Translation
 - 🌐 Custom HTTP request headers and request bodies
 - 💌 Silly Tavern character card import
+=======
+> APKs are rebuilt on every push to `master`, or twice a day (UTC 09:00 / 18:00) by GitHub Actions.
 
-## ✨ Development
+## ✨ Features
 
-> [!IMPORTANT]
-> This project does not accept pull requests (PRs).
+- [x] 🎨 Material You Design and 🌙 Dark mode
+- [x] 📦 Workspace: a proot-based Linux agent environment
+- [x] 🔄 Multiple AI Provider Support: custom API / URL / models (all OpenAI, Google, Anthropic compatible api)
+- [x] 🖼️ Multimodal input support (Image, Text Documentation, PDF, Docx)
+- [x] 🖥️ Web access for multi-platform use
+- [x] 🛠️ MCP support
+- [x] 📝 Markdown Rendering (with code highlighting, Latex formulas, tables, Mermaid)
+- [x] 🪾 Message Branching
+- [x] 🔍 Search capabilities (Exa, Tavily, Zhipu, LinkUp, Brave, Perplexity, etc.)
+- [x] 🧩 Prompt variables (model name, time, etc.)
+- [x] 🤳 QR code export and import for providers
+- [x] 🤖 Agent customization
+- [x] 🧠 ChatGPT-like memory feature
+- [x] 📝 AI Translation
+- [x] 🌐 Custom HTTP request headers and request bodies
+- [x] 💌 Silly Tavern character card import
+>>>>>>> 018ab9e4 (feat: 二次开发收尾——其他分类移到工作区、README/关于页/许可证定制、上游同步文档)
+
+### Added in this fork
+
+- [x] 📱 Package name changed to `app.ai.rune` (display name unchanged)
+- [x] 🔓 Tool approval "Allow All": AI can use every tool (including MCP) without confirmation dialogs
+- [x] 🔁 Rate-limit auto retry (tpm/rpm): fixed interval / exponential backoff / jitter, configurable max retry count
+- [x] 🔥 Firebase optional: builds and runs without `google-services.json`
+- [x] 🤖 GitHub Actions builds and signs APKs automatically (Nightly release)
+
+## 💻 Development
 
 This project is developed using [Android Studio](https://developer.android.com/studio).
 
-Technology stack documentation:
+Technology stack:
 
 - [Kotlin](https://kotlinlang.org/) (Development language)
 - [Koin](https://insert-koin.io/) (Dependency Injection)
@@ -74,6 +106,7 @@ Technology stack documentation:
 - [Okhttp](https://square.github.io/okhttp/) (HTTP client)
 - [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) (JSON serialization)
 
+<<<<<<< HEAD
 > [!TIP]
 > You need a `google-services.json` file at `app` folder to build the app.
 
@@ -93,7 +126,13 @@ If you like this project, please give it a star ⭐
    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=re-ovo/rikkahub&type=date&legend=top-left&sealed_token=qSytWeq7LkzQQViTjK0MYlvvA_qkfuwjOxOqgbRpLUZZwok5rO6LXhpVL7Mq-q3o89BfKpzE7g66BCy18H6eiqTsD8czD0J-HejLqmHy-npcvCTHu11wZw" />
  </picture>
 </a>
+=======
+> [!NOTE]
+> This repository is a fork of [rikkahub/rikkahub](https://github.com/rikkahub/rikkahub).
+> To sync upstream updates, see [FORK_SYNC.md](FORK_SYNC.md).
+>>>>>>> 018ab9e4 (feat: 二次开发收尾——其他分类移到工作区、README/关于页/许可证定制、上游同步文档)
 
 ## 📄 License
 
-This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0).
+Licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0).
+This is a modified fork of RikkaHub; the original project is owned by RikkaHub authors.

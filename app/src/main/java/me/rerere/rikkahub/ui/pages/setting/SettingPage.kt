@@ -351,11 +351,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     )
                     item(
                         onClick = {
-                            val docUrl = if (java.util.Locale.getDefault().language == "zh") {
-                                "https://docs.rikka-ai.com/zh/introduction"
-                            } else {
-                                "https://docs.rikka-ai.com/introduction"
-                            }
+                            val docUrl = "https://github.com/Rune-cn/rikkahub#readme"
                             context.openUrl(docUrl)
                         },
                         leadingContent = { CardGroupIcon(HugeIcons.Book01, containerColor = containerColor, contentColor = contentColor) },
