@@ -17,6 +17,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlin.random.Random
 import me.rerere.ai.core.MessageRole
 import me.rerere.ai.core.Tool
 import me.rerere.ai.provider.Model
@@ -30,9 +31,11 @@ import me.rerere.ai.ui.ToolApprovalState
 import me.rerere.ai.ui.StreamChunkHandler
 import me.rerere.ai.ui.handleTextGenerationResult
 import me.rerere.ai.ui.limitContext
+import me.rerere.ai.util.HttpException
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.ai.transformers.InputMessageTransformer
 import me.rerere.rikkahub.data.ai.transformers.MessageTransformer
+import me.rerere.rikkahub.data.datastore.RetryMode
 import me.rerere.rikkahub.data.ai.transformers.OutputMessageTransformer
 import me.rerere.rikkahub.data.files.FileFolders
 import me.rerere.rikkahub.data.ai.transformers.onGenerationFinish
@@ -59,6 +62,24 @@ private const val TOOL_OUTPUT_PREVIEW_CHARS = 4 * 1024
 private val TOOLS_WITHOUT_OUTPUT_TRUNCATION = setOf("search_web")
 private const val MAX_PROVIDER_NETWORK_RETRIES = 3
 private const val INITIAL_PROVIDER_RETRY_DELAY_MS = 1_000L
+// 限流重试基础间隔：指数退避从 2s 开始（2s/4s/8s）
+private const val INITIAL_RATE_LIMIT_RETRY_DELAY_MS = 2_000L
+
+// 限流错误关键词：模型触发 tpm/rpm limit 或 429 时自动重试
+private val RATE_LIMIT_ERROR_KEYWORDS = listOf(
+    "tpm",
+    "rpm",
+    "rate limit",
+    "rate_limit",
+    "too many requests",
+    "429",
+    "limit exceeded",
+)
+
+private fun Throwable.isRateLimitError(): Boolean =
+    this is HttpException && message?.lowercase()?.let { msg ->
+        RATE_LIMIT_ERROR_KEYWORDS.any { it in msg }
+    } == true
 
 private class StreamChunkHandlingException(cause: Throwable) : RuntimeException(cause)
 
@@ -445,6 +466,9 @@ class GenerationLoop(
                             retryCount = retryCount,
                             processingStatus = processingStatus,
                             enabled = settings.networkSetting.enableAutoRetry,
+                            rateLimitEnabled = settings.networkSetting.enableRateLimitRetry,
+                            retryMode = settings.networkSetting.rateLimitRetryMode,
+                            maxRateLimitRetries = settings.networkSetting.rateLimitRetryCount,
                         )
                     }
                 }
@@ -452,6 +476,9 @@ class GenerationLoop(
                 val result = executeProviderRequestWithRetry(
                     processingStatus = processingStatus,
                     enabled = settings.networkSetting.enableAutoRetry,
+                    rateLimitEnabled = settings.networkSetting.enableRateLimitRetry,
+                    retryMode = settings.networkSetting.rateLimitRetryMode,
+                    maxRateLimitRetries = settings.networkSetting.rateLimitRetryCount,
                 ) {
                     providerImpl.generateText(
                         providerSetting = provider,
@@ -470,6 +497,9 @@ class GenerationLoop(
     private suspend fun <T> executeProviderRequestWithRetry(
         processingStatus: MutableStateFlow<String?>,
         enabled: Boolean,
+        rateLimitEnabled: Boolean,
+        retryMode: RetryMode,
+        maxRateLimitRetries: Int,
         block: suspend () -> T,
     ): T {
         var retryCount = 0
@@ -482,6 +512,9 @@ class GenerationLoop(
                     retryCount = retryCount,
                     processingStatus = processingStatus,
                     enabled = enabled,
+                    rateLimitEnabled = rateLimitEnabled,
+                    retryMode = retryMode,
+                    maxRateLimitRetries = maxRateLimitRetries,
                 )
             }
         }
@@ -492,30 +525,71 @@ class GenerationLoop(
         retryCount: Int,
         processingStatus: MutableStateFlow<String?>,
         enabled: Boolean,
+        rateLimitEnabled: Boolean,
+        retryMode: RetryMode,
+        maxRateLimitRetries: Int,
     ): Int {
         // 用户主动停止生成时，底层连接也可能以 IOException("canceled") 收尾；
         // 先检查协程状态，确保取消不会被当作网络波动重新拉起。
         currentCoroutineContext().ensureActive()
-        if (!enabled || error !is IOException || retryCount >= MAX_PROVIDER_NETWORK_RETRIES) {
-            throw error
-        }
+        val isNetworkError = error is IOException
+        val isRateLimit = error.isRateLimitError()
+
+        // 不认识的错误直接抛出
+        if (!isNetworkError && !isRateLimit) throw error
+        // 网络错误由 enableAutoRetry 控制，超过次数上限则放弃
+        if (isNetworkError && (!enabled || retryCount >= MAX_PROVIDER_NETWORK_RETRIES)) throw error
+        // 限流错误由 enableRateLimitRetry 控制，超过用户设置的上限则放弃
+        if (isRateLimit && (!rateLimitEnabled || retryCount >= maxRateLimitRetries)) throw error
 
         val nextRetryCount = retryCount + 1
-        val retryDelay = INITIAL_PROVIDER_RETRY_DELAY_MS shl retryCount
+        val retryDelay = if (isRateLimit) {
+            rateLimitRetryDelayMs(retryMode, retryCount)
+        } else {
+            INITIAL_PROVIDER_RETRY_DELAY_MS shl retryCount
+        }
+        val maxRetries = if (isRateLimit) maxRateLimitRetries else MAX_PROVIDER_NETWORK_RETRIES
         processingStatus.value = context.getString(
-            R.string.chat_generation_network_retrying,
-            getNetworkErrorMessage(error),
+            if (isRateLimit) {
+                R.string.chat_generation_rate_limit_retrying
+            } else {
+                R.string.chat_generation_network_retrying
+            },
+            if (isRateLimit) {
+                context.getString(R.string.chat_generation_rate_limit_error)
+            } else {
+                getNetworkErrorMessage(error)
+            },
             nextRetryCount,
-            MAX_PROVIDER_NETWORK_RETRIES,
+            maxRetries,
         )
         Log.w(
             TAG,
-            "Provider connection failed, retrying in ${retryDelay}ms " +
-                    "($nextRetryCount/$MAX_PROVIDER_NETWORK_RETRIES)",
+            if (isRateLimit) {
+                "Rate limit hit, retrying in ${retryDelay}ms ($nextRetryCount/$maxRetries)"
+            } else {
+                "Provider connection failed, retrying in ${retryDelay}ms ($nextRetryCount/$maxRetries)"
+            },
             error,
         )
         delay(retryDelay)
         return nextRetryCount
+    }
+
+    /**
+     * 按重试策略计算等待时间：
+     * - FIXED：固定间隔（2s）
+     * - EXPONENTIAL_BACKOFF：指数退避（2s/4s/8s）
+     * - JITTER：指数退避 + 随机抖动，避免大量客户端同时重试
+     */
+    private fun rateLimitRetryDelayMs(mode: RetryMode, retryCount: Int): Long {
+        val base = INITIAL_RATE_LIMIT_RETRY_DELAY_MS
+        val backoff = base shl retryCount
+        return when (mode) {
+            RetryMode.FIXED -> base
+            RetryMode.EXPONENTIAL_BACKOFF -> backoff
+            RetryMode.JITTER -> backoff + Random.nextLong(0, base)
+        }
     }
 
     private fun getNetworkErrorMessage(error: IOException): String {

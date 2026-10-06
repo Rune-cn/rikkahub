@@ -1240,6 +1240,14 @@
   <string name="workspace_terminal_no_tabs">No open terminal tabs</string>
   <string name="extensions_page_workspace">Workspace</string>
   <string name="extensions_page_workspace_desc">Manage local working directories accessible by Agent</string>
+  <string name="extensions_page_other_category">Other</string>
+  <string name="extensions_page_auto_retry">Auto Retry</string>
+  <string name="extensions_page_auto_retry_desc">Automatically retry when the model hits rate limits (tpm/rpm)</string>
+  <string name="extensions_page_retry_interval">Retry Interval</string>
+  <string name="extensions_page_retry_interval_fixed">Fixed</string>
+  <string name="extensions_page_retry_interval_exponential">Exponential</string>
+  <string name="extensions_page_retry_interval_jitter">Jitter</string>
+  <string name="extensions_page_retry_max_count">Max Retries</string>
   <string name="workspace_select">Select Workspace</string>
   <string name="workspace_no_binding">No binding</string>
   <string name="workspace_manage">Manage Workspaces</string>
@@ -1328,6 +1336,8 @@
   <string name="setting_provider_page_test_tool_called">Called: %1$s  Args: %2$s</string>
   <string name="setting_provider_page_test_tool_not_called">Tool not called, response: %s</string>
   <string name="chat_generation_network_retrying">%1$s. Retrying (%2$d/%3$d)…</string>
+  <string name="chat_generation_rate_limit_error">Rate limit exceeded</string>
+  <string name="chat_generation_rate_limit_retrying">%1$s, retrying (%2$d/%3$d)…</string>
   <string name="chat_generation_network_unknown_host">Unable to resolve server address</string>
   <string name="chat_generation_network_timeout">Connection timed out</string>
   <string name="chat_generation_network_unreachable">Unable to connect to server</string>

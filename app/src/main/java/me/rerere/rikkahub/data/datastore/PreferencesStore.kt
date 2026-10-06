@@ -641,7 +641,25 @@ data class NetworkSetting(
     val proxyUsername: String = "",
     val proxyPassword: String = "",
     val enableAutoRetry: Boolean = true,
+    // 模型触发限流（tpm/rpm）时自动重试
+    val enableRateLimitRetry: Boolean = true,
+    // 重试间隔策略：固定 / 指数退避 / 随机抖动
+    val rateLimitRetryMode: RetryMode = RetryMode.EXPONENTIAL_BACKOFF,
+    // 最大重试次数
+    val rateLimitRetryCount: Int = 3,
 )
+
+@Serializable
+enum class RetryMode {
+    @SerialName("fixed")
+    FIXED,
+
+    @SerialName("exponential")
+    EXPONENTIAL_BACKOFF,
+
+    @SerialName("jitter")
+    JITTER,
+}
 
 @Serializable
 enum class ChatFontFamily {
