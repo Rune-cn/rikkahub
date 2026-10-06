@@ -34,8 +34,14 @@ val WorkspaceToolDefaultApprovals: Map<String, Boolean> = mapOf(
 /** 直接写文件的工具, 只在支持 [WorkspaceCapabilities.fileWriteTools] 的工作区提供 */
 val WorkspaceFileWriteToolNames: Set<String> = setOf("workspace_write_file", "workspace_edit_file")
 
-fun resolveWorkspaceToolApproval(name: String, overrides: Map<String, Boolean>): Boolean =
-    overrides[name] ?: WorkspaceToolDefaultApprovals[name] ?: false
+// 工具审批设置中的特殊键：开启后所有工具都不再需要审批（字面意义的"全部允许"）
+const val WORKSPACE_ALLOW_ALL_APPROVAL_KEY = "__workspace_allow_all__"
+
+fun resolveWorkspaceToolApproval(name: String, overrides: Map<String, Boolean>): Boolean {
+    // 全部允许开启时，任何工具都不需要审批
+    if (overrides[WORKSPACE_ALLOW_ALL_APPROVAL_KEY] == true) return false
+    return overrides[name] ?: WorkspaceToolDefaultApprovals[name] ?: false
+}
 
 suspend fun createWorkspaceTools(
     workspaceId: String?,
