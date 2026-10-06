@@ -97,7 +97,17 @@ class ChatToolFactory(
         // 文件放在本机, 只有本地 Rootfs 挂载了 /tool_outputs, 远程工作区同样读不到
         val canReadToolOutputs = workspaceTools.isNotEmpty() &&
             assistant.workspaceId?.let { workspaceRepository.getById(it.toString()) }?.capabilities()?.rootfs == true
-        return if (canReadToolOutputs) tools.map(::withOutputTruncation) else tools
+        val outputTools = if (canReadToolOutputs) tools.map(::withOutputTruncation) else tools
+        // 全部允许：该工作区开启后，所有工具（含 MCP、AskUser、Calendar、Skill 等）都不再需要审批，
+        // 即 AI 使用工具时不再弹确认框（字面意义的"全部允许"）
+        val allowAll = assistant.workspaceId?.let { workspaceRepository.getById(it.toString()) }
+            ?.toolApprovalOverrides()
+            ?.get(WORKSPACE_ALLOW_ALL_APPROVAL_KEY) == true
+        return if (allowAll) {
+            outputTools.map { it.copy(needsApproval = { false }) }
+        } else {
+            outputTools
+        }
     }
 
     private fun withOutputTruncation(tool: Tool): Tool {
@@ -129,6 +139,7 @@ class ChatToolFactory(
                 }
             )
         ) + output.filter { it !is UIMessagePart.Text }
+    }
     }
 
     private suspend fun createWorkspaceToolsIfReady(workspaceId: String?, cwd: String?): List<Tool> {
