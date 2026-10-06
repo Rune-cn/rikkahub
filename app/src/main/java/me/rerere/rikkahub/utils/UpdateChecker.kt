@@ -33,7 +33,7 @@ class UpdateChecker(
         initialValue = UiState.Loading,
     )
 
-    private fun checkUpdate(): Flow<UiState<UpdateInfo>> = flow {
+    private fun checkUpdate(): Flow<UiState<UpdateInfo>> = flow<UiState<UpdateInfo>> {
         emit(UiState.Loading)
         // 更新检查已禁用：本 fork 版本通过 GitHub Actions 的 Nightly Release 自动发布，
         // 不再依赖上游 updates.rikka-ai.com 服务，避免误提示上游新版本。
