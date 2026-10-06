@@ -21,8 +21,6 @@ import me.rerere.rikkahub.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-private const val API_URL = "https://updates.rikka-ai.com/"
-
 class UpdateChecker(
     private val client: OkHttpClient,
     appScope: AppScope,
@@ -37,29 +35,8 @@ class UpdateChecker(
 
     private fun checkUpdate(): Flow<UiState<UpdateInfo>> = flow {
         emit(UiState.Loading)
-        emit(
-            UiState.Success(
-                data = try {
-                    val response = client.newCall(
-                        Request.Builder()
-                            .url(API_URL)
-                            .get()
-                            .addHeader(
-                                "User-Agent",
-                                "RikkaHub ${BuildConfig.VERSION_NAME} #${BuildConfig.VERSION_CODE}"
-                            )
-                            .build()
-                    ).await()
-                    if (response.isSuccessful) {
-                        json.decodeFromString<UpdateInfo>(response.body.string())
-                    } else {
-                        throw Exception("Failed to fetch update info")
-                    }
-                } catch (e: Exception) {
-                    throw Exception("Failed to fetch update info", e)
-                }
-            )
-        )
+        // 更新检查已禁用：本 fork 版本通过 GitHub Actions 的 Nightly Release 自动发布，
+        // 不再依赖上游 updates.rikka-ai.com 服务，避免误提示上游新版本。
     }.catch {
         emit(UiState.Error(it))
     }.flowOn(Dispatchers.IO)

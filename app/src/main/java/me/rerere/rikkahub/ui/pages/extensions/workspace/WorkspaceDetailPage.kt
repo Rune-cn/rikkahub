@@ -81,6 +81,8 @@ import me.rerere.hugeicons.stroke.Share08
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.ai.tools.WORKSPACE_ALLOW_ALL_APPROVAL_KEY
 import me.rerere.rikkahub.data.ai.tools.resolveWorkspaceToolApproval
+import me.rerere.rikkahub.data.datastore.RetryMode
+import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.db.entity.WorkspaceEntity
 import androidx.compose.ui.res.stringResource
 import me.rerere.rikkahub.R
@@ -98,6 +100,7 @@ import me.rerere.workspace.WorkspaceFileEntry
 import me.rerere.workspace.WorkspaceShellStatus
 import me.rerere.workspace.WorkspaceStorageArea
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import java.io.File
 
@@ -479,6 +482,9 @@ private fun WorkspaceAllowAllCard(
     onToolApprovalChange: (String, Boolean) -> Unit,
 ) {
     val overrides = workspace?.toolApprovalOverrides().orEmpty()
+    val coroutineScope = rememberCoroutineScope()
+    val settingsStore = koinInject<SettingsStore>()
+    val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
     CardGroup(
         title = { Text(stringResource(R.string.workspace_detail_other_category)) },
     ) {
@@ -497,6 +503,103 @@ private fun WorkspaceAllowAllCard(
                     onCheckedChange = { onToolApprovalChange(WORKSPACE_ALLOW_ALL_APPROVAL_KEY, it) },
                     enabled = workspace != null,
                 )
+            },
+        )
+        item(
+            headlineContent = { Text(stringResource(R.string.extensions_page_auto_retry)) },
+            supportingContent = {
+                Text(
+                    text = stringResource(R.string.extensions_page_auto_retry_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+            trailingContent = {
+                Switch(
+                    checked = settings.networkSetting.enableRateLimitRetry,
+                    onCheckedChange = { enabled ->
+                        coroutineScope.launch {
+                            settingsStore.update {
+                                it.copy(
+                                    networkSetting = it.networkSetting.copy(
+                                        enableRateLimitRetry = enabled,
+                                    )
+                                )
+                            }
+                        }
+                    },
+                )
+            },
+        )
+        item(
+            headlineContent = { Text(stringResource(R.string.extensions_page_retry_interval)) },
+            supportingContent = {
+                val modes = listOf(
+                    RetryMode.FIXED,
+                    RetryMode.EXPONENTIAL_BACKOFF,
+                    RetryMode.JITTER,
+                )
+                val modeLabels = listOf(
+                    stringResource(R.string.extensions_page_retry_interval_fixed),
+                    stringResource(R.string.extensions_page_retry_interval_exponential),
+                    stringResource(R.string.extensions_page_retry_interval_jitter),
+                )
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                ) {
+                    modes.forEachIndexed { index, mode ->
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(index, modes.size),
+                            selected = settings.networkSetting.rateLimitRetryMode == mode,
+                            onClick = {
+                                coroutineScope.launch {
+                                    settingsStore.update {
+                                        it.copy(
+                                            networkSetting = it.networkSetting.copy(
+                                                rateLimitRetryMode = mode,
+                                            )
+                                        )
+                                    }
+                                }
+                            },
+                        ) {
+                            Text(modeLabels[index])
+                        }
+                    }
+                }
+            },
+        )
+        item(
+            headlineContent = { Text(stringResource(R.string.extensions_page_retry_max_count)) },
+            supportingContent = {
+                val counts = listOf(3, 5)
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                ) {
+                    counts.forEachIndexed { index, count ->
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(index, counts.size),
+                            selected = settings.networkSetting.rateLimitRetryCount == count,
+                            onClick = {
+                                coroutineScope.launch {
+                                    settingsStore.update {
+                                        it.copy(
+                                            networkSetting = it.networkSetting.copy(
+                                                rateLimitRetryCount = count,
+                                            )
+                                        )
+                                    }
+                                }
+                            },
+                        ) {
+                            Text(count.toString())
+                        }
+                    }
+                }
             },
         )
     }
