@@ -1,8 +1,5 @@
 package me.rerere.rikkahub.di
 
-import com.google.firebase.Firebase
-import com.google.firebase.analytics.analytics
-import com.google.firebase.crashlytics.crashlytics
 import kotlinx.serialization.json.Json
 import me.rerere.rikkahub.AppScope
 import me.rerere.rikkahub.data.ai.tools.local.LocalTools
@@ -49,15 +46,6 @@ val appModule = module {
 
     single {
         TTSManager(get())
-    }
-
-    // Firebase 未配置（无 google-services.json）时返回 null，避免应用启动崩溃
-    single {
-        runCatching { Firebase.crashlytics }.getOrNull()
-    }
-
-    single {
-        runCatching { Firebase.analytics }.getOrNull()
     }
 
     single {
