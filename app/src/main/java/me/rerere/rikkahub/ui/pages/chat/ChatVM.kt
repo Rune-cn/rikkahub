@@ -73,14 +73,6 @@ class ChatVM(
     val conversation: StateFlow<Conversation> = chatService.getConversationFlow(_conversationId)
     var chatListInitialized by mutableStateOf(false) // 聊天列表是否已经滚动到底部
 
-    // 是否可"继续生成"：最后一条是 AI 消息且未生成完（finishedAt 为空），且当前不在生成中
-    // 覆盖：用户停止 / 出错中断 / 历史中段对话（消息持久化后 finishedAt 仍为空）
-    val canContinueGeneration: StateFlow<Boolean> =
-        combine(conversation, conversationJob) { conv, job ->
-            val last = conv.currentMessages.lastOrNull()
-            last?.role == MessageRole.ASSISTANT && last.finishedAt == null && job?.isActive != true
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
-
     // 聊天输入状态 - 保存在 ViewModel 中避免 TransactionTooLargeException
     val inputState = ChatInputState()
 
@@ -93,6 +85,14 @@ class ChatVM(
         chatService
             .getGenerationJobStateFlow(_conversationId)
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    // 是否可"继续生成"：最后一条是 AI 消息且未生成完（finishedAt 为空），且当前不在生成中
+    // 覆盖：用户停止 / 出错中断 / 历史中段对话（消息持久化后 finishedAt 仍为空）
+    val canContinueGeneration: StateFlow<Boolean> =
+        combine(conversation, conversationJob) { conv, job ->
+            val last = conv.currentMessages.lastOrNull()
+            last?.role == MessageRole.ASSISTANT && last.finishedAt == null && job?.isActive != true
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val processingStatus: StateFlow<String?> =
         chatService
