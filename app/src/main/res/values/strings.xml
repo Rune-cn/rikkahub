@@ -1339,6 +1339,7 @@
   <string name="chat_generation_network_retrying">%1$s. Retrying (%2$d/%3$d)…</string>
   <string name="chat_generation_rate_limit_error">Rate limit exceeded</string>
   <string name="chat_generation_rate_limit_retrying">%1$s, retrying (%2$d/%3$d)…</string>
+  <string name="chat_page_continue_generation">Continue generating</string>
   <string name="chat_generation_network_unknown_host">Unable to resolve server address</string>
   <string name="chat_generation_network_timeout">Connection timed out</string>
   <string name="chat_generation_network_unreachable">Unable to connect to server</string>

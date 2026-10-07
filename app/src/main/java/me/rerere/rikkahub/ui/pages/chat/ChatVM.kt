@@ -71,6 +71,7 @@ class ChatVM(
     }
     val conversation: StateFlow<Conversation> = chatService.getConversationFlow(_conversationId)
     var chatListInitialized by mutableStateOf(false) // 聊天列表是否已经滚动到底部
+    var generationStopped by mutableStateOf(false) // AI 生成是否被强制停止（用于显示"继续生成"按钮）
 
     // 聊天输入状态 - 保存在 ViewModel 中避免 TransactionTooLargeException
     val inputState = ChatInputState()
@@ -223,7 +224,7 @@ class ChatVM(
     fun handleMessageSend(content: List<UIMessagePart>,answer: Boolean = true) {
         if (content.isEmptyInputMessage()) return
         analytics?.logEvent("ai_send_message", null)
-
+        generationStopped = false
         chatService.sendMessage(_conversationId, content, answer)
     }
 
@@ -294,8 +295,16 @@ class ChatVM(
     }
 
     fun stopGeneration() {
+        generationStopped = true
         viewModelScope.launch {
             chatService.stopGeneration(_conversationId)
+        }
+    }
+
+    fun continueGeneration() {
+        generationStopped = false
+        viewModelScope.launch {
+            chatService.continueGeneration(_conversationId)
         }
     }
 

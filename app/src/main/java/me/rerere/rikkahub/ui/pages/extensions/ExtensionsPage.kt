@@ -80,14 +80,6 @@ fun ExtensionsPage() {
                         headlineContent = { Text(stringResource(R.string.extensions_page_workspace)) },
                         supportingContent = { Text(stringResource(R.string.extensions_page_workspace_desc)) },
                     )
-                }
-            }
-
-            item {
-                CardGroup(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    title = { Text(stringResource(R.string.extensions_page_other_category)) },
-                ) {
                     item(
                         onClick = { navController.navigate(Screen.OtherSettings) },
                         leadingContent = { Icon(HugeIcons.Settings03, null) },

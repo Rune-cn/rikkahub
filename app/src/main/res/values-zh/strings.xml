@@ -1332,6 +1332,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="chat_generation_network_retrying">%1$s，正在重试（%2$d/%3$d）…</string>
   <string name="chat_generation_rate_limit_error">触发限流</string>
   <string name="chat_generation_rate_limit_retrying">%1$s，正在重试（%2$d/%3$d）…</string>
+  <string name="chat_page_continue_generation">继续生成</string>
   <string name="chat_generation_network_unknown_host">无法解析服务器地址</string>
   <string name="chat_generation_network_timeout">连接超时</string>
   <string name="chat_generation_network_unreachable">无法连接到服务器</string>
