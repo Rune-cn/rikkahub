@@ -1554,13 +1554,15 @@ class ChatService(
                     message.parts.any { it is UIMessagePart.Tool && it.isPending }
                 }) return
             session.messageQueue.resume()
-            launchGenerationJob(
+            val job = launchGenerationJob(
                 conversationId = conversationId,
                 keepAliveInBackground = true,
             ) {
                 finishInterruptedPendingTools(conversationId)
                 handleMessageComplete(conversationId)
             }
+            // 必须通过 setJob 注册并启动（LAZY 协程不会自动执行）
+            session.setJob(job)
         }
     }
 }

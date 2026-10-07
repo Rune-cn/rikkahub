@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import me.rerere.ai.core.MessageRole
 import me.rerere.ai.provider.Model
 import me.rerere.ai.ui.UIMessage
 import me.rerere.ai.ui.UIMessagePart
@@ -71,7 +72,14 @@ class ChatVM(
     }
     val conversation: StateFlow<Conversation> = chatService.getConversationFlow(_conversationId)
     var chatListInitialized by mutableStateOf(false) // 聊天列表是否已经滚动到底部
-    var generationStopped by mutableStateOf(false) // AI 生成是否被强制停止（用于显示"继续生成"按钮）
+
+    // 是否可"继续生成"：最后一条是 AI 消息且未生成完（finishedAt 为空），且当前不在生成中
+    // 覆盖：用户停止 / 出错中断 / 历史中段对话（消息持久化后 finishedAt 仍为空）
+    val canContinueGeneration: StateFlow<Boolean> =
+        combine(conversation, conversationJob) { conv, job ->
+            val last = conv.currentMessages.lastOrNull()
+            last?.role == MessageRole.ASSISTANT && last.finishedAt == null && job?.isActive != true
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     // 聊天输入状态 - 保存在 ViewModel 中避免 TransactionTooLargeException
     val inputState = ChatInputState()
@@ -224,7 +232,7 @@ class ChatVM(
     fun handleMessageSend(content: List<UIMessagePart>,answer: Boolean = true) {
         if (content.isEmptyInputMessage()) return
         analytics?.logEvent("ai_send_message", null)
-        generationStopped = false
+
         chatService.sendMessage(_conversationId, content, answer)
     }
 
@@ -295,14 +303,12 @@ class ChatVM(
     }
 
     fun stopGeneration() {
-        generationStopped = true
         viewModelScope.launch {
             chatService.stopGeneration(_conversationId)
         }
     }
 
     fun continueGeneration() {
-        generationStopped = false
         viewModelScope.launch {
             chatService.continueGeneration(_conversationId)
         }
