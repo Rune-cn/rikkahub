@@ -50,7 +50,8 @@ Built APKs are published automatically to the [Nightly Build release](https://gi
 
 - [x] 📱 Package name changed to `app.ai.rune` (display name unchanged)
 - [x] 🔓 Tool approval "Allow All": AI can use every tool (including MCP) without confirmation dialogs
-- [x] 🔁 Rate-limit auto retry (tpm/rpm): fixed interval / exponential backoff / jitter, configurable max retry count
+- [x] 🔁 Rate-limit auto retry (tpm/rpm): fixed interval / exponential backoff / jitter, configurable max retry count (Extensions → Other)
+- [x] ▶️ Continue generation: after AI is stopped or interrupted, resume from the half-finished reply (including unfinished conversations from history)
 - [x] 🔥 Firebase optional: builds and runs without `google-services.json`
 - [x] 🤖 GitHub Actions builds and signs APKs automatically (Nightly release)
 
