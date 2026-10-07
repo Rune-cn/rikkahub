@@ -1241,7 +1241,8 @@
   <string name="extensions_page_workspace">Workspace</string>
   <string name="extensions_page_workspace_desc">Manage local working directories accessible by Agent</string>
   <string name="extensions_page_other_category">Other</string>
-  <string name="extensions_page_other_desc">Auto retry and more</string>
+  <string name="extensions_page_other_desc">More uncategorized features</string>
+  <string name="extensions_page_retry_section">Retry</string>
   <string name="extensions_page_auto_retry">Auto Retry</string>
   <string name="extensions_page_auto_retry_desc">Automatically retry when the model hits rate limits (tpm/rpm)</string>
   <string name="extensions_page_retry_interval">Retry Interval</string>

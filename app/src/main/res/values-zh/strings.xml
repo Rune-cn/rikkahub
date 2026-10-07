@@ -1217,7 +1217,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="extensions_page_workspace">工作区</string>
   <string name="extensions_page_workspace_desc">管理可由Agent访问的本地工作目录</string>
   <string name="extensions_page_other_category">其他</string>
-  <string name="extensions_page_other_desc">自动重试等设置</string>
+  <string name="extensions_page_other_desc">更多未分类功能</string>
+  <string name="extensions_page_retry_section">重试</string>
   <string name="extensions_page_auto_retry">自动重试</string>
   <string name="extensions_page_auto_retry_desc">模型触发限流（tpm/rpm）时自动重试</string>
   <string name="extensions_page_retry_interval">重试间隔</string>
