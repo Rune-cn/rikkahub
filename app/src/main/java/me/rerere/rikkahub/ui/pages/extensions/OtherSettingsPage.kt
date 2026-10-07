@@ -59,6 +59,7 @@ fun OtherSettingsPage() {
             item {
                 CardGroup(
                     modifier = Modifier.padding(horizontal = 8.dp),
+                    title = { Text(stringResource(R.string.extensions_page_retry_section)) },
                 ) {
                     item(
                         headlineContent = { Text(stringResource(R.string.extensions_page_auto_retry)) },
