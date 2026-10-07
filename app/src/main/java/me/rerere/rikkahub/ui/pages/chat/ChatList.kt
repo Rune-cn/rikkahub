@@ -129,7 +129,7 @@ fun ChatList(
     settings: Settings,
     hazeState: HazeState,
     errors: List<ChatError> = emptyList(),
-    generationStopped: Boolean = false,
+    canContinueGeneration: Boolean = false,
     onContinueGeneration: () -> Unit = {},
     onDismissError: (Uuid) -> Unit = {},
     onClearAllErrors: () -> Unit = {},
@@ -173,7 +173,7 @@ fun ChatList(
                 settings = settings,
                 hazeState = hazeState,
                 errors = errors,
-                generationStopped = generationStopped,
+                canContinueGeneration = canContinueGeneration,
                 onContinueGeneration = onContinueGeneration,
                 onDismissError = onDismissError,
                 onClearAllErrors = onClearAllErrors,
@@ -224,7 +224,7 @@ private fun ChatListNormal(
     settings: Settings,
     hazeState: HazeState,
     errors: List<ChatError>,
-    generationStopped: Boolean = false,
+    canContinueGeneration: Boolean = false,
     onContinueGeneration: () -> Unit = {},
     onDismissError: (Uuid) -> Unit,
     onClearAllErrors: () -> Unit,
@@ -406,7 +406,7 @@ private fun ChatListNormal(
                 }
             }
 
-            if (generationStopped) {
+            if (canContinueGeneration) {
                 item(key = "ContinueGeneration") {
                     OutlinedButton(
                         onClick = onContinueGeneration,
