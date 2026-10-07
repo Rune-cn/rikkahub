@@ -1250,4 +1250,24 @@ class ChatService(
         jobs.forEach { it.join() }
         if (session.isInitialized) finishInterruptedPendingTools(session)
     }
+
+    // 继续生成：被强制停止后，基于现有消息（保留 AI 已生成的半截回复）继续生成
+    fun continueGeneration(conversationId: Uuid) {
+        val session = sessionManager.getOrCreate(conversationId)
+        synchronized(session) {
+            // 正在生成、或存在待审批工具时忽略
+            if (session.isGenerating) return
+            if (session.state.value.currentMessages.any { message ->
+                    message.parts.any { it is UIMessagePart.Tool && it.isPending }
+                }) return
+            session.messageQueue.resume()
+            launchGenerationJob(
+                conversationId = conversationId,
+                keepAliveInBackground = true,
+            ) {
+                finishInterruptedPendingTools(conversationId)
+                handleMessageComplete(conversationId)
+            }
+        }
+    }
 }

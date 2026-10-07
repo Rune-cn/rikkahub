@@ -422,6 +422,10 @@ private fun ChatPageContent(
                 settings = setting,
                 hazeState = hazeState,
                 errors = errors,
+                generationStopped = vm.generationStopped,
+                onContinueGeneration = {
+                    vm.continueGeneration()
+                },
                 onDismissError = onDismissError,
                 onClearAllErrors = onClearAllErrors,
                 onRegenerate = {
