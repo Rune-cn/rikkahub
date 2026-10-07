@@ -10,8 +10,11 @@
 | 本仓库 | `Rune-cn/rikkahub`（https://github.com/Rune-cn/rikkahub） |
 | 上游仓库 | `rikkahub/rikkahub`（https://github.com/rikkahub/rikkahub） |
 | fork 基线（上游 commit） | `b64beeef`（feat(chat): 会话开始后把模型、思考级别、搜索等配置固定在会话上） |
+| 最近一次同步（上游 commit） | `4a7a39c4`（2026-10-06，上游新增 2 个提交：会话列表排序、AI 消息模型显示修复） |
 | 上游默认分支 | `master` |
 | 本仓库默认分支 | `master` |
+
+> ✅ 最近一次同步已完成：`git rebase upstream/master` 零冲突，落后 0 / 领先 14（定制提交），构建通过。
 
 ## 本分支的定制改动（同步时注意保持）
 
