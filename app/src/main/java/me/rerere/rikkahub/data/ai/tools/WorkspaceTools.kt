@@ -25,21 +25,19 @@ private const val SHELL_TIMEOUT_MAX_SECONDS = 600L
 private const val MAX_READ_FILE_BYTES = 8L * 1024 * 1024
 
 val WorkspaceToolDefaultApprovals: Map<String, Boolean> = mapOf(
-    "workspace_read_file" to false,
-    "workspace_write_file" to false,
-    "workspace_edit_file" to false,
-    "workspace_shell" to true,
+    "workspace_read_file" to false,   // 读文件无副作用，默认不审批
+    "workspace_write_file" to true,   // 写文件：默认需要审批（可开启全局「自动允许」跳过）
+    "workspace_edit_file" to true,    // 编辑文件：默认需要审批（同上）
+    "workspace_shell" to true,        // 执行命令：默认需要审批（同上）
 )
 
 /** 直接写文件的工具, 只在支持 [WorkspaceCapabilities.fileWriteTools] 的工作区提供 */
 val WorkspaceFileWriteToolNames: Set<String> = setOf("workspace_write_file", "workspace_edit_file")
 
-// 工具审批设置中的特殊键：开启后所有工具都不再需要审批（字面意义的"全部允许"）
-const val WORKSPACE_ALLOW_ALL_APPROVAL_KEY = "__workspace_allow_all__"
+// 注意：旧的「工作区全部允许」机制（__workspace_allow_all__）已废弃移除。
+// 其入口已从工作区详情页删除，若继续生效会覆盖全局「自动允许」开关，导致用户无法关闭。
 
 fun resolveWorkspaceToolApproval(name: String, overrides: Map<String, Boolean>): Boolean {
-    // 全部允许开启时，任何工具都不需要审批
-    if (overrides[WORKSPACE_ALLOW_ALL_APPROVAL_KEY] == true) return false
     return overrides[name] ?: WorkspaceToolDefaultApprovals[name] ?: false
 }
 
