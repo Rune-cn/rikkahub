@@ -69,7 +69,8 @@ class UpdateChecker(
         emit(
             UiState.Success(
                 UpdateInfo(
-                    version = release.publishedAt.take(10).replace("-", "."),
+                    // 版本号格式：应用版本-构建 commit（如 2.5.6-a3ea1cd1）
+                    version = release.name.ifBlank { release.publishedAt.take(10).replace("-", ".") },
                     publishedAt = release.publishedAt,
                     changelog = release.body,
                     downloads = release.assets.map { asset ->
@@ -137,6 +138,7 @@ data class UpdateInfo(
 /** GitHub Release API 响应（仅取所需字段） */
 @Serializable
 private data class GitHubRelease(
+    @SerialName("name") val name: String = "",
     @SerialName("published_at") val publishedAt: String = "",
     @SerialName("body") val body: String = "",
     @SerialName("assets") val assets: List<GitHubAsset> = emptyList(),
