@@ -7,8 +7,17 @@ on:
   # 每天 UTC 09:00、18:00 触发（北京时间 17:00、次日 02:00）
   schedule:
     - cron: '0 9,18 * * *'
-  # 也支持手动触发
+  # 也支持手动触发（可选择发布 Beta 预览版或正式版）
   workflow_dispatch:
+    inputs:
+      release_type:
+        description: '发布类型（nightly = Beta 预览版；stable = 正式版）'
+        required: true
+        default: nightly
+        type: choice
+        options:
+          - nightly
+          - stable
 
 jobs:
   # 检查过去 24 小时内是否有新提交，没有则跳过构建，避免重复打包
@@ -96,7 +105,12 @@ jobs:
       - name: Gradle Build
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          # 正式版：versionName 不带 commit 短 SHA
+          EXTRA_ARGS=""
+          if [ "${{ github.event.inputs.release_type }}" = "stable" ]; then
+            EXTRA_ARGS="-PversionWithSha=false"
+          fi
+          ./gradlew assembleRelease $EXTRA_ARGS
 
       # 计算版本号：应用版本 + 构建 commit 短 SHA（如 2.5.6-a3ea1cd1）
       - name: Compute release version
@@ -104,37 +118,46 @@ jobs:
         run: |
           APP_VERSION=$(grep -oP 'val appVersion = "\K[^"]+' app/build.gradle.kts)
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
-          echo "version=${APP_VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event.inputs.release_type }}" = "stable" ]; then
+            VERSION="${APP_VERSION}"                # 正式版：纯版本号（如 2.5.6）
+          else
+            VERSION="${APP_VERSION}-${SHORT_SHA}"   # 预览版：版本号-commit（如 2.5.6-a3ea1cd1）
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
           echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
-      # 发布 Beta 预览版（prerelease）到固定 tag nightly，附更新日志
-      - name: Publish nightly beta prerelease
+      # 发布：
+      # - nightly（默认）：Beta 预览版（prerelease），tag 固定 nightly，版本号带 commit
+      # - stable：正式版（非 prerelease），tag 为纯版本号（如 2.5.6）
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         if: success()
         with:
-          tag_name: nightly            # 固定 tag，每次构建覆盖同一个「最新预览版」
+          tag_name: ${{ github.event.inputs.release_type == 'stable' && steps.version.outputs.app_version || 'nightly' }}
           name: ${{ steps.version.outputs.version }}
-          prerelease: true
+          prerelease: ${{ github.event.inputs.release_type != 'stable' }}
           body: |
             ## 📦 更新日志（commit `${{ github.sha }}`）
 
             **版本**：`${{ steps.version.outputs.version }}`
 
             ### ✨ 新增功能
-            - 🔓 工具审批「全部允许」：AI 使用所有工具（含 MCP）不再弹确认框（ask_user 除外）
+            - 🔧 工具调用：扩展管理新增「工具调用」页，可开启「自动允许」并自由勾选参与自动允许的工具（ask_user 默认保留审批）
+            - ▶️ 继续生成：AI 被停止/中断后，可从半截回复继续生成（历史中段对话也能继续）
             - 🔁 限流自动重试（tpm/rpm）：固定间隔 / 指数退避 / 随机抖动，可配置最大重试次数
-            - ▶️ 继续生成：AI 被停止/中断后从半截回复继续生成（历史中段对话也能）
+            - 🔄 更新检查：指向本仓库 Release，有新版本时提示并可直接下载
             - 🔥 Firebase 可选：无 google-services.json 也能构建运行
 
             ### 🎨 界面改动
-            - 扩展管理页新增「其他」入口（自动重试设置页）
-            - 工作区详情页新增「其他 / 全部允许」
-            - 关于页去掉官网，GitHub / 许可证指向本仓库
-            - 设置页帮助文档 / 分享文案指向本仓库，更新检查禁用
+            - 扩展管理页新增「工具调用」入口；「其他」副标题为「更多未分类功能」
+            - 「其他」页重试设置新增「重试」分区标题
+            - 工作区详情页移除旧「全部允许」（已移至「工具调用」页）
+            - 关于页去掉官网入口，GitHub / 许可证链接指向本仓库
 
             ### 📦 其他
-            - 包名 `app.ai.rune`，完整记录见 [CHANGELOG.md](https://github.com/Rune-cn/rikkahub/blob/master/CHANGELOG.md)
+            - 包名 `app.ai.rune`；版本号：预览版 `版本-commit`，正式版 `版本`
+            - 完整记录见 [CHANGELOG.md](https://github.com/Rune-cn/rikkahub/blob/master/CHANGELOG.md)
 
-            > ⚠️ **Beta 预览版**，可能不稳定，仅供测试。
+            ${{ github.event.inputs.release_type == 'stable' && '' || '> ⚠️ **Beta 预览版**，可能不稳定，仅供测试。' }}
           files: app/build/outputs/apk/release/*.apk
