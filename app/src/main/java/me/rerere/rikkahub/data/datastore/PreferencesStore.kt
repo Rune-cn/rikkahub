@@ -583,6 +583,7 @@ data class Settings(
     val developerMode: Boolean = false,
     val displaySetting: DisplaySetting = DisplaySetting(),
     val networkSetting: NetworkSetting = NetworkSetting(),
+    val toolAutoAllowSetting: ToolAutoAllowSetting = ToolAutoAllowSetting(),
     val favoriteModels: List<Uuid> = emptyList(),
     val chatModelId: Uuid = Uuid.random(),
     val fastModelId: Uuid = Uuid.random(),
@@ -633,6 +634,14 @@ data class Settings(
         fun dummy() = Settings(init = true)
     }
 }
+
+@Serializable
+data class ToolAutoAllowSetting(
+    // 自动允许总开关：开启后 AI 使用工具不再弹确认框
+    val enabled: Boolean = false,
+    // 不参与自动允许的工具（默认含 ask_user：它本质是"询问用户"，需保留交互流程）
+    val disabledTools: Set<String> = setOf("ask_user"),
+)
 
 @Serializable
 data class NetworkSetting(

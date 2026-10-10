@@ -1243,6 +1243,10 @@
   <string name="extensions_page_other_category">Other</string>
   <string name="extensions_page_other_desc">More uncategorized features</string>
   <string name="extensions_page_retry_section">Retry</string>
+  <string name="tool_call_page_title">Tool Calls</string>
+  <string name="tool_call_entry_desc">Auto-allow tool calls and choose which tools</string>
+  <string name="tool_call_auto_allow">Auto Allow</string>
+  <string name="tool_call_auto_allow_desc">Allow AI tool calls without confirmation. Pick the tools below.</string>
   <string name="extensions_page_auto_retry">Auto Retry</string>
   <string name="extensions_page_auto_retry_desc">Automatically retry when the model hits rate limits (tpm/rpm)</string>
   <string name="extensions_page_retry_interval">Retry Interval</string>
