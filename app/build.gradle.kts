@@ -18,6 +18,15 @@ if (file("google-services.json").exists()) {
     apply(plugin = "com.google.firebase.crashlytics")
 }
 
+// 预发布版本号格式：[应用版本]-[构建 commit 短 SHA]（如 2.5.6-a3ea1cd1）
+// 应用版本号在此处统一维护；Release 名称由工作流按同一规则生成
+val appVersion = "2.5.6"
+val gitShortSha = runCatching {
+    providers.exec {
+        commandLine("git", "rev-parse", "--short=8", "HEAD")
+    }.standardOutput.asText.get().trim()
+}.getOrNull().orEmpty()
+
 android {
     namespace = "me.rerere.rikkahub"
     compileSdk {
@@ -31,7 +40,7 @@ android {
         minSdk = 26
         targetSdk = 37
         versionCode = 191
-        versionName = "2.5.6"
+        versionName = if (gitShortSha.isNotBlank()) "$appVersion-$gitShortSha" else appVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

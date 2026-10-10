@@ -102,7 +102,7 @@ jobs:
       - name: Compute release version
         id: version
         run: |
-          APP_VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          APP_VERSION=$(grep -oP 'val appVersion = "\K[^"]+' app/build.gradle.kts)
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
           echo "version=${APP_VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
           echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
