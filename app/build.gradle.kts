@@ -18,7 +18,9 @@ if (file("google-services.json").exists()) {
     apply(plugin = "com.google.firebase.crashlytics")
 }
 
-// 预发布版本号格式：[应用版本]-[构建 commit 短 SHA]（如 2.5.6-a3ea1cd1）
+// 版本号规则：
+// - 预发布版（nightly）：[应用版本]-[构建 commit 短 SHA]，如 2.5.6-a3ea1cd1
+// - 正式版（stable）：纯应用版本号，如 2.5.6（构建时传 -PversionWithSha=false）
 // 应用版本号在此处统一维护；Release 名称由工作流按同一规则生成
 val appVersion = "2.5.6"
 val gitShortSha = runCatching {
@@ -26,6 +28,7 @@ val gitShortSha = runCatching {
         commandLine("git", "rev-parse", "--short=8", "HEAD")
     }.standardOutput.asText.get().trim()
 }.getOrNull().orEmpty()
+val versionWithSha = (findProperty("versionWithSha") as String?)?.toBooleanStrictOrNull() ?: true
 
 android {
     namespace = "me.rerere.rikkahub"
@@ -40,7 +43,7 @@ android {
         minSdk = 26
         targetSdk = 37
         versionCode = 191
-        versionName = if (gitShortSha.isNotBlank()) "$appVersion-$gitShortSha" else appVersion
+        versionName = if (versionWithSha && gitShortSha.isNotBlank()) "$appVersion-$gitShortSha" else appVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
