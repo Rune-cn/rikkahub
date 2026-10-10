@@ -20,11 +20,10 @@
 
 | APK | 说明 |
 |---|---|
-| `app-arm64-v8a-release.apk` | 手机（arm64 设备） |
-| `app-universal-release.apk` | 通用包 |
-| `app-x86_64-release.apk` | 模拟器 |
+| `app-arm64-v8a-release.apk` | 手机（arm64 设备）——现在只构建此版本 |
 
-> 每次推送到 `master` 或每天定时（UTC 09:00 / 18:00），GitHub Actions 会自动重新构建并更新以上 APK。
+> 每次推送到 `master` 或每天定时（UTC 09:00 / 18:00），GitHub Actions 会自动重新构建并更新 APK。
+> 现在只构建 **arm64-v8a** 版本；应用内「更新检查」已指向本仓库的 Nightly Release。
 
 ## ✨ 功能特色
 

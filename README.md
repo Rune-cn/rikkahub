@@ -21,11 +21,10 @@ Built APKs are published automatically to the [Nightly Build release](https://gi
 
 | APK | Description |
 |---|---|
-| `app-arm64-v8a-release.apk` | Phones (arm64) |
-| `app-universal-release.apk` | Universal package |
-| `app-x86_64-release.apk` | Emulators (x86_64) |
+| `app-arm64-v8a-release.apk` | Phones (arm64) — the only build target |
 
 > APKs are rebuilt on every push to `master`, or twice a day (UTC 09:00 / 18:00) by GitHub Actions.
+> Only the **arm64-v8a** variant is built now. In-app update check points to this fork's own Nightly Release.
 
 ## ✨ Features
 
