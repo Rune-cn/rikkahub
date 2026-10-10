@@ -6,7 +6,7 @@
 
 基于 [rikkahub/rikkahub](https://github.com/rikkahub/rikkahub) 的二次开发版本，包名为 `app.ai.rune`
 
-[简体中文](README_ZH_CN.md) | [繁體中文](README_ZH_TW.md) | English
+[English](README.md) | **简体中文** | [繁體中文](README_ZH_TW.md)
 </div>
 
 <div align="center">
