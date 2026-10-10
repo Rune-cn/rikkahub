@@ -34,12 +34,9 @@ android {
         versionName = "2.5.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        ndk {
-            abiFilters += listOf("arm64-v8a")
-        }
     }
 
+    // 只构建 arm64-v8a 单一变体（通过 splits 控制；不可同时设置 ndk.abiFilters，会冲突）
     splits {
         abi {
             // AppBundle tasks usually contain "bundle" in their name
