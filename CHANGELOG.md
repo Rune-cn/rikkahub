@@ -22,7 +22,6 @@
 ### 📦 其他
 
 - 包名改为 `app.ai.rune`（应用显示名不变）
-- **只构建 arm64-v8a** APK（手机平台，减小构建产物）
 - GitHub Actions 自动构建 + 签名 APK（Nightly Release）
 - README 三语更新（功能清单打勾、发布版本）
 - 新增 `FORK_SYNC.md`：fork 基线与上游同步方法

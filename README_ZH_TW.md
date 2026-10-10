@@ -21,10 +21,9 @@
 
 | APK | 說明 |
 |---|---|
-| `app-arm64-v8a-release.apk` | 手機（arm64 設備）——現在只構建此版本 |
+| `app-arm64-v8a-release.apk` | 手機（arm64 設備） |
 
 > 每次推送到 `master` 或每天定時（UTC 09:00 / 18:00），GitHub Actions 會自動重新構建並更新 APK。
-> 現在只構建 **arm64-v8a** 版本；應用內「更新檢查」已指向本倉庫的 Nightly Release。
 
 ## ✨ 功能特色
 
