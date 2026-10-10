@@ -23,6 +23,7 @@
 | `app-arm64-v8a-release.apk` | 手机（arm64 设备） |
 
 > 每次推送到 `master` 或每天定时（UTC 09:00 / 18:00），GitHub Actions 会自动重新构建并更新 APK。
+> 预发布版本号格式：`[应用版本]-[构建 commit]`，如 `2.5.6-a3ea1cd1`。
 
 ## ✨ 功能特色
 

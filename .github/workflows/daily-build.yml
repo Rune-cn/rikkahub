@@ -98,16 +98,28 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
 
+      # 计算版本号：应用版本 + 构建 commit 短 SHA（如 2.5.6-a3ea1cd1）
+      - name: Compute release version
+        id: version
+        run: |
+          APP_VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
+          echo "version=${APP_VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
       # 发布 Beta 预览版（prerelease）到固定 tag nightly，附更新日志
       - name: Publish nightly beta prerelease
         uses: softprops/action-gh-release@v2
         if: success()
         with:
           tag_name: nightly            # 固定 tag，每次构建覆盖同一个「最新预览版」
-          name: Nightly Build（Beta 预览版）
+          name: ${{ steps.version.outputs.version }}
           prerelease: true
           body: |
             ## 📦 更新日志（commit `${{ github.sha }}`）
+
+            **版本**：`${{ steps.version.outputs.version }}`
 
             ### ✨ 新增功能
             - 🔓 工具审批「全部允许」：AI 使用所有工具（含 MCP）不再弹确认框（ask_user 除外）
