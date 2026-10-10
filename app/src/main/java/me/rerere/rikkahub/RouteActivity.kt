@@ -792,7 +792,11 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object Extensions : Screen
+
+    @Serializable
     data object ToolCalls : Screen
+
+    @Serializable
     data object OtherSettings : Screen
 
     @Serializable
