@@ -93,34 +93,24 @@ class ChatToolFactory(
                 )
             }
         }
-<<<<<<< HEAD
         // 过长的输出存成文件让模型用 shell 按需读取；没有 shell 时模型读不到文件，只能原样返回。
         // 文件放在本机, 只有本地 Rootfs 挂载了 /tool_outputs, 远程工作区同样读不到
         val canReadToolOutputs = workspaceTools.isNotEmpty() &&
             assistant.workspaceId?.let { workspaceRepository.getById(it.toString()) }?.capabilities()?.rootfs == true
         val outputTools = if (canReadToolOutputs) tools.map(::withOutputTruncation) else tools
-        // 全部允许：该工作区开启后，所有工具（含 MCP、AskUser、Calendar、Skill 等）都不再需要审批，
-        // 即 AI 使用工具时不再弹确认框（字面意义的"全部允许"）
-        val allowAll = assistant.workspaceId?.let { workspaceRepository.getById(it.toString()) }
-            ?.toolApprovalOverrides()
-            ?.get(WORKSPACE_ALLOW_ALL_APPROVAL_KEY) == true
-        return if (allowAll) {
-            outputTools.map { it.copy(needsApproval = { false }) }
-=======
-    }.let { tools ->
-        // 全部允许：该工作区开启后，除 ask_user 外的所有工具（含 MCP、Calendar、Skill 等）
-        // 都不再需要审批，即 AI 使用工具时不再弹确认框（字面意义的"全部允许"）。
-        // ask_user 本质是"询问用户"（HITL），必须保留审批/回答流程，
-        // 否则 AI 直接执行会破坏用户交互（没人回答）。
-        val allowAll = assistant.workspaceId?.let { workspaceRepository.getById(it.toString()) }
-            ?.toolApprovalOverrides()
-            ?.get(WORKSPACE_ALLOW_ALL_APPROVAL_KEY) == true
-        if (allowAll) {
-            tools.map { tool ->
-                if (tool.name == "ask_user") tool
+        // 自动允许：开启后，AI 使用工具不再弹确认框（含 MCP、日历、技能等）。
+        // 用户可在「扩展管理 → 工具调用」页自由选择哪些工具参与自动允许；
+        // ask_user 默认不参与（本质是"询问用户"，需保留交互流程）。
+        val autoAllow = settings.toolAutoAllowSetting
+        if (autoAllow.enabled) {
+            outputTools.map { tool ->
+                if (tool.name in autoAllow.disabledTools) tool
                 else tool.copy(needsApproval = { false })
             }
->>>>>>> b8d9a657 (feat: 工作流发布 Beta 预发布版（带更新日志）+ 全部允许排除 ask_user)
+        } else {
+            outputTools
+        }
+    }
         } else {
             outputTools
         }

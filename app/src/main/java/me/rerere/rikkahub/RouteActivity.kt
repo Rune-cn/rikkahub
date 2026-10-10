@@ -94,6 +94,7 @@ import me.rerere.rikkahub.ui.pages.chat.ChatPage
 import me.rerere.rikkahub.ui.pages.debug.DebugPage
 import me.rerere.rikkahub.ui.pages.extensions.ExtensionsPage
 import me.rerere.rikkahub.ui.pages.extensions.OtherSettingsPage
+import me.rerere.rikkahub.ui.pages.extensions.ToolCallPage
 import me.rerere.rikkahub.ui.pages.extensions.PromptPage
 import me.rerere.rikkahub.ui.pages.extensions.QuickMessagesPage
 import me.rerere.rikkahub.ui.pages.extensions.skills.SkillDetailPage
@@ -548,6 +549,10 @@ class RouteActivity : ComponentActivity() {
                                 OtherSettingsPage()
                             }
 
+                            entry<Screen.ToolCalls> {
+                                ToolCallPage()
+                            }
+
                             entry<Screen.QuickMessages> {
                                 QuickMessagesPage()
                             }
@@ -787,6 +792,7 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object Extensions : Screen
+    data object ToolCalls : Screen
     data object OtherSettings : Screen
 
     @Serializable

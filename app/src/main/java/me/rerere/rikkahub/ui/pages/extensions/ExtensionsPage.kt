@@ -21,6 +21,7 @@ import me.rerere.hugeicons.stroke.Book03
 import me.rerere.hugeicons.stroke.Folder01
 import me.rerere.hugeicons.stroke.Puzzle
 import me.rerere.hugeicons.stroke.Settings03
+import me.rerere.hugeicons.stroke.Tools
 import me.rerere.hugeicons.stroke.Zap
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.ui.components.nav.BackButton
@@ -81,6 +82,12 @@ fun ExtensionsPage() {
                         leadingContent = { CardGroupIcon(HugeIcons.Folder01, containerColor = containerColor, contentColor = contentColor) },
                         headlineContent = { Text(stringResource(R.string.extensions_page_workspace)) },
                         supportingContent = { Text(stringResource(R.string.extensions_page_workspace_desc)) },
+                    )
+                    item(
+                        onClick = { navController.navigate(Screen.ToolCalls) },
+                        leadingContent = { Icon(HugeIcons.Tools, null) },
+                        headlineContent = { Text(stringResource(R.string.tool_call_page_title)) },
+                        supportingContent = { Text(stringResource(R.string.tool_call_entry_desc)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.OtherSettings) },
