@@ -13,15 +13,18 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import me.rerere.common.http.await
 import me.rerere.rikkahub.AppScope
-import me.rerere.rikkahub.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class UpdateChecker(
+    private val context: Context,
     private val client: OkHttpClient,
     appScope: AppScope,
 ) {
@@ -33,13 +36,62 @@ class UpdateChecker(
         initialValue = UiState.Loading,
     )
 
+    /**
+     * 检查本仓库（fork）的 Nightly Release 是否有更新。
+     * 不再依赖上游 updates.rikka-ai.com 服务；比较依据为 Release 发布时间 vs 本地安装时间。
+     */
+    @OptIn(ExperimentalTime::class)
     private fun checkUpdate(): Flow<UiState<UpdateInfo>> = flow<UiState<UpdateInfo>> {
         emit(UiState.Loading)
-        // 更新检查已禁用：本 fork 版本通过 GitHub Actions 的 Nightly Release 自动发布，
-        // 不再依赖上游 updates.rikka-ai.com 服务，避免误提示上游新版本。
+        val request = Request.Builder()
+            .url("https://api.github.com/repos/Rune-cn/rikkahub/releases/tags/nightly")
+            .header("Accept", "application/vnd.github+json")
+            .header("User-Agent", "RikkaHub")
+            .build()
+        val response = client.newCall(request).await()
+        if (!response.isSuccessful) {
+            emit(UiState.Idle)
+            return@flow
+        }
+        val release = json.decodeFromString<GitHubRelease>(response.body?.string().orEmpty())
+        val publishedAt = runCatching { Instant.parse(release.publishedAt) }.getOrNull()
+        val installedAt = runCatching {
+            @Suppress("DEPRECATION")
+            context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime
+        }.getOrNull()
+        // 仅当 Release 比本地安装版本更新时才提示（否则静默）
+        if (publishedAt == null || installedAt == null ||
+            publishedAt.toEpochMilliseconds() <= installedAt
+        ) {
+            emit(UiState.Idle)
+            return@flow
+        }
+        emit(
+            UiState.Success(
+                UpdateInfo(
+                    version = release.publishedAt.take(10).replace("-", "."),
+                    publishedAt = release.publishedAt,
+                    changelog = release.body,
+                    downloads = release.assets.map { asset ->
+                        UpdateDownload(
+                            name = asset.name,
+                            url = asset.browserDownloadUrl,
+                            size = formatSize(asset.size),
+                        )
+                    },
+                )
+            )
+        )
     }.catch {
-        emit(UiState.Error(it))
+        // 网络异常时静默，避免打扰用户
+        emit(UiState.Idle)
     }.flowOn(Dispatchers.IO)
+
+    private fun formatSize(bytes: Long): String = when {
+        bytes >= 1024 * 1024 -> "%.1f MB".format(bytes / 1024.0 / 1024.0)
+        bytes >= 1024 -> "%.0f KB".format(bytes / 1024.0)
+        else -> "$bytes B"
+    }
 
     fun downloadUpdate(context: Context, download: UpdateDownload) {
         runCatching {
@@ -80,6 +132,21 @@ data class UpdateInfo(
     val publishedAt: String,
     val changelog: String,
     val downloads: List<UpdateDownload>
+)
+
+/** GitHub Release API 响应（仅取所需字段） */
+@Serializable
+private data class GitHubRelease(
+    @SerialName("published_at") val publishedAt: String = "",
+    @SerialName("body") val body: String = "",
+    @SerialName("assets") val assets: List<GitHubAsset> = emptyList(),
+)
+
+@Serializable
+private data class GitHubAsset(
+    @SerialName("name") val name: String = "",
+    @SerialName("browser_download_url") val browserDownloadUrl: String = "",
+    @SerialName("size") val size: Long = 0,
 )
 
 /**
