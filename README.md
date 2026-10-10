@@ -7,7 +7,7 @@ conversations 🤖💬
 
 A fork of [rikkahub/rikkahub](https://github.com/rikkahub/rikkahub) with package name `app.ai.rune`
 
-[简体中文](README_ZH_CN.md) | [繁體中文](README_ZH_TW.md) | English
+**English** | [简体中文](README_ZH_CN.md) | [繁體中文](README_ZH_TW.md)
 </div>
 
 <div align="center">

@@ -159,5 +159,5 @@ jobs:
             - 包名 `app.ai.rune`；版本号：预览版 `版本-commit`，正式版 `版本`
             - 完整记录见 [CHANGELOG.md](https://github.com/Rune-cn/rikkahub/blob/master/CHANGELOG.md)
 
-            ${{ github.event.inputs.release_type == 'stable' && '' || '> ⚠️ **Beta 预览版**，可能不稳定，仅供测试。' }}
+            ${{ github.event.inputs.release_type == 'stable' && '> ✅ **正式版（Stable）**' || '> ⚠️ **Beta 预览版**，可能不稳定，仅供测试。' }}
           files: app/build/outputs/apk/release/*.apk
