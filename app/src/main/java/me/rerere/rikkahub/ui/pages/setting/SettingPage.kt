@@ -102,14 +102,22 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
     if (!settings.init && launchCount > 100 && (launchCount - settings.sponsorAlertDismissedAt) >= 50) {
         AlertDialog(
             onDismissRequest = {
+<<<<<<< HEAD
                 vm.updateSettings { it.copy(sponsorAlertDismissedAt = launchCount) }
+=======
+                vm.updateSettings { s -> s.copy(sponsorAlertDismissedAt = settings.launchCount) }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
             },
             icon = { Icon(HugeIcons.WavingHand01, null) },
             title = { Text(stringResource(R.string.setting_page_sponsor_alert_title)) },
             text = { Text(stringResource(R.string.setting_page_sponsor_alert_desc)) },
             confirmButton = {
                 Button(onClick = {
+<<<<<<< HEAD
                     vm.updateSettings { it.copy(sponsorAlertDismissedAt = launchCount) }
+=======
+                    vm.updateSettings { s -> s.copy(sponsorAlertDismissedAt = settings.launchCount) }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                     navController.navigate(Screen.SettingDonate)
                 }) {
                     Text(stringResource(R.string.setting_page_sponsor_alert_confirm))
@@ -117,7 +125,11 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
             },
             dismissButton = {
                 TextButton(onClick = {
+<<<<<<< HEAD
                     vm.updateSettings { it.copy(sponsorAlertDismissedAt = launchCount) }
+=======
+                    vm.updateSettings { s -> s.copy(sponsorAlertDismissedAt = settings.launchCount) }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                 }) {
                     Text(stringResource(R.string.setting_page_sponsor_alert_dismiss))
                 }

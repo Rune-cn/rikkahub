@@ -40,7 +40,11 @@ fun S3Tab(
     var isBackingUp by remember { mutableStateOf(false) }
 
     fun updateS3Config(newConfig: S3Config) {
+<<<<<<< HEAD
         vm.updateSettings { it.copy(s3Config = newConfig) }
+=======
+        vm.updateSettings { s -> s.copy(s3Config = newConfig) }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
     }
 
     RemoteBackupLayout(

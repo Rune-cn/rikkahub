@@ -123,6 +123,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
 
 @Composable
 private fun ModelSettingsPage(settings: Settings, vm: SettingVM, contentPadding: PaddingValues) {
+<<<<<<< HEAD
     // CardGroup 里放不了弹窗，各项的选择状态先在这里建好，弹窗统一放在列表后面
     val chatModel = rememberModelListState(
         modelId = settings.chatModelId,
@@ -142,6 +143,104 @@ private fun ModelSettingsPage(settings: Settings, vm: SettingVM, contentPadding:
     val ocrModel = rememberModelListState(
         modelId = settings.ocrModelId,
         providers = settings.providers,
+=======
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = contentPadding + PaddingValues(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        item {
+            ModelSettingItem(
+                title = stringResource(R.string.setting_model_page_chat_model),
+                description = stringResource(R.string.setting_model_page_chat_model_desc),
+                modelId = settings.chatModelId,
+                providers = settings.providers,
+                onSelect = { vm.updateSettings { s -> s.copy(chatModelId = it.id) } },
+            )
+        }
+        item {
+            ModelSettingItem(
+                title = stringResource(R.string.setting_model_page_fast_model),
+                description = stringResource(R.string.setting_model_page_fast_model_desc),
+                modelId = settings.fastModelId,
+                providers = settings.providers,
+                onSelect = { vm.updateSettings { s -> s.copy(fastModelId = it.id) } },
+                reasoningLevel = settings.fastModelReasoningLevel,
+                onUpdateReasoningLevel = {
+                    vm.updateSettings { s -> s.copy(fastModelReasoningLevel = it) }
+                },
+            )
+        }
+        item {
+            SuggestionSettingItem(
+                settings = settings,
+                vm = vm,
+            )
+        }
+        item {
+            ModelSettingItem(
+                title = stringResource(R.string.setting_model_page_translate_model),
+                description = stringResource(R.string.setting_model_page_translate_model_desc),
+                modelId = settings.translateModeId,
+                providers = settings.providers,
+                onSelect = { vm.updateSettings { s -> s.copy(translateModeId = it.id) } },
+            )
+        }
+        item {
+            ModelSettingItem(
+                title = stringResource(R.string.setting_model_page_ocr_model),
+                description = stringResource(R.string.setting_model_page_ocr_model_desc),
+                modelId = settings.ocrModelId,
+                providers = settings.providers,
+                onSelect = { vm.updateSettings { s -> s.copy(ocrModelId = it.id) } },
+            )
+        }
+        item {
+            ModelSettingItem(
+                title = stringResource(R.string.setting_model_page_compress_model),
+                description = stringResource(R.string.setting_model_page_compress_model_desc),
+                modelId = settings.compressModelId,
+                providers = settings.providers,
+                onSelect = { vm.updateSettings { s -> s.copy(compressModelId = it.id) } },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SuggestionSettingItem(
+    settings: Settings,
+    vm: SettingVM,
+) {
+    CardGroup {
+        item(
+            headlineContent = { Text(stringResource(R.string.setting_model_page_enable_suggestion)) },
+            trailingContent = {
+                Switch(
+                    checked = settings.enableSuggestion,
+                    onCheckedChange = {
+                        vm.updateSettings { s -> s.copy(enableSuggestion = it) }
+                    }
+                )
+            },
+        )
+    }
+}
+
+@Composable
+private fun ModelSettingItem(
+    title: String,
+    description: String,
+    modelId: Uuid?,
+    providers: List<ProviderSetting>,
+    onSelect: (Model) -> Unit,
+    reasoningLevel: ReasoningLevel? = null,
+    onUpdateReasoningLevel: ((ReasoningLevel) -> Unit)? = null,
+) {
+    val state = rememberModelListState(
+        modelId = modelId,
+        providers = providers,
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
         type = ModelType.CHAT,
     )
 

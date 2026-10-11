@@ -90,7 +90,27 @@ import org.koin.compose.koinInject
 fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val mcpConfigs = settings.mcpServers
+<<<<<<< HEAD
     val navController = LocalNavController.current
+=======
+    val creationState = useEditState<McpServerConfig> {
+        vm.updateSettings { s -> s.copy(
+                mcpServers = mcpConfigs + it
+            )
+         }
+    }
+    val editState = useEditState<McpServerConfig> { newConfig ->
+        vm.updateSettings { s -> s.copy(
+                mcpServers = mcpConfigs.map {
+                    if (it.id == newConfig.id) {
+                        newConfig
+                    } else {
+                        it
+                    }
+                }
+            ) }
+    }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
     var showImportDialog by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
@@ -164,11 +184,18 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                             navController.navigate(Screen.SettingMcpDetail(serverId = mcpConfig.id.toString()))
                         },
                         onDelete = {
+<<<<<<< HEAD
                             vm.updateSettings { latest ->
                                 latest.copy(
                                     mcpServers = latest.mcpServers.filter { it.id != mcpConfig.id }
                                 )
                             }
+=======
+                            vm.updateSettings { s -> s.copy(
+                                    mcpServers = mcpConfigs.filter { it.id != mcpConfig.id }
+                                )
+                             }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                         },
                         modifier = Modifier.animateItem()
                     )
@@ -196,7 +223,11 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
             onImport = { newConfigs ->
                 val existingIds = mcpConfigs.map { it.commonOptions.name }.toSet()
                 val toAdd = newConfigs.filter { it.commonOptions.name.isNotBlank() && it.commonOptions.name !in existingIds }
+<<<<<<< HEAD
                 vm.updateSettings { it.copy(mcpServers = it.mcpServers + toAdd) }
+=======
+                vm.updateSettings { s -> s.copy(mcpServers = mcpConfigs + toAdd) }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                 showImportDialog = false
             }
         )

@@ -107,9 +107,14 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                 val newServices = settings.searchServices.toMutableList().apply {
                     add(toIndex, removeAt(fromIndex))
                 }
+<<<<<<< HEAD
                 vm.updateSettings {
                     it.copy(searchServices = newServices)
                 }
+=======
+                vm.updateSettings { s -> s.copy(searchServices = newServices)
+                 }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
             }
         }
 
@@ -146,9 +151,14 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                 CommonOptions(
                     settings = settings,
                     onUpdate = { options ->
+<<<<<<< HEAD
                         vm.updateSettings {
                             it.copy(searchCommonOptions = options)
                         }
+=======
+                        vm.updateSettings { s -> s.copy(searchCommonOptions = options)
+                         }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                     }
                 )
             }
@@ -160,11 +170,18 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
             onDismiss = { showAddDialog = false },
             onConfirm = { options ->
                 showAddDialog = false
+<<<<<<< HEAD
                 vm.updateSettings {
                     it.copy(
                         searchServices = listOf(options) + it.searchServices
                     )
                 }
+=======
+                vm.updateSettings { s -> s.copy(
+                        searchServices = listOf(options) + settings.searchServices
+                    )
+                 }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                 scope.launch {
                     lazyListState.animateScrollToItem(0)
                 }
@@ -179,9 +196,14 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
         dismissText = stringResource(R.string.cancel),
         onConfirm = {
             deleteTarget?.let { target ->
+<<<<<<< HEAD
                 vm.updateSettings { latest ->
                     latest.copy(searchServices = latest.searchServices.filter { it.id != target.id })
                 }
+=======
+                vm.updateSettings { s -> s.copy(searchServices = settings.searchServices.filter { it.id != target.id })
+                 }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
             }
             deleteTarget = null
         },

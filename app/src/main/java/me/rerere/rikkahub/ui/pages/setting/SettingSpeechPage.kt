@@ -109,6 +109,7 @@ fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
                     BackButton()
                 },
                 actions = {
+<<<<<<< HEAD
                     when (SpeechTab.entries[pagerState.targetPage]) {
                         SpeechTab.TTS -> AddTTSProviderButton {
                             vm.updateSettings { latest ->
@@ -125,6 +126,22 @@ fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
                                     selectedASRProviderId = latest.selectedASRProviderId ?: it.id
                                 )
                             }
+=======
+                    if (selectedPage == 0) {
+                        AddTTSProviderButton {
+                            vm.updateSettings { s -> s.copy(
+                                    ttsProviders = listOf(it) + settings.ttsProviders
+                                )
+                             }
+                        }
+                    } else {
+                        AddASRProviderButton {
+                            vm.updateSettings { s -> s.copy(
+                                    asrProviders = listOf(it) + settings.asrProviders,
+                                    selectedASRProviderId = settings.selectedASRProviderId ?: it.id
+                                )
+                             }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                         }
                     }
                 },
@@ -172,6 +189,7 @@ fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
     }
 
     editingTTSProvider?.let { provider ->
+<<<<<<< HEAD
         ProviderEditSheet(
             title = stringResource(R.string.setting_tts_page_edit_provider),
             initial = provider,
@@ -179,6 +197,65 @@ fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
             onConfirm = { edited ->
                 vm.updateSettings { latest ->
                     latest.copy(ttsProviders = latest.ttsProviders.map { if (it.id == provider.id) edited else it })
+=======
+        val bottomSheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden, enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded))
+        var currentProvider by remember(provider) { mutableStateOf(provider) }
+
+        ModalBottomSheet(
+            onDismissRequest = {
+                editingTTSProvider = null
+            },
+            sheetState = bottomSheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle()
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .fillMaxHeight(0.8f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.setting_tts_page_edit_provider),
+                    style = MaterialTheme.typography.headlineSmall
+                )
+
+                TTSProviderConfigure(
+                    setting = currentProvider,
+                    onValueChange = { newState ->
+                        currentProvider = newState
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(
+                        onClick = {
+                            editingTTSProvider = null
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+
+                    TextButton(
+                        onClick = {
+                            val newProviders = settings.ttsProviders.map {
+                                if (it.id == provider.id) currentProvider else it
+                            }
+                            vm.updateSettings { s -> s.copy(ttsProviders = newProviders) }
+                            editingTTSProvider = null
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.chat_page_save))
+                    }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                 }
             },
             onDismiss = { editingTTSProvider = null },
@@ -188,6 +265,7 @@ fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
     }
 
     editingASRProvider?.let { provider ->
+<<<<<<< HEAD
         ProviderEditSheet(
             title = stringResource(R.string.setting_asr_page_edit_provider),
             initial = provider,
@@ -195,6 +273,65 @@ fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
             onConfirm = { edited ->
                 vm.updateSettings { latest ->
                     latest.copy(asrProviders = latest.asrProviders.map { if (it.id == provider.id) edited else it })
+=======
+        val bottomSheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden, enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded))
+        var currentProvider by remember(provider) { mutableStateOf(provider) }
+
+        ModalBottomSheet(
+            onDismissRequest = {
+                editingASRProvider = null
+            },
+            sheetState = bottomSheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle()
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .fillMaxHeight(0.8f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.setting_asr_page_edit_provider),
+                    style = MaterialTheme.typography.headlineSmall
+                )
+
+                ASRProviderConfigure(
+                    setting = currentProvider,
+                    onValueChange = { newState ->
+                        currentProvider = newState
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(
+                        onClick = {
+                            editingASRProvider = null
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+
+                    TextButton(
+                        onClick = {
+                            val newProviders = settings.asrProviders.map {
+                                if (it.id == provider.id) currentProvider else it
+                            }
+                            vm.updateSettings { s -> s.copy(asrProviders = newProviders) }
+                            editingASRProvider = null
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.chat_page_save))
+                    }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                 }
             },
             onDismiss = { editingASRProvider = null },

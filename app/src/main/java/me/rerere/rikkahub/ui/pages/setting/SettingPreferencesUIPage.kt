@@ -77,7 +77,11 @@ fun SettingPreferencesUIPage(vm: SettingVM = koinViewModel()) {
 
     fun updateDisplaySetting(setting: DisplaySetting) {
         displaySetting = setting
+<<<<<<< HEAD
         vm.updateSettings { it.copy(displaySetting = setting) }
+=======
+        vm.updateSettings { s -> s.copy(displaySetting = setting) }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
     }
 
     val importSuccessMsg = stringResource(R.string.setting_display_page_custom_font_import_success)

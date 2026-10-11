@@ -143,6 +143,7 @@ fun ChatDrawerContent(
 
     // 昵称编辑状态
     val nicknameEditState = useEditState<String> { newNickname ->
+<<<<<<< HEAD
         vm.updateSettings {
             it.copy(
                 displaySetting = it.displaySetting.copy(
@@ -150,6 +151,14 @@ fun ChatDrawerContent(
                 )
             )
         }
+=======
+        vm.updateSettings { s -> s.copy(
+                displaySetting = settings.displaySetting.copy(
+                    userNickname = newNickname
+                )
+            )
+         }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
     }
 
     // 移动对话状态
@@ -215,6 +224,7 @@ fun ChatDrawerContent(
                     name = settings.displaySetting.userNickname.ifBlank { stringResource(R.string.user_default_name) },
                     value = settings.displaySetting.userAvatar,
                     onUpdate = { newAvatar ->
+<<<<<<< HEAD
                         vm.updateSettings {
                             it.copy(
                                 displaySetting = it.displaySetting.copy(
@@ -222,6 +232,14 @@ fun ChatDrawerContent(
                                 )
                             )
                         }
+=======
+                        vm.updateSettings { s -> s.copy(
+                                displaySetting = settings.displaySetting.copy(
+                                    userAvatar = newAvatar
+                                )
+                            )
+                         }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                     },
                     modifier = Modifier.size(50.dp),
                 )
@@ -282,6 +300,7 @@ fun ChatDrawerContent(
                 ConversationSortButton(
                     sortOrder = settings.displaySetting.conversationSortOrder,
                     onSortOrderChange = { sortOrder ->
+<<<<<<< HEAD
                         vm.updateSettings {
                             it.copy(
                                 displaySetting = it.displaySetting.copy(
@@ -289,6 +308,14 @@ fun ChatDrawerContent(
                                 )
                             )
                         }
+=======
+                        vm.updateSettings { s -> s.copy(
+                                displaySetting = settings.displaySetting.copy(
+                                    conversationSortOrder = sortOrder
+                                )
+                            )
+                         }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                         // 换排序后回到顶部，否则会停留在原来滚动到的位置
                         scope.launch { conversationListState.scrollToItem(0) }
                     },

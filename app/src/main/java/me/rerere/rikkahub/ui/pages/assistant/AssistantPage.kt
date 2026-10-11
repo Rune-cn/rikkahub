@@ -155,7 +155,11 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
                     val newAssistants = settings.assistants.toMutableList().apply {
                         add(to.index, removeAt(from.index))
                     }
+<<<<<<< HEAD
                     vm.updateSettings { it.copy(assistants = newAssistants) }
+=======
+                    vm.updateSettings { s -> s.copy(assistants = newAssistants) }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                 }
             }
 
@@ -300,7 +304,11 @@ private fun AssistantTagsFilterRow(
             val newTags = settings.assistantTags.toMutableList().apply {
                 add(to.index, removeAt(from.index))
             }
+<<<<<<< HEAD
             vm.updateSettings { it.copy(assistantTags = newTags) }
+=======
+            vm.updateSettings { s -> s.copy(assistantTags = newTags) }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
         }
 
         LazyRow(

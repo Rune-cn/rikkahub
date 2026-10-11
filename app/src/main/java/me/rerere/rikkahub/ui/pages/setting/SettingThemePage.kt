@@ -162,7 +162,11 @@ fun SettingThemePage(vm: SettingVM = koinViewModel()) {
                                 themeId = settings.themeId,
                                 modifier = Modifier.fillMaxWidth(),
                                 onChangeTheme = {
+<<<<<<< HEAD
                                     vm.updateSettings { latest -> latest.copy(themeId = it) }
+=======
+                                    vm.updateSettings { s -> s.copy(themeId = it) }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                                 }
                             )
                         }
@@ -226,7 +230,11 @@ fun SettingThemePage(vm: SettingVM = koinViewModel()) {
                         theme = theme,
                         isSelected = settings.themeId == theme.id,
                         onSelect = {
+<<<<<<< HEAD
                             vm.updateSettings { it.copy(themeId = theme.id) }
+=======
+                            vm.updateSettings { s -> s.copy(themeId = theme.id) }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                         },
                         onExport = {
                             val json = themeJson.encodeToString(theme)
@@ -260,12 +268,20 @@ fun SettingThemePage(vm: SettingVM = koinViewModel()) {
                 } else {
                     settings.customThemes + theme
                 }
+<<<<<<< HEAD
                 vm.updateSettings {
                     it.copy(
                         customThemes = newThemes,
                         themeId = theme.id
                     )
                 }
+=======
+                vm.updateSettings { s -> s.copy(
+                        customThemes = newThemes,
+                        themeId = theme.id
+                    )
+                 }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                 showEditSheet = false
             }
         )
@@ -276,12 +292,20 @@ fun SettingThemePage(vm: SettingVM = koinViewModel()) {
             onDismiss = { showImportDialog = false },
             onImport = { theme ->
                 val importedTheme = theme.copy(id = Uuid.random().toString())
+<<<<<<< HEAD
                 vm.updateSettings {
                     it.copy(
                         customThemes = it.customThemes + importedTheme,
                         themeId = importedTheme.id
                     )
                 }
+=======
+                vm.updateSettings { s -> s.copy(
+                        customThemes = settings.customThemes + importedTheme,
+                        themeId = importedTheme.id
+                    )
+                 }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                 showImportDialog = false
                 toaster.show(importSuccessMsg, type = ToastType.Success)
             }
@@ -297,7 +321,11 @@ fun SettingThemePage(vm: SettingVM = koinViewModel()) {
             deletingTheme?.let { theme ->
                 val newThemes = settings.customThemes.filter { it.id != theme.id }
                 val newThemeId = if (settings.themeId == theme.id) "sakura" else settings.themeId
+<<<<<<< HEAD
                 vm.updateSettings { it.copy(customThemes = newThemes, themeId = newThemeId) }
+=======
+                vm.updateSettings { s -> s.copy(customThemes = newThemes, themeId = newThemeId) }
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
             }
             deletingTheme = null
         },

@@ -149,6 +149,7 @@ fun PromptPage(vm: PromptVM = koinViewModel()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+<<<<<<< HEAD
                 .padding(innerPadding)
         ) {
             PagerTabs(
@@ -175,6 +176,19 @@ fun PromptPage(vm: PromptVM = koinViewModel()) {
                         onUpdate = { vm.updateSettings { latest -> latest.copy(lorebooks = it) } }
                     )
                 }
+=======
+        ) { page ->
+            when (page) {
+                0 -> ModeInjectionTab(
+                    modeInjections = settings.modeInjections,
+                    onUpdate = { vm.updateSettings { s -> s.copy(modeInjections = it) } }
+                )
+
+                1 -> LorebookTab(
+                    lorebooks = settings.lorebooks,
+                    onUpdate = { vm.updateSettings { s -> s.copy(lorebooks = it) } }
+                )
+>>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
             }
         }
     }
