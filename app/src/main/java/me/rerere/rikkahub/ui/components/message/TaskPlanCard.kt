@@ -44,7 +44,7 @@ import me.rerere.rikkahub.ui.components.message.tools.TaskPlanContent
  * 默认展开，点击标题行可折叠；全部完成时标题用次要色。
  */
 @Composable
-fun TaskPlanCard(
+internal fun TaskPlanCard(
     plan: TaskPlan,
     modifier: Modifier = Modifier,
 ) {
@@ -121,7 +121,7 @@ fun TaskPlanCard(
  * 显示当前任务的完成进度，点击可展开查看完整清单。
  */
 @Composable
-fun TaskProgressBanner(
+internal fun TaskProgressBanner(
     plan: TaskPlan,
     modifier: Modifier = Modifier,
 ) {
