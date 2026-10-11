@@ -141,13 +141,12 @@ fun ChatDrawerContent(
 
     // 昵称编辑状态
     val nicknameEditState = useEditState<String> { newNickname ->
-        vm.updateSettings(
-            settings.copy(
+        vm.updateSettings { s -> s.copy(
                 displaySetting = settings.displaySetting.copy(
                     userNickname = newNickname
                 )
             )
-        )
+         }
     }
 
     // 移动对话状态
@@ -210,13 +209,12 @@ fun ChatDrawerContent(
                     name = settings.displaySetting.userNickname.ifBlank { stringResource(R.string.user_default_name) },
                     value = settings.displaySetting.userAvatar,
                     onUpdate = { newAvatar ->
-                        vm.updateSettings(
-                            settings.copy(
+                        vm.updateSettings { s -> s.copy(
                                 displaySetting = settings.displaySetting.copy(
                                     userAvatar = newAvatar
                                 )
                             )
-                        )
+                         }
                     },
                     modifier = Modifier.size(50.dp),
                 )
@@ -277,13 +275,12 @@ fun ChatDrawerContent(
                 ConversationSortButton(
                     sortOrder = settings.displaySetting.conversationSortOrder,
                     onSortOrderChange = { sortOrder ->
-                        vm.updateSettings(
-                            settings.copy(
+                        vm.updateSettings { s -> s.copy(
                                 displaySetting = settings.displaySetting.copy(
                                     conversationSortOrder = sortOrder
                                 )
                             )
-                        )
+                         }
                         // 换排序后回到顶部，否则会停留在原来滚动到的位置
                         scope.launch { conversationListState.scrollToItem(0) }
                     },

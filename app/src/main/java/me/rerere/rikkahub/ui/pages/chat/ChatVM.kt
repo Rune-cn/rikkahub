@@ -176,6 +176,20 @@ class ChatVM(
         }
     }
 
+    /**
+     * 基于最新设置更新（推荐）
+     *
+     * 避免用 UI 旧快照整体写回而覆盖其他并发修改（例如「自动允许」开关）。
+     */
+    fun updateSettings(update: (Settings) -> Settings): Job {
+        return viewModelScope.launch {
+            val oldSettings = settings.value
+            val newSettings = update(oldSettings)
+            checkUserAvatarDelete(oldSettings, newSettings)
+            settingsStore.update(newSettings)
+        }
+    }
+
     // 检查用户头像删除
     private fun checkUserAvatarDelete(oldSettings: Settings, newSettings: Settings) {
         val oldAvatar = oldSettings.displaySetting.userAvatar

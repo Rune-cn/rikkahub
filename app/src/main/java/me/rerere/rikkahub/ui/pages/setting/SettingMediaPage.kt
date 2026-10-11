@@ -100,11 +100,10 @@ fun SettingMediaPage(vm: SettingVM = koinViewModel()) {
                 actions = {
                     if (selectedPage == 0) {
                         AddMediaProviderButton {
-                            vm.updateSettings(
-                                settings.copy(
+                            vm.updateSettings { s -> s.copy(
                                     mediaGenerationProviders = listOf(it) + settings.mediaGenerationProviders
                                 )
-                            )
+                             }
                         }
                     }
                 },
@@ -155,13 +154,12 @@ fun SettingMediaPage(vm: SettingVM = koinViewModel()) {
             initial = provider,
             confirmText = stringResource(R.string.chat_page_save),
             onConfirm = { edited ->
-                vm.updateSettings(
-                    settings.copy(
+                vm.updateSettings { s -> s.copy(
                         mediaGenerationProviders = settings.mediaGenerationProviders.map {
                             if (it.id == provider.id) edited else it
                         }
                     )
-                )
+                 }
             },
             onDismiss = { editingProvider = null }
         )

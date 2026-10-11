@@ -95,23 +95,21 @@ fun SettingPreferencesNetworkPage(vm: SettingVM = koinViewModel()) {
 
     fun updateUserAgent(value: String) {
         userAgent = value
-        vm.updateSettings(
-            settings.copy(
+        vm.updateSettings { s -> s.copy(
                 networkSetting = settings.networkSetting.copy(userAgent = value),
             )
-        )
+         }
     }
 
     fun saveProxy() {
-        vm.updateSettings(
-            settings.copy(
+        vm.updateSettings { s -> s.copy(
                 networkSetting = settings.networkSetting.copy(
                     proxyUrl = proxyUrlDraft,
                     proxyUsername = proxyUsernameDraft,
                     proxyPassword = proxyPasswordDraft,
                 ),
             )
-        )
+         }
     }
 
     fun resetProxy() {
@@ -291,13 +289,12 @@ fun SettingPreferencesNetworkPage(vm: SettingVM = koinViewModel()) {
                             Switch(
                                 checked = settings.networkSetting.enableAutoRetry,
                                 onCheckedChange = { enabled ->
-                                    vm.updateSettings(
-                                        settings.copy(
+                                    vm.updateSettings { s -> s.copy(
                                             networkSetting = settings.networkSetting.copy(
                                                 enableAutoRetry = enabled,
                                             ),
                                         )
-                                    )
+                                     }
                                 },
                             )
                         },

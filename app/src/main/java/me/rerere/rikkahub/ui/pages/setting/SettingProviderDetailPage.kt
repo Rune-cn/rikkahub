@@ -146,22 +146,20 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
     val context = LocalContext.current
 
     val onEdit = { newProvider: ProviderSetting ->
-        val newSettings = settings.copy(
-            providers = settings.providers.map {
-                if (newProvider.id == it.id) {
-                    newProvider
-                } else {
-                    it
+        vm.updateSettings { s ->
+            s.copy(
+                providers = s.providers.map {
+                    if (newProvider.id == it.id) {
+                        newProvider
+                    } else {
+                        it
+                    }
                 }
-            }
-        )
-        vm.updateSettings(newSettings)
+            )
+        }
     }
     val onDelete = {
-        val newSettings = settings.copy(
-            providers = settings.providers - provider
-        )
-        vm.updateSettings(newSettings)
+        vm.updateSettings { s -> s.copy(providers = s.providers - provider) }
         navController.popBackStack()
     }
 

@@ -118,15 +118,13 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val mcpConfigs = settings.mcpServers
     val creationState = useEditState<McpServerConfig> {
-        vm.updateSettings(
-            settings.copy(
+        vm.updateSettings { s -> s.copy(
                 mcpServers = mcpConfigs + it
             )
-        )
+         }
     }
     val editState = useEditState<McpServerConfig> { newConfig ->
-        vm.updateSettings(
-            settings.copy(
+        vm.updateSettings { s -> s.copy(
                 mcpServers = mcpConfigs.map {
                     if (it.id == newConfig.id) {
                         newConfig
@@ -134,7 +132,7 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                         it
                     }
                 }
-            ))
+            ) }
     }
     var showImportDialog by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -204,11 +202,10 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                             editState.open(mcpConfig)
                         },
                         onDelete = {
-                            vm.updateSettings(
-                                settings.copy(
+                            vm.updateSettings { s -> s.copy(
                                     mcpServers = mcpConfigs.filter { it.id != mcpConfig.id }
                                 )
-                            )
+                             }
                         },
                         modifier = Modifier.animateItem()
                     )
@@ -238,7 +235,7 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
             onImport = { newConfigs ->
                 val existingIds = mcpConfigs.map { it.commonOptions.name }.toSet()
                 val toAdd = newConfigs.filter { it.commonOptions.name.isNotBlank() && it.commonOptions.name !in existingIds }
-                vm.updateSettings(settings.copy(mcpServers = mcpConfigs + toAdd))
+                vm.updateSettings { s -> s.copy(mcpServers = mcpConfigs + toAdd) }
                 showImportDialog = false
             }
         )

@@ -108,9 +108,8 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                 val newServices = settings.searchServices.toMutableList().apply {
                     add(toIndex, removeAt(fromIndex))
                 }
-                vm.updateSettings(
-                    settings.copy(searchServices = newServices)
-                )
+                vm.updateSettings { s -> s.copy(searchServices = newServices)
+                 }
             }
         }
 
@@ -147,9 +146,8 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                 CommonOptions(
                     settings = settings,
                     onUpdate = { options ->
-                        vm.updateSettings(
-                            settings.copy(searchCommonOptions = options)
-                        )
+                        vm.updateSettings { s -> s.copy(searchCommonOptions = options)
+                         }
                     }
                 )
             }
@@ -161,11 +159,10 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
             onDismiss = { showAddDialog = false },
             onConfirm = { options ->
                 showAddDialog = false
-                vm.updateSettings(
-                    settings.copy(
+                vm.updateSettings { s -> s.copy(
                         searchServices = listOf(options) + settings.searchServices
                     )
-                )
+                 }
                 scope.launch {
                     lazyListState.animateScrollToItem(0)
                 }
@@ -180,9 +177,8 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
         dismissText = stringResource(R.string.cancel),
         onConfirm = {
             deleteTarget?.let { target ->
-                vm.updateSettings(
-                    settings.copy(searchServices = settings.searchServices.filter { it.id != target.id })
-                )
+                vm.updateSettings { s -> s.copy(searchServices = settings.searchServices.filter { it.id != target.id })
+                 }
             }
             deleteTarget = null
         },

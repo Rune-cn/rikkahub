@@ -102,7 +102,7 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
         val newProviders = settings.providers.toMutableList().apply {
             add(to.index, removeAt(from.index))
         }
-        vm.updateSettings(settings.copy(providers = newProviders))
+        vm.updateSettings { s -> s.copy(providers = newProviders) }
     }
 
     val filteredProviders = remember(settings.providers, searchQuery) {
@@ -126,25 +126,22 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
                 },
                 actions = {
                     RecommendProviderButton { provider ->
-                        vm.updateSettings(
-                            settings.copy(
+                        vm.updateSettings { s -> s.copy(
                                 providers = listOf(provider.copyProvider(Uuid.random())) + settings.providers
                             )
-                        )
+                         }
                     }
                     ImportProviderButton {
-                        vm.updateSettings(
-                            settings.copy(
+                        vm.updateSettings { s -> s.copy(
                                 providers = listOf(it.copyProvider(Uuid.random())) + settings.providers
                             )
-                        )
+                         }
                     }
                     AddButton {
-                        vm.updateSettings(
-                            settings.copy(
+                        vm.updateSettings { s -> s.copy(
                                 providers = listOf(it) + settings.providers
                             )
-                        )
+                         }
                     }
                 },
                 scrollBehavior = scrollBehavior,
@@ -222,7 +219,7 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
         dismissText = stringResource(R.string.cancel),
         onConfirm = {
             deleteTarget?.let { target ->
-                vm.updateSettings(settings.copy(providers = settings.providers.filter { it.id != target.id }))
+                vm.updateSettings { s -> s.copy(providers = settings.providers.filter { it.id != target.id }) }
             }
             deleteTarget = null
         },

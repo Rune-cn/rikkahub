@@ -32,7 +32,7 @@ fun ReminderTab(vm: BackupVM) {
     val config = settings.backupReminderConfig
 
     fun updateConfig(update: BackupReminderConfig) {
-        vm.updateSettings(settings.copy(backupReminderConfig = update))
+        vm.updateSettings { s -> s.copy(backupReminderConfig = update) }
     }
 
     Column(
