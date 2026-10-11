@@ -166,7 +166,7 @@ private fun TaskPlanStatusIndicator(step: TaskPlanStep) {
 }
 
 /**
- * update_plan 工具步骤渲染器（Codex 同款待办）
+ * update_plan 工具步骤渲染器
  */
 object UpdatePlanToolUI : ToolUIRenderer {
     override val toolName: String = UPDATE_PLAN_TOOL_NAME

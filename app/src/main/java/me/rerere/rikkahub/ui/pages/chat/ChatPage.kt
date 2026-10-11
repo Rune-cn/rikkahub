@@ -351,7 +351,17 @@ private fun ChatPageContent(
             bottomBar = {
                 val messageQueue by vm.messageQueue.collectAsStateWithLifecycle()
                 val voiceState by vm.voiceSession.state.collectAsStateWithLifecycle()
-                ChatInput(
+                Column {
+                    // 待办进度：显示在聊天输入框上方（有未完成步骤时）
+                    activeTaskPlan?.takeIf { !it.allCompleted }?.let { plan ->
+                        TaskProgressBanner(
+                            plan = plan,
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                        )
+                    }
+                    ChatInput(
                     onStartVoiceMode = onStartVoiceMode,
                     voiceState = voiceState,
                     onStopVoiceMode = vm.voiceSession::stop,
@@ -422,10 +432,10 @@ private fun ChatPageContent(
                         showFilesSheet = true
                     },
                 )
+                }
             },
             containerColor = Color.Transparent,
         ) { innerPadding ->
-          Box(modifier = Modifier.fillMaxSize()) {
             ChatList(
                 innerPadding = innerPadding,
                 conversation = conversation,
@@ -505,20 +515,6 @@ private fun ChatPageContent(
                     vm.saveConversationAsync()
                 },
             )
-            // 顶部悬浮任务进度（有未完成的待办清单时显示）
-            activeTaskPlan?.takeIf { !it.allCompleted }?.let { plan ->
-                TaskProgressBanner(
-                    plan = plan,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(
-                            top = innerPadding.calculateTopPadding() + 8.dp,
-                            start = 16.dp,
-                            end = 16.dp,
-                        ),
-                )
-            }
-          }
         }
 
         if (showFilesSheet) {
