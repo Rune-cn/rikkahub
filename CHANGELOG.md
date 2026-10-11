@@ -11,6 +11,7 @@
 - **「继续生成」**：AI 生成被停止或中断后，在最后一条 AI 消息下方显示「继续生成」按钮，点击后从半截回复继续生成；历史中段对话（重进会话）也能继续
 - **Firebase 可选化**：没有 `google-services.json` 也能正常构建和运行（Analytics 自动降级为 null）
 - **更新检查指向本仓库**：应用内检查 `Rune-cn/rikkahub` 的 Nightly Release（对比 Release 发布时间与本地安装时间），不再依赖上游 `updates.rikka-ai.com`
+- **任务计划（Codex 同款待办）**：内置工具 `update_plan`，AI 可维护分步待办清单（`pending` / `in_progress` / `completed`）。对话正文显示可折叠的待办卡片，聊天页顶部悬浮显示实时进度（如「任务 3/5」）。在「助手设置 → 本地工具」中启用
 
 ### 🎨 界面改动
 
