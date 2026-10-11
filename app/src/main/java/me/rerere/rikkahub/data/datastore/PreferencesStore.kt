@@ -116,6 +116,7 @@ class SettingsStore(
         val CUSTOM_THEMES = stringPreferencesKey("custom_themes")
         val DISPLAY_SETTING = stringPreferencesKey("display_setting")
         val NETWORK_SETTING = stringPreferencesKey("network_setting")
+        val TOOL_AUTO_ALLOW_SETTING = stringPreferencesKey("tool_auto_allow_setting")
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode")
 
         // 模型选择
@@ -205,6 +206,7 @@ class SettingsStore(
                 preferences[DEVELOPER_MODE] = settings.developerMode
                 preferences[DISPLAY_SETTING] = JsonInstant.encodeToString(settings.displaySetting)
                 preferences[NETWORK_SETTING] = JsonInstant.encodeToString(settings.networkSetting)
+                preferences[TOOL_AUTO_ALLOW_SETTING] = JsonInstant.encodeToString(settings.toolAutoAllowSetting)
 
                 preferences[FAVORITE_MODELS] = JsonInstant.encodeToString(settings.favoriteModels)
                 preferences[SELECT_MODEL] = settings.chatModelId.toString()
@@ -312,6 +314,7 @@ class SettingsStore(
                 developerMode = preferences[DEVELOPER_MODE] == true,
                 displaySetting = JsonInstant.decodeFromString(preferences[DISPLAY_SETTING] ?: "{}"),
                 networkSetting = JsonInstant.decodeFromString(preferences[NETWORK_SETTING] ?: "{}"),
+                toolAutoAllowSetting = JsonInstant.decodeFromString(preferences[TOOL_AUTO_ALLOW_SETTING] ?: "{}"),
                 searchServices = preferences[SEARCH_SERVICES]?.let {
                     JsonInstant.decodeFromString(it)
                 } ?: listOf(SearchServiceOptions.DEFAULT),
