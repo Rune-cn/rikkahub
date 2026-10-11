@@ -10,13 +10,13 @@ import me.rerere.ai.ui.UIMessagePart
 
 internal const val UPDATE_PLAN_TOOL_NAME = "update_plan"
 
-/** 待办步骤状态（与 Codex 的 update_plan 工具保持一致） */
+/** 待办步骤状态 */
 internal const val PLAN_STATUS_PENDING = "pending"
 internal const val PLAN_STATUS_IN_PROGRESS = "in_progress"
 internal const val PLAN_STATUS_COMPLETED = "completed"
 
 /**
- * 待办清单工具（Codex 同款 update_plan）
+ * 待办清单工具
  *
  * 工具本身没有副作用：计划内容就写在入参里，UI 直接解析入参渲染成 checklist，
  * 因此无需额外存储，也不需要用户审批。

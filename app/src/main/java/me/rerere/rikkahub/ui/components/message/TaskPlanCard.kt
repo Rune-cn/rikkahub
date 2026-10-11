@@ -39,7 +39,7 @@ import me.rerere.rikkahub.ui.components.message.tools.TaskPlan
 import me.rerere.rikkahub.ui.components.message.tools.TaskPlanContent
 
 /**
- * 正文中的待办清单卡片（Codex 同款 update_plan）
+ * 正文中的待办清单卡片
  *
  * 默认展开，点击标题行可折叠；全部完成时标题用次要色。
  */
@@ -116,7 +116,7 @@ internal fun TaskPlanCard(
 }
 
 /**
- * 聊天页顶部的悬浮任务进度（Codex 同款 "Tasks 3/5"）
+ * 聊天输入框上方的任务进度
  *
  * 显示当前任务的完成进度，点击可展开查看完整清单。
  */
