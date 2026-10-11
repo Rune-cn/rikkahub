@@ -1398,6 +1398,14 @@
   <string name="assistant_page_local_tools_chart_display_desc">Let the AI display line, bar, and scatter charts</string>
   <string name="chat_message_tool_chart_display">Display chart</string>
   <string name="chat_message_tool_chart_display_with_title">Display chart: %1$s</string>
+  <string name="assistant_page_local_tools_update_plan_title">Task Plan</string>
+  <string name="assistant_page_local_tools_update_plan_desc">Let the AI keep a step-by-step checklist for the task and show progress</string>
+  <string name="chat_message_tool_update_plan">Task plan</string>
+  <string name="chat_message_tool_update_plan_progress">Task plan (%1$d/%2$d)</string>
+  <string name="chat_message_tool_update_plan_explanation">Reason: %1$s</string>
+  <string name="chat_task_progress">Tasks %1$d/%2$d</string>
+  <string name="chat_task_progress_expand">Expand</string>
+  <string name="chat_task_progress_collapse">Collapse</string>
   <string name="error_fast_model_not_found">Fast model not found. Please select one in settings.</string>
   <string name="error_fast_model_provider_not_found">Provider of the fast model not found</string>
   <string name="assistant_page_clone_with_memories">Also copy memories</string>

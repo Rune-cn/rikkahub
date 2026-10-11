@@ -5,9 +5,11 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import me.rerere.ai.ui.UIMessagePart
+import me.rerere.rikkahub.ui.components.message.tools.parseTaskPlan
 import me.rerere.rikkahub.utils.JsonInstant
 
 internal const val CHART_DISPLAY_TOOL_NAME = "chart_display"
+internal const val UPDATE_PLAN_TOOL_NAME = "update_plan"
 
 /**
  * 思考步骤类型，用于分组 Reasoning、客户端 Tool 和 ServerTool
@@ -35,6 +37,9 @@ sealed interface MessagePartBlock {
 
     /** 成功执行的 chart_display 工具调用, 在正文中以图表卡片展示 */
     data class ChartBlock(val tool: UIMessagePart.Tool, val index: Int) : MessagePartBlock
+
+    /** 成功执行的 update_plan 工具调用, 在正文中以待办清单卡片展示 */
+    data class PlanBlock(val tool: UIMessagePart.Tool, val index: Int) : MessagePartBlock
 }
 
 /**
@@ -64,6 +69,9 @@ fun List<UIMessagePart>.groupMessageParts(): List<MessagePartBlock> {
                 if (part.isSuccessfulChartDisplay()) {
                     flushThinkingSteps()
                     result.add(MessagePartBlock.ChartBlock(part, index))
+                } else if (part.isSuccessfulUpdatePlan()) {
+                    flushThinkingSteps()
+                    result.add(MessagePartBlock.PlanBlock(part, index))
                 } else {
                     currentThinkingSteps.add(ThinkingStep.ToolStep(part))
                 }
@@ -88,4 +96,10 @@ private fun UIMessagePart.Tool.isSuccessfulChartDisplay(): Boolean {
     val outputText = output.filterIsInstance<UIMessagePart.Text>().joinToString("\n") { it.text }
     val result = runCatching { JsonInstant.parseToJsonElement(outputText) }.getOrNull() as? JsonObject
     return (result?.get("success") as? JsonPrimitive)?.booleanOrNull == true
+}
+
+/** 已执行且入参能解析出有效待办清单的 update_plan 调用 */
+private fun UIMessagePart.Tool.isSuccessfulUpdatePlan(): Boolean {
+    if (toolName != UPDATE_PLAN_TOOL_NAME || !isExecuted) return false
+    return parseTaskPlan(inputAsJson()) != null
 }

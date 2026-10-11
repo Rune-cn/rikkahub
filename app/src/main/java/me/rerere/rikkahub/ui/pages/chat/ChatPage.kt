@@ -3,6 +3,7 @@ package me.rerere.rikkahub.ui.pages.chat
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -71,7 +73,10 @@ import me.rerere.rikkahub.data.model.Conversation
 import me.rerere.rikkahub.data.repository.WorkspaceRepository
 import me.rerere.rikkahub.service.ChatError
 import me.rerere.rikkahub.ui.components.ai.ChatAttachmentPickerActions
+import me.rerere.rikkahub.data.ai.tools.local.UPDATE_PLAN_TOOL_NAME
 import me.rerere.rikkahub.ui.components.ai.ChatInput
+import me.rerere.rikkahub.ui.components.message.TaskProgressBanner
+import me.rerere.rikkahub.ui.components.message.tools.parseTaskPlan
 import me.rerere.rikkahub.ui.components.ai.FilesPicker
 import me.rerere.rikkahub.ui.components.ai.SearchMode
 import me.rerere.rikkahub.ui.components.ai.completion.WorkspaceCompletionProvider
@@ -317,6 +322,15 @@ private fun ChatPageContent(
 
     TTSAutoPlay(vm = vm, setting = setting, conversation = conversation)
 
+    // 当前任务计划（update_plan 工具），用于聊天页顶部的悬浮进度
+    val activeTaskPlan = remember(conversation.currentMessages) {
+        conversation.currentMessages.asReversed().asSequence()
+            .flatMap { message -> message.parts.asReversed().asSequence() }
+            .filterIsInstance<UIMessagePart.Tool>()
+            .firstOrNull { it.toolName == UPDATE_PLAN_TOOL_NAME && it.isExecuted }
+            ?.let { tool -> parseTaskPlan(tool.inputAsJson()) }
+    }
+
     Surface(
         color = MaterialTheme.colorScheme.background,
         modifier = Modifier.fillMaxSize()
@@ -416,6 +430,7 @@ private fun ChatPageContent(
             },
             containerColor = Color.Transparent,
         ) { innerPadding ->
+          Box(modifier = Modifier.fillMaxSize()) {
             ChatList(
                 innerPadding = innerPadding,
                 conversation = conversation,
@@ -484,6 +499,20 @@ private fun ChatPageContent(
                     vm.updateConversationSystemPrompt(newPrompt)
                 },
             )
+            // 顶部悬浮任务进度（有未完成的待办清单时显示）
+            activeTaskPlan?.takeIf { !it.allCompleted }?.let { plan ->
+                TaskProgressBanner(
+                    plan = plan,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(
+                            top = innerPadding.calculateTopPadding() + 8.dp,
+                            start = 16.dp,
+                            end = 16.dp,
+                        ),
+                )
+            }
+          }
         }
 
         if (showFilesSheet) {

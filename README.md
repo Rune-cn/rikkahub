@@ -52,6 +52,7 @@ Built APKs are published automatically to the [Nightly Build release](https://gi
 - [x] 🔁 Rate-limit auto retry (tpm/rpm): fixed interval / exponential backoff / jitter, configurable max retry count (Extensions → Other)
 - [x] ▶️ Continue generation: after AI is stopped or interrupted, resume from the half-finished reply (including unfinished conversations from history)
 - [x] 🔥 Firebase optional: builds and runs without `google-services.json`
+- [x] 📋 Task plan (Codex-style todo): the AI keeps a step-by-step checklist, shown as a card in chat plus a floating progress pill (Assistant settings → Local Tools)
 - [x] 🤖 GitHub Actions builds and signs APKs automatically (Nightly release)
 
 ## 💻 Development

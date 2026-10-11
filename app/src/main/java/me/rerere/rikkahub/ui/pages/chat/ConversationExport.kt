@@ -84,6 +84,8 @@ import me.rerere.rikkahub.data.model.Conversation
 import me.rerere.rikkahub.ui.components.message.MessagePartBlock
 import me.rerere.rikkahub.ui.components.message.ThinkingStep
 import me.rerere.rikkahub.ui.components.message.ChatMessageServerToolStep
+import me.rerere.rikkahub.ui.components.message.TaskPlanCard
+import me.rerere.rikkahub.ui.components.message.tools.parseTaskPlan
 import me.rerere.rikkahub.ui.components.message.groupMessageParts
 import me.rerere.rikkahub.ui.components.message.tools.memoryToolTitle
 import me.rerere.rikkahub.ui.components.richtext.MarkdownBlock
@@ -594,6 +596,11 @@ private fun ExportedChatMessage(
                     is MessagePartBlock.ChartBlock -> {
                         val spec = remember(block.tool.input) { ChartSpec.fromJson(block.tool.inputAsJson()) }
                         spec?.let { ChartCard(spec = it) }
+                    }
+
+                    is MessagePartBlock.PlanBlock -> {
+                        val plan = remember(block.tool.input) { parseTaskPlan(block.tool.inputAsJson()) }
+                        plan?.let { TaskPlanCard(plan = it) }
                     }
 
                     is MessagePartBlock.ContentBlock -> {

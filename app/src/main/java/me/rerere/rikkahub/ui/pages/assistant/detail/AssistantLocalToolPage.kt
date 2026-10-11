@@ -222,6 +222,20 @@ private fun AssistantLocalToolContent(
                 title = R.string.assistant_page_local_tools_chart_display_title,
                 description = R.string.assistant_page_local_tools_chart_display_desc,
             )
+            item(
+                headlineContent = {
+                    Text(stringResource(R.string.assistant_page_local_tools_update_plan_title))
+                },
+                supportingContent = {
+                    Text(stringResource(R.string.assistant_page_local_tools_update_plan_desc))
+                },
+                trailingContent = {
+                    Switch(
+                        checked = assistant.localTools.contains(LocalToolOption.UpdatePlan),
+                        onCheckedChange = { toggleLocalTool(LocalToolOption.UpdatePlan, it) }
+                    )
+                }
+            )
         }
     }
 }

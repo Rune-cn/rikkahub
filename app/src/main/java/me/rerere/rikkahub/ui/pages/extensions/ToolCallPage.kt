@@ -49,6 +49,7 @@ private val BUILT_IN_TOOL_NAMES = listOf(
     "text_to_speech",
     "get_time_info",
     "chart_display",
+    "update_plan",
 )
 
 @Composable
