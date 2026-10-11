@@ -59,6 +59,8 @@ Built APKs are published automatically to the [Nightly Build release](https://gi
 
 This project is developed using [Android Studio](https://developer.android.com/studio).
 
+> 📖 For fork development see [**Architecture Guide (ARCHITECTURE.md)**](ARCHITECTURE.md): code structure, key file locations, common change recipes and pitfalls.
+
 Technology stack:
 
 - [Kotlin](https://kotlinlang.org/) (Development language)

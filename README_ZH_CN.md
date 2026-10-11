@@ -58,6 +58,8 @@
 
 本项目使用 [Android Studio](https://developer.android.com/studio) 开发。
 
+> 📖 二次开发请看 [**架构与修改指引（ARCHITECTURE.md）**](ARCHITECTURE.md)：代码架构、关键文件位置、常见改动步骤与踩坑记录。
+
 技术栈：
 
 - [Kotlin](https://kotlinlang.org/)（开发语言）

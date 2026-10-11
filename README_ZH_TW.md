@@ -59,6 +59,8 @@
 
 本項目使用 [Android Studio](https://developer.android.com/studio) 開發。
 
+> 📖 二次開發請看 [**架構與修改指引（ARCHITECTURE.md）**](ARCHITECTURE.md)：代碼架構、關鍵文件位置、常見改動步驟與踩坑記錄。
+
 技術棧：
 
 - [Kotlin](https://kotlinlang.org/)（開發語言）
