@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.uuid.Uuid
@@ -150,16 +151,14 @@ class SubAgentManager(
      * @return 这些子 Agent 的最新状态（超时则返回当时的快照，status 仍可能是 RUNNING）
      */
     suspend fun waitFor(names: List<String>, timeoutMs: Long): List<SubAgentTask> {
-        val targets = _tasks.value.filter { it.name in names }
-        if (targets.isEmpty()) return emptyList()
-        val finished = withTimeoutOrNull<List<SubAgentTask>>(timeoutMs) {
-            while (true) {
-                val current = _tasks.value.filter { it.name in names }
-                if (current.isNotEmpty() && current.all { it.isFinished }) return@withTimeoutOrNull current
-                delay(500)
-            }
-        }
-        return finished ?: _tasks.value.filter { it.name in names }
+        val current = _tasks.value.filter { it.name in names }
+        if (current.isEmpty()) return emptyList()
+        if (current.all { it.isFinished }) return current
+        // 等待直到全部结束，或超时返回当时的快照
+        return withTimeoutOrNull(timeoutMs) {
+            _tasks.map { list -> list.filter { it.name in names } }
+                .first { list -> list.isNotEmpty() && list.all { it.isFinished } }
+        } ?: _tasks.value.filter { it.name in names }
     }
 
     /** 取消指定子 Agent */
