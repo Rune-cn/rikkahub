@@ -16,6 +16,7 @@ import me.rerere.ai.core.MessageRole
 import me.rerere.ai.ui.UIMessage
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.rikkahub.AppScope
+import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.ai.GenerationChunk
 import me.rerere.rikkahub.data.ai.GenerationLoop
 import me.rerere.rikkahub.data.ai.tools.ChatToolFactory
@@ -151,7 +152,7 @@ class SubAgentManager(
     suspend fun waitFor(names: List<String>, timeoutMs: Long): List<SubAgentTask> {
         val targets = _tasks.value.filter { it.name in names }
         if (targets.isEmpty()) return emptyList()
-        val finished = withTimeoutOrNull(timeoutMs) {
+        val finished = withTimeoutOrNull<List<SubAgentTask>>(timeoutMs) {
             while (true) {
                 val current = _tasks.value.filter { it.name in names }
                 if (current.isNotEmpty() && current.all { it.isFinished }) return@withTimeoutOrNull current
