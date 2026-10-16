@@ -101,6 +101,24 @@ data class NetworkSetting(
     val rateLimitRetryMode: RetryMode = RetryMode.EXPONENTIAL_BACKOFF,
     // 最大重试次数
     val rateLimitRetryCount: Int = 3,
+    // 可重试的 HTTP 状态码：错误信息中出现这些状态码时自动重试
+    val retryableStatusCodes: List<Int> = listOf(429, 500, 502, 503, 504),
+    // 重试关键字：错误信息中包含任一关键字时自动重试（不区分大小写）
+    val retryKeywords: List<String> = listOf(
+        "rate limit",
+        "tpm",
+        "rpm",
+        "too many requests",
+        "limit exceeded",
+    ),
+    // 停止重试关键字：错误信息中包含任一关键字时立即失败，不再重试（优先级最高，不区分大小写）
+    val stopRetryKeywords: List<String> = listOf(
+        "insufficient",
+        "quota exceeded",
+        "invalid api key",
+        "invalid_api_key",
+        "unauthorized",
+    ),
 )
 
 @Serializable

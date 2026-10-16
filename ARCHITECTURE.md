@@ -155,7 +155,7 @@ ChatPage (UI)
 | 功能 | 关键文件 |
 |---|---|
 | **包名** `app.ai.rune` | `app/build.gradle.kts`（`applicationId`） |
-| **版本号** | `app/build.gradle.kts`（`val appVersion`，预发布版本号 = `版本-commit`） |
+| **版本号** | `app/build.gradle.kts` 的 `val appVersion`（如 `2.5.8`）与 `val appVersionCode`（如 `192`）<br>→ `versionName` = `2.5.8-<commit>`（正式版为 `2.5.8`）<br>→ `versionCode` 每次发版**手动 +1**（必须单调递增） |
 | **工具调用页 + 自动允许** | `ui/pages/extensions/ToolCallPage.kt`（UI）<br>`data/datastore/PreferencesStore.kt`（`ToolAutoAllowSetting`）<br>`data/ai/tools/ChatToolFactory.kt`（把 `needsApproval` 置 false）<br>`ui/pages/extensions/ExtensionsPage.kt`（入口顺序） |
 | **工作区工具审批** | `data/ai/tools/WorkspaceTools.kt`（`WorkspaceToolDefaultApprovals`） |
 | **限流自动重试** | `data/datastore/PreferencesStore.kt`（`NetworkSetting` 新增字段）<br>`data/ai/GenerationLoop.kt`（`awaitNetworkRetryOrThrow`）<br>`ui/pages/extensions/OtherSettingsPage.kt`（设置 UI） |
@@ -173,8 +173,9 @@ ChatPage (UI)
 ### 1. 改版本号 / 发版
 
 ```kotlin
-// app/build.gradle.kts
-val appVersion = "2.5.7"   // ← 只改这一处
+// app/build.gradle.kts —— 只改这两处
+val appVersion = "2.5.8"      // 应用版本号
+val appVersionCode = 192      // 每次发版 +1（单调递增）
 ```
 
 | 目标 | 操作 |

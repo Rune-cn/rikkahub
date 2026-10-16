@@ -1215,6 +1215,12 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="extensions_page_retry_interval_exponential">指数退避</string>
   <string name="extensions_page_retry_interval_jitter">随机抖动</string>
   <string name="extensions_page_retry_max_count">最大重试次数</string>
+  <string name="extensions_page_retry_status_codes">可重试状态码</string>
+  <string name="extensions_page_retry_status_codes_desc">错误信息中出现这些 HTTP 状态码时自动重试（英文逗号分隔）</string>
+  <string name="extensions_page_retry_keywords">重试关键字</string>
+  <string name="extensions_page_retry_keywords_desc">错误信息中包含这些关键字时自动重试（英文逗号分隔，不区分大小写）</string>
+  <string name="extensions_page_stop_retry_keywords">停止重试关键字</string>
+  <string name="extensions_page_stop_retry_keywords_desc">错误信息中包含这些关键字时立即失败、不再重试（优先级最高，英文逗号分隔）</string>
   <string name="workspace_select">选择工作区</string>
   <string name="workspace_no_binding">未绑定</string>
   <string name="workspace_manage">管理工作区</string>
