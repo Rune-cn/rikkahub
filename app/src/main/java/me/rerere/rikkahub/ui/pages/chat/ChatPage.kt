@@ -72,10 +72,14 @@ import me.rerere.rikkahub.data.model.Conversation
 import me.rerere.rikkahub.data.repository.WorkspaceRepository
 import me.rerere.rikkahub.service.ChatError
 import me.rerere.rikkahub.ui.components.ai.ChatAttachmentPickerActions
+import me.rerere.rikkahub.data.ai.subagent.SubAgentManager
 import me.rerere.rikkahub.data.ai.tools.local.UPDATE_PLAN_TOOL_NAME
+import me.rerere.rikkahub.data.model.SubAgentStatus
 import me.rerere.rikkahub.ui.components.ai.ChatInput
 import me.rerere.rikkahub.ui.components.message.TaskProgressBanner
+import me.rerere.rikkahub.ui.components.message.tools.SubAgentRunningBanner
 import me.rerere.rikkahub.ui.components.message.tools.parseTaskPlan
+import org.koin.compose.koinInject
 import me.rerere.rikkahub.ui.components.ai.FilesPicker
 import me.rerere.rikkahub.ui.components.ai.SearchMode
 import me.rerere.rikkahub.ui.components.ai.completion.WorkspaceCompletionProvider
@@ -89,7 +93,6 @@ import me.rerere.rikkahub.ui.hooks.useEditState
 import me.rerere.rikkahub.utils.base64Decode
 import me.rerere.rikkahub.utils.navigateToChatPage
 import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.Uuid
@@ -313,7 +316,7 @@ private fun ChatPageContent(
 
     TTSAutoPlay(vm = vm, setting = setting, conversation = conversation)
 
-    // 当前任务计划（update_plan 工具），用于聊天页顶部的悬浮进度
+    // 当前任务计划（update_plan 工具），用于输入框上方的进度展示
     val activeTaskPlan = remember(conversation.currentMessages) {
         conversation.currentMessages.asReversed().asSequence()
             .flatMap { message -> message.parts.asReversed().asSequence() }
@@ -321,6 +324,11 @@ private fun ChatPageContent(
             .firstOrNull { it.toolName == UPDATE_PLAN_TOOL_NAME && it.isExecuted }
             ?.let { tool -> parseTaskPlan(tool.inputAsJson()) }
     }
+
+    // 运行中的子 Agent（输入框上方显示进度）
+    val subAgentManager: SubAgentManager = koinInject()
+    val subAgentTasks by subAgentManager.tasks.collectAsStateWithLifecycle()
+    val runningSubAgentCount = subAgentTasks.count { it.status == SubAgentStatus.RUNNING }
 
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -356,6 +364,15 @@ private fun ChatPageContent(
                     activeTaskPlan?.takeIf { !it.allCompleted }?.let { plan ->
                         TaskProgressBanner(
                             plan = plan,
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                        )
+                    }
+                    // 子 Agent 运行进度
+                    if (runningSubAgentCount > 0) {
+                        SubAgentRunningBanner(
+                            count = runningSubAgentCount,
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
                                 .padding(horizontal = 16.dp, vertical = 4.dp),

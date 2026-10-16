@@ -41,9 +41,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Cancel01
+import me.rerere.ai.provider.ModelType
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.RetryMode
 import me.rerere.rikkahub.data.datastore.SettingsStore
+import me.rerere.rikkahub.data.datastore.findModelById
+import me.rerere.rikkahub.ui.components.ai.ModelSelector
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.CardGroup
 import me.rerere.rikkahub.ui.theme.CustomColors
@@ -74,6 +77,49 @@ fun OtherSettingsPage() {
             contentPadding = innerPadding + PaddingValues(8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            item {
+                CardGroup(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    title = { Text(stringResource(R.string.extensions_page_sub_agent_section)) },
+                ) {
+                    item(
+                        headlineContent = {
+                            Text(stringResource(R.string.extensions_page_sub_agent_model))
+                        },
+                        supportingContent = {
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.extensions_page_sub_agent_model_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                ModelSelector(
+                                    modelId = settings.subAgentSetting.defaultModelId,
+                                    providers = settings.providers,
+                                    type = ModelType.CHAT,
+                                    allowClear = true,
+                                    modifier = Modifier.padding(top = 4.dp),
+                                    onSelect = { model ->
+                                        // 清除时 Model() 为空对象，用能否在 providers 里找到来区分
+                                        val selectedId = model.id.takeIf { id ->
+                                            settings.findModelById(id) != null
+                                        }
+                                        coroutineScope.launch {
+                                            settingsStore.update { s ->
+                                                s.copy(
+                                                    subAgentSetting = s.subAgentSetting.copy(
+                                                        defaultModelId = selectedId,
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    },
+                                )
+                            }
+                        },
+                    )
+                }
+            }
             item {
                 CardGroup(
                     modifier = Modifier.padding(horizontal = 8.dp),

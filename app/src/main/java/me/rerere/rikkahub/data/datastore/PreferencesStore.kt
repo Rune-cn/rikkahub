@@ -117,6 +117,7 @@ class SettingsStore(
         val DISPLAY_SETTING = stringPreferencesKey("display_setting")
         val NETWORK_SETTING = stringPreferencesKey("network_setting")
         val TOOL_AUTO_ALLOW_SETTING = stringPreferencesKey("tool_auto_allow_setting")
+        val SUB_AGENT_SETTING = stringPreferencesKey("sub_agent_setting")
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode")
 
         // 模型选择
@@ -207,6 +208,7 @@ class SettingsStore(
                 preferences[DISPLAY_SETTING] = JsonInstant.encodeToString(settings.displaySetting)
                 preferences[NETWORK_SETTING] = JsonInstant.encodeToString(settings.networkSetting)
                 preferences[TOOL_AUTO_ALLOW_SETTING] = JsonInstant.encodeToString(settings.toolAutoAllowSetting)
+                preferences[SUB_AGENT_SETTING] = JsonInstant.encodeToString(settings.subAgentSetting)
 
                 preferences[FAVORITE_MODELS] = JsonInstant.encodeToString(settings.favoriteModels)
                 preferences[SELECT_MODEL] = settings.chatModelId.toString()
@@ -315,6 +317,7 @@ class SettingsStore(
                 displaySetting = JsonInstant.decodeFromString(preferences[DISPLAY_SETTING] ?: "{}"),
                 networkSetting = JsonInstant.decodeFromString(preferences[NETWORK_SETTING] ?: "{}"),
                 toolAutoAllowSetting = JsonInstant.decodeFromString(preferences[TOOL_AUTO_ALLOW_SETTING] ?: "{}"),
+                subAgentSetting = JsonInstant.decodeFromString(preferences[SUB_AGENT_SETTING] ?: "{}"),
                 searchServices = preferences[SEARCH_SERVICES]?.let {
                     JsonInstant.decodeFromString(it)
                 } ?: listOf(SearchServiceOptions.DEFAULT),
@@ -587,6 +590,7 @@ data class Settings(
     val displaySetting: DisplaySetting = DisplaySetting(),
     val networkSetting: NetworkSetting = NetworkSetting(),
     val toolAutoAllowSetting: ToolAutoAllowSetting = ToolAutoAllowSetting(),
+    val subAgentSetting: SubAgentSetting = SubAgentSetting(),
     val favoriteModels: List<Uuid> = emptyList(),
     val chatModelId: Uuid = Uuid.random(),
     val fastModelId: Uuid = Uuid.random(),
@@ -644,6 +648,12 @@ data class ToolAutoAllowSetting(
     val enabled: Boolean = false,
     // 不参与自动允许的工具（默认含 ask_user：它本质是"询问用户"，需保留交互流程）
     val disabledTools: Set<String> = setOf("ask_user"),
+)
+
+@Serializable
+data class SubAgentSetting(
+    // 子 Agent 默认使用的模型；null 表示继承主 Agent 当前模型
+    val defaultModelId: Uuid? = null,
 )
 
 @Serializable

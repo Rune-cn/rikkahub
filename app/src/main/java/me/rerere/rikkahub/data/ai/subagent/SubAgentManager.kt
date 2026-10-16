@@ -76,6 +76,7 @@ class SubAgentManager(
             name = name,
             prompt = prompt,
             modelId = modelId,
+            startedAt = System.currentTimeMillis(),
         )
         _tasks.value = _tasks.value + task
         jobs[name] = appScope.launch { runTask(task) }
@@ -87,9 +88,13 @@ class SubAgentManager(
         try {
             val settings = settingsStore.settingsFlow.first { !it.init }
             val assistant = settings.getCurrentAssistant()
+            // 模型优先级：任务指定 > 全局子 Agent 默认模型 > 主 Agent 当前模型
             val model = task.modelId?.let { settings.findModelById(it) }
+                ?: settings.subAgentSetting.defaultModelId?.let { settings.findModelById(it) }
                 ?: settings.getCurrentChatModel()
                 ?: throw IllegalStateException("No chat model available for sub-agent")
+
+            updateTask(task.name) { it.copy(modelName = model.displayName) }
 
             // 子 Agent 拥有与主 Agent 同源的工具集（含工作区、MCP、技能等）
             val tools = chatToolFactory.createTools(
@@ -117,6 +122,8 @@ class SubAgentManager(
             ).collect { chunk ->
                 if (chunk is GenerationChunk.Messages) {
                     messages = chunk.messages
+                    // 实时同步完整对话（供详情查看）
+                    updateTask(task.name) { it.copy(messages = chunk.messages) }
                     chunk.messages.lastOrNull()
                         ?.takeIf { it.role == MessageRole.ASSISTANT }
                         ?.let { finalText = it.toText() }
@@ -127,16 +134,24 @@ class SubAgentManager(
                 it.copy(
                     status = SubAgentStatus.DONE,
                     result = finalText.ifBlank { context.getString(R.string.sub_agent_empty_result) },
+                    messages = messages,
+                    finishedAt = System.currentTimeMillis(),
                 )
             }
             Log.i(TAG, "sub-agent finished: ${task.name}")
         } catch (e: CancellationException) {
-            updateTask(task.name) { it.copy(status = SubAgentStatus.CANCELLED) }
+            updateTask(task.name) {
+                it.copy(status = SubAgentStatus.CANCELLED, finishedAt = System.currentTimeMillis())
+            }
             throw e
         } catch (e: Throwable) {
             Log.w(TAG, "sub-agent failed: ${task.name}", e)
             updateTask(task.name) {
-                it.copy(status = SubAgentStatus.FAILED, error = e.message ?: e.toString())
+                it.copy(
+                    status = SubAgentStatus.FAILED,
+                    error = e.message ?: e.toString(),
+                    finishedAt = System.currentTimeMillis(),
+                )
             }
         }
     }

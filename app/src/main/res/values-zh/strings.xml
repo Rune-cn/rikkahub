@@ -1226,6 +1226,9 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="extensions_page_auto_retry">自动重试</string>
   <string name="extensions_page_auto_retry_desc">根据下方规则自动重试失败的请求</string>
   <string name="extensions_page_retry_add_tag">添加</string>
+  <string name="extensions_page_sub_agent_section">子 Agent</string>
+  <string name="extensions_page_sub_agent_model">子 Agent 模型</string>
+  <string name="extensions_page_sub_agent_model_desc">子 Agent 使用的模型；清除则继承当前模型</string>
   <string name="extensions_page_retry_interval">重试间隔</string>
   <string name="extensions_page_retry_interval_fixed">固定间隔</string>
   <string name="extensions_page_retry_interval_exponential">指数退避</string>
@@ -1425,6 +1428,15 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="assistant_page_local_tools_update_plan_desc">让 AI 为任务维护分步待办清单并显示进度</string>
   <string name="assistant_page_local_tools_sub_agent_title">子 Agent 协同</string>
   <string name="assistant_page_local_tools_sub_agent_desc">让 AI 把任务分派给子 Agent 并行处理，子 Agent 拥有自己的工具与模型</string>
+  <string name="chat_sub_agent_running">%1$d 个子 Agent 运行中</string>
+  <string name="sub_agent_not_found">未找到该子 Agent</string>
+  <string name="sub_agent_model_label">模型：%1$s</string>
+  <string name="sub_agent_status_running">运行中</string>
+  <string name="sub_agent_status_done">已完成</string>
+  <string name="sub_agent_status_failed">失败</string>
+  <string name="sub_agent_status_cancelled">已取消</string>
+  <string name="sub_agent_role_user">任务</string>
+  <string name="sub_agent_role_assistant">助手</string>
   <string name="sub_agent_empty_result">（无输出）</string>
   <string name="chat_message_tool_spawn_agent">启动子 Agent</string>
   <string name="chat_message_tool_spawn_agent_with_name">启动子 Agent：%1$s</string>
