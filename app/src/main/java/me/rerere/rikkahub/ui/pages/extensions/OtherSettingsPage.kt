@@ -1,12 +1,16 @@
 package me.rerere.rikkahub.ui.pages.extensions
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -16,10 +20,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
@@ -154,8 +162,132 @@ fun OtherSettingsPage() {
                             }
                         },
                     )
+                    // 可重试状态码
+                    item(
+                        headlineContent = {
+                            Text(stringResource(R.string.extensions_page_retry_status_codes))
+                        },
+                        supportingContent = {
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.extensions_page_retry_status_codes_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                RetryListField(
+                                    initial = settings.networkSetting.retryableStatusCodes.joinToString(", "),
+                                    keyboardType = KeyboardType.Number,
+                                ) { input ->
+                                    val codes = input.split(",", "，")
+                                        .mapNotNull { it.trim().toIntOrNull() }
+                                        .filter { it in 100..599 }
+                                    coroutineScope.launch {
+                                        settingsStore.update {
+                                            it.copy(
+                                                networkSetting = it.networkSetting.copy(
+                                                    retryableStatusCodes = codes,
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    )
+                    // 重试关键字
+                    item(
+                        headlineContent = {
+                            Text(stringResource(R.string.extensions_page_retry_keywords))
+                        },
+                        supportingContent = {
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.extensions_page_retry_keywords_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                RetryListField(
+                                    initial = settings.networkSetting.retryKeywords.joinToString(", "),
+                                ) { input ->
+                                    val keywords = parseKeywordList(input)
+                                    coroutineScope.launch {
+                                        settingsStore.update {
+                                            it.copy(
+                                                networkSetting = it.networkSetting.copy(
+                                                    retryKeywords = keywords,
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    )
+                    // 停止重试关键字
+                    item(
+                        headlineContent = {
+                            Text(stringResource(R.string.extensions_page_stop_retry_keywords))
+                        },
+                        supportingContent = {
+                            Column {
+                                Text(
+                                    text = stringResource(R.string.extensions_page_stop_retry_keywords_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                RetryListField(
+                                    initial = settings.networkSetting.stopRetryKeywords.joinToString(", "),
+                                ) { input ->
+                                    val keywords = parseKeywordList(input)
+                                    coroutineScope.launch {
+                                        settingsStore.update {
+                                            it.copy(
+                                                networkSetting = it.networkSetting.copy(
+                                                    stopRetryKeywords = keywords,
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    )
                 }
             }
         }
     }
+}
+
+/** 逗号（中英文）分隔的关键字列表解析 */
+private fun parseKeywordList(input: String): List<String> =
+    input.split(",", "，")
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .distinct()
+
+/**
+ * 重试配置的列表编辑框（逗号分隔）
+ *
+ * 输入即保存（中间状态也写入，不影响最终结果）。
+ */
+@Composable
+private fun RetryListField(
+    initial: String,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    onValueChange: (String) -> Unit,
+) {
+    var text by remember { mutableStateOf(initial) }
+    OutlinedTextField(
+        value = text,
+        onValueChange = { input ->
+            text = input
+            onValueChange(input)
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodySmall,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+    )
 }

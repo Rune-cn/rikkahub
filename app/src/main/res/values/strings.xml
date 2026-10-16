@@ -1254,6 +1254,12 @@
   <string name="extensions_page_retry_interval_exponential">Exponential</string>
   <string name="extensions_page_retry_interval_jitter">Jitter</string>
   <string name="extensions_page_retry_max_count">Max Retries</string>
+  <string name="extensions_page_retry_status_codes">Retryable status codes</string>
+  <string name="extensions_page_retry_status_codes_desc">Auto retry when the error contains one of these HTTP status codes (comma separated)</string>
+  <string name="extensions_page_retry_keywords">Retry keywords</string>
+  <string name="extensions_page_retry_keywords_desc">Auto retry when the error message contains one of these keywords (comma separated, case-insensitive)</string>
+  <string name="extensions_page_stop_retry_keywords">Stop-retry keywords</string>
+  <string name="extensions_page_stop_retry_keywords_desc">Never retry when the error message contains one of these keywords (takes priority over the rules above, comma separated)</string>
   <string name="workspace_select">Select Workspace</string>
   <string name="workspace_no_binding">No binding</string>
   <string name="workspace_manage">Manage Workspaces</string>

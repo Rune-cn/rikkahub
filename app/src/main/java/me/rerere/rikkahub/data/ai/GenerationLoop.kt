@@ -35,6 +35,7 @@ import me.rerere.ai.util.HttpException
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.ai.transformers.InputMessageTransformer
 import me.rerere.rikkahub.data.ai.transformers.MessageTransformer
+import me.rerere.rikkahub.data.datastore.NetworkSetting
 import me.rerere.rikkahub.data.datastore.RetryMode
 import me.rerere.rikkahub.data.ai.transformers.OutputMessageTransformer
 import me.rerere.rikkahub.data.files.FileFolders
@@ -65,21 +66,41 @@ private const val INITIAL_PROVIDER_RETRY_DELAY_MS = 1_000L
 // 限流重试基础间隔：指数退避从 2s 开始（2s/4s/8s）
 private const val INITIAL_RATE_LIMIT_RETRY_DELAY_MS = 2_000L
 
-// 限流错误关键词：模型触发 tpm/rpm limit 或 429 时自动重试
-private val RATE_LIMIT_ERROR_KEYWORDS = listOf(
-    "tpm",
-    "rpm",
-    "rate limit",
-    "rate_limit",
-    "too many requests",
-    "429",
-    "limit exceeded",
-)
+// 错误信息中是否包含指定 HTTP 状态码（按数字边界匹配，避免 "500" 误匹配 "5000"）
+private fun String.containsStatusCode(code: Int): Boolean {
+    val token = code.toString()
+    var index = indexOf(token)
+    while (index >= 0) {
+        val before = getOrNull(index - 1)
+        val after = getOrNull(index + token.length)
+        if ((before == null || !before.isDigit()) && (after == null || !after.isDigit())) return true
+        index = indexOf(token, index + 1)
+    }
+    return false
+}
 
-private fun Throwable.isRateLimitError(): Boolean =
-    this is HttpException && message?.lowercase()?.let { msg ->
-        RATE_LIMIT_ERROR_KEYWORDS.any { it in msg }
-    } == true
+/**
+ * 判断错误是否应该自动重试（规则完全由用户配置）：
+ *
+ * 1. 命中「停止重试关键字」→ 立即失败（优先级最高，例如余额不足、密钥无效）
+ * 2. 命中「可重试状态码」或「重试关键字」→ 重试
+ *
+ * 状态码/关键字均不区分大小写。
+ */
+private fun Throwable.isRetryableError(setting: NetworkSetting): Boolean {
+    val msg = message?.lowercase().orEmpty()
+    if (msg.isBlank()) return false
+    // 1. 停止重试关键字优先
+    if (setting.stopRetryKeywords.any { it.isNotBlank() && it.trim().lowercase() in msg }) {
+        return false
+    }
+    // 2. 可重试状态码（仅对 HTTP 错误）
+    if (this is HttpException && setting.retryableStatusCodes.any { msg.containsStatusCode(it) }) {
+        return true
+    }
+    // 3. 重试关键字
+    return setting.retryKeywords.any { it.isNotBlank() && it.trim().lowercase() in msg }
+}
 
 private class StreamChunkHandlingException(cause: Throwable) : RuntimeException(cause)
 
@@ -469,6 +490,7 @@ class GenerationLoop(
                             rateLimitEnabled = settings.networkSetting.enableRateLimitRetry,
                             retryMode = settings.networkSetting.rateLimitRetryMode,
                             maxRateLimitRetries = settings.networkSetting.rateLimitRetryCount,
+                            networkSetting = settings.networkSetting,
                         )
                     }
                 }
@@ -479,6 +501,7 @@ class GenerationLoop(
                     rateLimitEnabled = settings.networkSetting.enableRateLimitRetry,
                     retryMode = settings.networkSetting.rateLimitRetryMode,
                     maxRateLimitRetries = settings.networkSetting.rateLimitRetryCount,
+                    networkSetting = settings.networkSetting,
                 ) {
                     providerImpl.generateText(
                         providerSetting = provider,
@@ -500,6 +523,7 @@ class GenerationLoop(
         rateLimitEnabled: Boolean,
         retryMode: RetryMode,
         maxRateLimitRetries: Int,
+        networkSetting: NetworkSetting,
         block: suspend () -> T,
     ): T {
         var retryCount = 0
@@ -515,6 +539,7 @@ class GenerationLoop(
                     rateLimitEnabled = rateLimitEnabled,
                     retryMode = retryMode,
                     maxRateLimitRetries = maxRateLimitRetries,
+                    networkSetting = networkSetting,
                 )
             }
         }
@@ -528,34 +553,35 @@ class GenerationLoop(
         rateLimitEnabled: Boolean,
         retryMode: RetryMode,
         maxRateLimitRetries: Int,
+        networkSetting: NetworkSetting,
     ): Int {
         // 用户主动停止生成时，底层连接也可能以 IOException("canceled") 收尾；
         // 先检查协程状态，确保取消不会被当作网络波动重新拉起。
         currentCoroutineContext().ensureActive()
         val isNetworkError = error is IOException
-        val isRateLimit = error.isRateLimitError()
+        val isRetryable = error.isRetryableError(networkSetting)
 
         // 不认识的错误直接抛出
-        if (!isNetworkError && !isRateLimit) throw error
+        if (!isNetworkError && !isRetryable) throw error
         // 网络错误由 enableAutoRetry 控制，超过次数上限则放弃
         if (isNetworkError && (!enabled || retryCount >= MAX_PROVIDER_NETWORK_RETRIES)) throw error
-        // 限流错误由 enableRateLimitRetry 控制，超过用户设置的上限则放弃
-        if (isRateLimit && (!rateLimitEnabled || retryCount >= maxRateLimitRetries)) throw error
+        // 可重试错误由 enableRateLimitRetry 控制，超过用户设置的上限则放弃
+        if (isRetryable && (!rateLimitEnabled || retryCount >= maxRateLimitRetries)) throw error
 
         val nextRetryCount = retryCount + 1
-        val retryDelay = if (isRateLimit) {
+        val retryDelay = if (isRetryable) {
             rateLimitRetryDelayMs(retryMode, retryCount)
         } else {
             INITIAL_PROVIDER_RETRY_DELAY_MS shl retryCount
         }
-        val maxRetries = if (isRateLimit) maxRateLimitRetries else MAX_PROVIDER_NETWORK_RETRIES
-        val statusMessage = if (isRateLimit) {
+        val maxRetries = if (isRetryable) maxRateLimitRetries else MAX_PROVIDER_NETWORK_RETRIES
+        val statusMessage = if (isRetryable) {
             context.getString(R.string.chat_generation_rate_limit_error)
         } else {
             getNetworkErrorMessage(error as IOException)
         }
         processingStatus.value = context.getString(
-            if (isRateLimit) {
+            if (isRetryable) {
                 R.string.chat_generation_rate_limit_retrying
             } else {
                 R.string.chat_generation_network_retrying
@@ -566,7 +592,7 @@ class GenerationLoop(
         )
         Log.w(
             TAG,
-            if (isRateLimit) {
+            if (isRetryable) {
                 "Rate limit hit, retrying in ${retryDelay}ms ($nextRetryCount/$maxRetries)"
             } else {
                 "Provider connection failed, retrying in ${retryDelay}ms ($nextRetryCount/$maxRetries)"
