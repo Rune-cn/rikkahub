@@ -2,6 +2,7 @@ package me.rerere.rikkahub.data.ai.tools.local
 
 import android.content.Context
 import me.rerere.ai.core.Tool
+import me.rerere.rikkahub.data.ai.subagent.SubAgentManager
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.event.AppEventBus
 import me.rerere.tts.provider.TTSManager
@@ -11,6 +12,7 @@ class LocalTools(
     private val eventBus: AppEventBus,
     private val ttsManager: TTSManager,
     private val settingsStore: SettingsStore,
+    private val subAgentManager: SubAgentManager,
 ) {
     val javascriptTool by lazy { buildJavascriptTool() }
 
@@ -31,6 +33,8 @@ class LocalTools(
     val chartDisplayTool by lazy { buildChartDisplayTool() }
 
     val updatePlanTool by lazy { buildUpdatePlanTool() }
+
+    val subAgentTools by lazy { buildSubAgentTools(subAgentManager) }
 
     fun getTools(options: List<LocalToolOption>): List<Tool> {
         val tools = mutableListOf<Tool>()
@@ -61,6 +65,9 @@ class LocalTools(
         }
         if (options.contains(LocalToolOption.UpdatePlan)) {
             tools.add(updatePlanTool)
+        }
+        if (options.contains(LocalToolOption.SubAgent)) {
+            tools.addAll(subAgentTools)
         }
         return tools
     }
