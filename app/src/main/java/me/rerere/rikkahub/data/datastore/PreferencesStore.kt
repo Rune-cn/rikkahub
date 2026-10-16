@@ -107,6 +107,7 @@ class SettingsStore internal constructor(
         val DISPLAY_SETTING = stringPreferencesKey("display_setting")
         val NETWORK_SETTING = stringPreferencesKey("network_setting")
         val TOOL_AUTO_ALLOW_SETTING = stringPreferencesKey("tool_auto_allow_setting")
+        val SUB_AGENT_SETTING = stringPreferencesKey("sub_agent_setting")
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode")
 
         // 模型选择
@@ -185,10 +186,6 @@ class SettingsStore internal constructor(
         // Uses the same DataStore singleton without starting settings flows or requiring Koin.
         internal suspend fun restoreBeforeInitialization(context: Context, settings: Settings, launchCount: Int) {
             require(!settings.init) { "Cannot restore uninitialized settings" }
-            // 启动次数和设置在同一次写入里落盘
-            context.settingsStore.edit { preferences ->
-                preferences[LAUNCH_COUNT] = launchCount
-                preferences.putSettings(settings.normalized())
             }
         }
     }

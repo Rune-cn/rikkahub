@@ -37,6 +37,7 @@ data class Settings(
     val displaySetting: DisplaySetting = DisplaySetting(),
     val networkSetting: NetworkSetting = NetworkSetting(),
     val toolAutoAllowSetting: ToolAutoAllowSetting = ToolAutoAllowSetting(),
+    val subAgentSetting: SubAgentSetting = SubAgentSetting(),
     val favoriteModels: List<Uuid> = emptyList(),
     val chatModelId: Uuid = Uuid.random(),
     val fastModelId: Uuid = Uuid.random(),
@@ -139,6 +140,14 @@ data class ToolAutoAllowSetting(
     val enabled: Boolean = false,
     // 不参与自动允许的工具（默认含 ask_user：它本质是"询问用户"，需保留交互流程）
     val disabledTools: Set<String> = setOf("ask_user"),
+)
+
+@Serializable
+data class SubAgentSetting(
+    // 子 Agent 默认使用的模型；null 表示继承主 Agent 当前模型
+    val defaultModelId: Uuid? = null,
+    // 子 Agent 默认是否继承主 Agent 的最近对话上下文
+    val defaultInheritContext: Boolean = false,
 )
 
 @Serializable

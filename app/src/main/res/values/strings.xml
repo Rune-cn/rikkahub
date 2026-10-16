@@ -1235,6 +1235,9 @@
   <string name="extensions_page_auto_retry">Auto Retry</string>
   <string name="extensions_page_auto_retry_desc">Automatically retry failed requests that match the rules below</string>
   <string name="extensions_page_retry_add_tag">Add</string>
+  <string name="extensions_page_sub_agent_section">Sub-agent</string>
+  <string name="extensions_page_sub_agent_model">Sub-agent model</string>
+  <string name="extensions_page_sub_agent_model_desc">Model used by spawned sub-agents; clear it to inherit the current model</string>
   <string name="extensions_page_retry_interval">Retry Interval</string>
   <string name="extensions_page_retry_interval_fixed">Fixed</string>
   <string name="extensions_page_retry_interval_exponential">Exponential</string>
@@ -1409,6 +1412,15 @@
   <string name="assistant_page_local_tools_update_plan_desc">Let the AI keep a step-by-step checklist for the task and show progress</string>
   <string name="assistant_page_local_tools_sub_agent_title">Sub-agents</string>
   <string name="assistant_page_local_tools_sub_agent_desc">Let the AI delegate tasks to sub-agents running in parallel, each with its own tools and model</string>
+  <string name="chat_sub_agent_running">%1$d sub-agent(s) running</string>
+  <string name="sub_agent_not_found">Sub-agent not found</string>
+  <string name="sub_agent_model_label">Model: %1$s</string>
+  <string name="sub_agent_status_running">Running</string>
+  <string name="sub_agent_status_done">Done</string>
+  <string name="sub_agent_status_failed">Failed</string>
+  <string name="sub_agent_status_cancelled">Cancelled</string>
+  <string name="sub_agent_role_user">Task</string>
+  <string name="sub_agent_role_assistant">Assistant</string>
   <string name="sub_agent_empty_result">(no output)</string>
   <string name="chat_message_tool_spawn_agent">Spawn sub-agent</string>
   <string name="chat_message_tool_spawn_agent_with_name">Spawn sub-agent: %1$s</string>
