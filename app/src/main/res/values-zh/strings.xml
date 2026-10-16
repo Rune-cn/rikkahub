@@ -1422,6 +1422,14 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="chat_message_tool_chart_display_with_title">显示图表：%1$s</string>
   <string name="assistant_page_local_tools_update_plan_title">任务计划</string>
   <string name="assistant_page_local_tools_update_plan_desc">让 AI 为任务维护分步待办清单并显示进度</string>
+  <string name="assistant_page_local_tools_sub_agent_title">子 Agent 协同</string>
+  <string name="assistant_page_local_tools_sub_agent_desc">让 AI 把任务分派给子 Agent 并行处理，子 Agent 拥有自己的工具与模型</string>
+  <string name="sub_agent_empty_result">（无输出）</string>
+  <string name="chat_message_tool_spawn_agent">启动子 Agent</string>
+  <string name="chat_message_tool_spawn_agent_with_name">启动子 Agent：%1$s</string>
+  <string name="chat_message_tool_wait_agent">等待子 Agent</string>
+  <string name="chat_message_tool_list_agents">查看子 Agent</string>
+  <string name="chat_message_tool_close_agent">关闭子 Agent</string>
   <string name="chat_message_tool_update_plan">任务计划</string>
   <string name="chat_message_tool_update_plan_progress">任务计划（%1$d/%2$d）</string>
   <string name="chat_message_tool_update_plan_explanation">原因：%1$s</string>

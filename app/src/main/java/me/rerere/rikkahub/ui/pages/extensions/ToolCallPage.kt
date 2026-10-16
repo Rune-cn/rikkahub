@@ -50,6 +50,10 @@ private val BUILT_IN_TOOL_NAMES = listOf(
     "get_time_info",
     "chart_display",
     "update_plan",
+    "spawn_agent",
+    "wait_agent",
+    "list_agents",
+    "close_agent",
 )
 
 @Composable

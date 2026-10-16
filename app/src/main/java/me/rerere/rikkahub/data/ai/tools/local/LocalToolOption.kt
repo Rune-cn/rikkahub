@@ -40,4 +40,8 @@ sealed class LocalToolOption {
     @Serializable
     @SerialName("update_plan")
     data object UpdatePlan : LocalToolOption()
+
+    @Serializable
+    @SerialName("sub_agent")
+    data object SubAgent : LocalToolOption()
 }
