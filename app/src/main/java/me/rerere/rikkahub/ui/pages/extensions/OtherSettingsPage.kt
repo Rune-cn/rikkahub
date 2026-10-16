@@ -2,12 +2,19 @@ package me.rerere.rikkahub.ui.pages.extensions
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -27,10 +34,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
+import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.RetryMode
 import me.rerere.rikkahub.data.datastore.SettingsStore
@@ -174,13 +184,11 @@ fun OtherSettingsPage() {
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
-                                RetryListField(
-                                    initial = settings.networkSetting.retryableStatusCodes.joinToString(", "),
+                                RetryChipListEditor(
+                                    items = settings.networkSetting.retryableStatusCodes.map { it.toString() },
                                     keyboardType = KeyboardType.Number,
-                                ) { input ->
-                                    val codes = input.split(",", "，")
-                                        .mapNotNull { it.trim().toIntOrNull() }
-                                        .filter { it in 100..599 }
+                                ) { list ->
+                                    val codes = list.mapNotNull { it.toIntOrNull() }.filter { it in 100..599 }
                                     coroutineScope.launch {
                                         settingsStore.update {
                                             it.copy(
@@ -206,15 +214,14 @@ fun OtherSettingsPage() {
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
-                                RetryListField(
-                                    initial = settings.networkSetting.retryKeywords.joinToString(", "),
-                                ) { input ->
-                                    val keywords = parseKeywordList(input)
+                                RetryChipListEditor(
+                                    items = settings.networkSetting.retryKeywords,
+                                ) { list ->
                                     coroutineScope.launch {
                                         settingsStore.update {
                                             it.copy(
                                                 networkSetting = it.networkSetting.copy(
-                                                    retryKeywords = keywords,
+                                                    retryKeywords = list,
                                                 )
                                             )
                                         }
@@ -235,15 +242,14 @@ fun OtherSettingsPage() {
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
-                                RetryListField(
-                                    initial = settings.networkSetting.stopRetryKeywords.joinToString(", "),
-                                ) { input ->
-                                    val keywords = parseKeywordList(input)
+                                RetryChipListEditor(
+                                    items = settings.networkSetting.stopRetryKeywords,
+                                ) { list ->
                                     coroutineScope.launch {
                                         settingsStore.update {
                                             it.copy(
                                                 networkSetting = it.networkSetting.copy(
-                                                    stopRetryKeywords = keywords,
+                                                    stopRetryKeywords = list,
                                                 )
                                             )
                                         }
@@ -258,36 +264,73 @@ fun OtherSettingsPage() {
     }
 }
 
-/** 逗号（中英文）分隔的关键字列表解析 */
-private fun parseKeywordList(input: String): List<String> =
-    input.split(",", "，")
-        .map { it.trim() }
-        .filter { it.isNotEmpty() }
-        .distinct()
-
 /**
- * 重试配置的列表编辑框（逗号分隔）
+ * 重试规则的标签列表编辑器
  *
- * 输入即保存（中间状态也写入，不影响最终结果）。
+ * 已有项显示为可删除的标签（点击标签即删除），点「添加」输入新项（回车确认）。
  */
 @Composable
-private fun RetryListField(
-    initial: String,
+private fun RetryChipListEditor(
+    items: List<String>,
     keyboardType: KeyboardType = KeyboardType.Text,
-    onValueChange: (String) -> Unit,
+    onItemsChange: (List<String>) -> Unit,
 ) {
-    var text by remember { mutableStateOf(initial) }
-    OutlinedTextField(
-        value = text,
-        onValueChange = { input ->
-            text = input
-            onValueChange(input)
-        },
+    var adding by remember { mutableStateOf(false) }
+    var input by remember { mutableStateOf("") }
+
+    FlowRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 8.dp),
-        singleLine = true,
-        textStyle = MaterialTheme.typography.bodySmall,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-    )
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        items.forEach { item ->
+            InputChip(
+                selected = false,
+                onClick = { onItemsChange(items - item) },
+                label = {
+                    Text(
+                        text = item,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                },
+                trailingIcon = {
+                    Icon(
+                        imageVector = HugeIcons.Cancel01,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                    )
+                },
+            )
+        }
+        if (adding) {
+            OutlinedTextField(
+                value = input,
+                onValueChange = { input = it },
+                modifier = Modifier.width(140.dp),
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodySmall,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = keyboardType,
+                    imeAction = ImeAction.Done,
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        val value = input.trim()
+                        if (value.isNotEmpty() && value !in items) {
+                            onItemsChange(items + value)
+                        }
+                        input = ""
+                        adding = false
+                    }
+                ),
+            )
+        } else {
+            AssistChip(
+                onClick = { adding = true },
+                label = { Text(stringResource(R.string.extensions_page_retry_add_tag)) },
+            )
+        }
+    }
 }

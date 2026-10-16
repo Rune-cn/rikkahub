@@ -22,7 +22,7 @@ if (file("google-services.json").exists()) {
 // - 预发布版（nightly）：[应用版本]-[构建 commit 短 SHA]，如 2.5.8-a3ea1cd1
 // - 正式版（stable）：纯应用版本号，如 2.5.8（构建时传 -PversionWithSha=false）
 // 应用版本号在此处统一维护；Release 名称由工作流按同一规则生成
-val appVersion = "2.5.8"
+val appVersion = "2.5.7"
 
 // versionCode 每次发版手动 +1（必须单调递增，Android 靠它判断升级）
 val appVersionCode = 192
