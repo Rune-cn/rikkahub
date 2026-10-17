@@ -87,6 +87,21 @@ private fun String.containsStatusCode(code: Int): Boolean {
  *
  * 状态码/关键字均不区分大小写。
  */
+/**
+ * 是否真正的「限流」错误（用于提示文案区分）：
+ * HTTP 429，或命中用户配置的重试关键字（如 rate limit / tpm / rpm）。
+ * 其他可重试状态码（500/502/503/504 等）不算限流，按「请求失败」提示。
+ */
+private fun Throwable.isRateLimitError(setting: NetworkSetting): Boolean {
+    if (this !is HttpException) return false
+    val msg = message?.lowercase().orEmpty()
+    if (msg.isBlank()) return false
+    // 停止重试关键字优先
+    if (setting.stopRetryKeywords.any { it.isNotBlank() && it.trim().lowercase() in msg }) return false
+    if (msg.containsStatusCode(429)) return true
+    return setting.retryKeywords.any { it.isNotBlank() && it.trim().lowercase() in msg }
+}
+
 private fun Throwable.isRetryableError(setting: NetworkSetting): Boolean {
     val msg = message?.lowercase().orEmpty()
     if (msg.isBlank()) return false
@@ -559,7 +574,8 @@ class GenerationLoop(
         // 先检查协程状态，确保取消不会被当作网络波动重新拉起。
         currentCoroutineContext().ensureActive()
         val isNetworkError = error is IOException
-        val isRetryable = error.isRetryableError(networkSetting)
+        val isRateLimit = error.isRateLimitError(networkSetting)
+        val isRetryable = error.isRetryableError(networkSetting) || isRateLimit
 
         // 不认识的错误直接抛出
         if (!isNetworkError && !isRetryable) throw error
@@ -575,10 +591,14 @@ class GenerationLoop(
             INITIAL_PROVIDER_RETRY_DELAY_MS shl retryCount
         }
         val maxRetries = if (isRetryable) maxRateLimitRetries else MAX_PROVIDER_NETWORK_RETRIES
-        val statusMessage = if (isRetryable) {
+        // 只有真正的限流错误才显示「限流」提示，其他（网络/5xx）显示实际错误
+        val statusMessage = if (isRateLimit) {
             context.getString(R.string.chat_generation_rate_limit_error)
+        } else if (error is IOException) {
+            getNetworkErrorMessage(error)
         } else {
-            getNetworkErrorMessage(error as IOException)
+            error.message?.takeIf { it.isNotBlank() }
+                ?: context.getString(R.string.chat_generation_network_disconnected)
         }
         processingStatus.value = context.getString(
             if (isRetryable) {

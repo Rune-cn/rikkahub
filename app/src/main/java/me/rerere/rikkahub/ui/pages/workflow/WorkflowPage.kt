@@ -8,6 +8,17 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.Surface
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -69,6 +80,7 @@ fun WorkflowPage() {
 
     var editing by remember { mutableStateOf<Workflow?>(null) }
     var running by remember { mutableStateOf<Workflow?>(null) }
+    var expandedId by remember { mutableStateOf<String?>(null) }
 
     fun save(workflow: Workflow) {
         scope.launch {
@@ -118,7 +130,7 @@ fun WorkflowPage() {
                     }
                     workflows.forEach { workflow ->
                         item(
-                            onClick = { editing = workflow },
+                            onClick = { expandedId = if (expandedId == workflow.id) null else workflow.id },
                             headlineContent = { Text(workflow.name.ifBlank { stringResource(R.string.workflow_untitled) }) },
                             supportingContent = {
                                 Text(
@@ -140,6 +152,15 @@ fun WorkflowPage() {
                                 }
                             },
                         )
+                        // 展开：树形流程图
+                        if (expandedId == workflow.id) {
+                            item {
+                                WorkflowFlowView(
+                                    steps = workflow.steps,
+                                    modifier = Modifier.padding(start = 32.dp, end = 8.dp),
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -406,46 +427,186 @@ private fun WorkflowRunSheet(
                 Text(stringResource(R.string.workflow_run_start))
             }
 
-            states.sortedBy { it.stepIndex }.forEach { state ->
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text(
-                            text = state.stepName,
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                        Text(
-                            text = when (state.status) {
-                                WorkflowStepStatus.PENDING -> stringResource(R.string.workflow_status_pending)
-                                WorkflowStepStatus.RUNNING -> stringResource(R.string.workflow_status_running)
-                                WorkflowStepStatus.DONE -> stringResource(R.string.workflow_status_done)
-                                WorkflowStepStatus.FAILED -> stringResource(R.string.workflow_status_failed)
-                            },
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (state.status == WorkflowStepStatus.FAILED) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            },
-                        )
-                    }
-                    state.output?.takeIf { it.isNotBlank() }?.let { output ->
-                        Text(
-                            text = output,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    state.error?.let { error ->
-                        Text(
-                            text = error,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
+            // 树形流程图：每个步骤一个节点，实时显示状态
+            if (states.isNotEmpty() || running) {
+                WorkflowFlowView(
+                    steps = workflow.steps,
+                    statusByIndex = states.associate { it.stepIndex to it.status },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            // 最近一步的输出（展开显示完整结果）
+            states.sortedBy { it.stepIndex }.lastOrNull()?.output?.takeIf { it.isNotBlank() }?.let { output ->
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = stringResource(R.string.workflow_run_output),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = output,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+            states.firstOrNull { it.status == WorkflowStepStatus.FAILED }?.error?.let { error ->
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 工作流树形流程图：每个步骤一个节点卡片，竖向连接线，运行时可显示实时状态
+ */
+@Composable
+private fun WorkflowFlowView(
+    steps: List<WorkflowStep>,
+    statusByIndex: Map<Int, WorkflowStepStatus> = emptyMap(),
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(0.dp)) {
+        steps.forEachIndexed { index, step ->
+            Row(verticalAlignment = Alignment.Top) {
+                // 左侧：节点状态点 + 连接线
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    FlowNodeIndicator(
+                        status = statusByIndex[index] ?: WorkflowStepStatus.PENDING,
+                        modifier = Modifier.width(24.dp),
+                    )
+                    if (index < steps.size - 1) {
+                        Box(
+                            modifier = Modifier
+                                .width(2.dp)
+                                .height(24.dp)
+                                .background(MaterialTheme.colorScheme.outlineVariant)
                         )
                     }
                 }
+                Spacer(modifier = Modifier.width(8.dp))
+                // 右侧：节点卡片
+                WorkflowFlowNodeCard(
+                    index = index,
+                    step = step,
+                    status = statusByIndex[index] ?: WorkflowStepStatus.PENDING,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(bottom = 8.dp),
+                )
             }
+        }
+    }
+}
+
+/** 流程节点状态指示：灰点（待运行）/ 环形进度（运行中）/ 对勾（完成）/ 红叉（失败） */
+@Composable
+private fun FlowNodeIndicator(status: WorkflowStepStatus, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.height(24.dp), contentAlignment = Alignment.Center) {
+        when (status) {
+            WorkflowStepStatus.PENDING -> Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.outlineVariant)
+            )
+
+            WorkflowStepStatus.RUNNING -> CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                strokeWidth = 2.dp,
+            )
+
+            WorkflowStepStatus.DONE -> Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "✓",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                )
+            }
+
+            WorkflowStepStatus.FAILED -> Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.error),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "✕",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onError,
+                )
+            }
+        }
+    }
+}
+
+/** 单个流程节点卡片：序号 + 名称 + 类型徽标 + 提示词摘要 */
+@Composable
+private fun WorkflowFlowNodeCard(
+    index: Int,
+    step: WorkflowStep,
+    status: WorkflowStepStatus,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        color = when (status) {
+            WorkflowStepStatus.RUNNING -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+            WorkflowStepStatus.FAILED -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f)
+            else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        },
+        tonalElevation = 1.dp,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.workflow_step_index, index + 1),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = step.name.ifBlank { stringResource(R.string.workflow_untitled) },
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                // 类型徽标
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                ) {
+                    Text(
+                        text = if (step.type == WorkflowStepType.AGENT) {
+                            stringResource(R.string.workflow_step_type_agent)
+                        } else {
+                            stringResource(R.string.workflow_step_type_prompt)
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
+                    )
+                }
+            }
+            Text(
+                text = step.prompt.ifBlank { "{{input}}" },
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

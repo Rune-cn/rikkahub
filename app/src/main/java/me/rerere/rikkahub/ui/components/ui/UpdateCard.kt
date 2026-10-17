@@ -110,6 +110,13 @@ fun UpdateCard(vm: ChatVM) {
                             )
                         }
                     }
+                    if (info.prerelease) {
+                        Text(
+                            text = stringResource(R.string.update_card_prerelease),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
                     MarkdownBlock(
                         content = info.changelog,
                         style = MaterialTheme.typography.bodySmall,
@@ -140,8 +147,15 @@ fun UpdateCard(vm: ChatVM) {
                         style = MaterialTheme.typography.headlineMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
+                    if (info.prerelease) {
+                        Text(
+                            text = stringResource(R.string.update_card_prerelease),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
                     Text(
-                        text = Instant.parse(info.publishedAt).toJavaInstant().toLocalDateTime(),
+                        text = formatUpdateTime(info.publishedAt),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -184,3 +198,12 @@ fun UpdateCard(vm: ChatVM) {
         }
     }
 }
+
+
+/** 友好化显示 Release 发布时间（如 2026-10-17 10:30） */
+private fun formatUpdateTime(publishedAt: String): String =
+    runCatching {
+        java.time.Instant.parse(publishedAt)
+            .atZone(java.time.ZoneId.systemDefault())
+            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+    }.getOrDefault(publishedAt)
