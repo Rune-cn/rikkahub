@@ -194,7 +194,7 @@ fun WorkflowPage() {
                                         if (dragX < -60f) deleteTarget = workflow
                                         dragX = 0f
                                     },
-                                    onDrag = { change, amount ->
+                                    onHorizontalDrag = { change, amount ->
                                         change.consume()
                                         dragX = (dragX + amount.x).coerceIn(-220f, 0f)
                                     },
