@@ -863,6 +863,7 @@
   <string name="setting_page_dynamic_color_desc">Generate the app theme colors dynamically from your wallpaper</string>
   <string name="setting_page_extensions">Extensions</string>
   <string name="setting_page_extensions_desc">Manage prompt injections, skills and more</string>
+  <string name="setting_search_suggestion">Try different keywords, e.g. bubble, API key, port</string>
   <string name="setting_search_placeholder">Search settings</string>
   <string name="setting_search_results">Results</string>
   <string name="setting_search_no_result">No matching settings</string>

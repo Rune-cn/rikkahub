@@ -834,6 +834,7 @@
   <string name="setting_page_dynamic_color_desc">是否基于壁纸动态生成 app 主题配色</string>
   <string name="setting_page_extensions">扩展管理</string>
   <string name="setting_page_extensions_desc">管理提示词注入、技能等扩展</string>
+  <string name="setting_search_suggestion">换个关键词试试，比如「气泡」「密钥」「端口」</string>
   <string name="setting_search_placeholder">搜索设置</string>
   <string name="setting_search_results">搜索结果</string>
   <string name="setting_search_no_result">没有匹配的设置项</string>
