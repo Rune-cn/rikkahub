@@ -1481,6 +1481,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workflow_steps">步骤</string>
   <string name="workflow_steps_count">%1$d 个步骤</string>
   <string name="workflow_step_index">步骤 %1$d</string>
+  <string name="workflow_edit_node">编辑节点</string>
+  <string name="workflow_step_condition">条件</string>
   <string name="workflow_step_name">步骤名称</string>
   <string name="workflow_step_prompt">提示词</string>
   <string name="workflow_step_prompt_hint">用 {{input}} 表示初始输入，{{prev}} 表示上一步的输出</string>

@@ -14,6 +14,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -337,7 +341,10 @@ fun WorkflowCanvasPage(
     nodes: List<WorkflowNode>,
     onBack: () -> Unit,
     onNodeMove: ((nodeId: String, x: Float, y: Float) -> Unit)? = null,
+    onNodeUpdate: ((WorkflowNode) -> Unit)? = null,
+    onNodeDelete: ((nodeId: String) -> Unit)? = null,
 ) {
+    var editingNode by remember { mutableStateOf<WorkflowNode?>(null) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -352,8 +359,91 @@ fun WorkflowCanvasPage(
             nodes = nodes,
             modifier = Modifier.padding(padding),
             onNodeMove = onNodeMove,
+            onNodeClick = { editingNode = it },
         )
     }
+    editingNode?.let { node ->
+        NodeEditDialog(
+            node = node,
+            onSave = { updated ->
+                onNodeUpdate?.invoke(updated)
+                editingNode = null
+            },
+            onDelete = {
+                onNodeDelete?.invoke(node.id)
+                editingNode = null
+            },
+            onDismiss = { editingNode = null },
+        )
+    }
+}
+
+/** 节点编辑对话框（名称 / 提示词 / 条件，可删除） */
+@Composable
+private fun NodeEditDialog(
+    node: WorkflowNode,
+    onSave: (WorkflowNode) -> Unit,
+    onDelete: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var name by remember { mutableStateOf(node.name) }
+    var prompt by remember { mutableStateOf(node.prompt) }
+    var condition by remember { mutableStateOf(node.condition) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.workflow_edit_node)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(stringResource(R.string.workflow_step_name)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                if (node.type == WorkflowNodeType.IF_ELSE) {
+                    OutlinedTextField(
+                        value = condition,
+                        onValueChange = { condition = it },
+                        label = { Text(stringResource(R.string.workflow_step_condition)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2,
+                    )
+                } else {
+                    OutlinedTextField(
+                        value = prompt,
+                        onValueChange = { prompt = it },
+                        label = { Text(stringResource(R.string.workflow_step_prompt)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSave(node.copy(name = name, prompt = prompt, condition = condition))
+                },
+            ) {
+                Text(stringResource(R.string.workflow_save))
+            }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onDelete) {
+                    Text(
+                        text = stringResource(R.string.workflow_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.workflow_cancel))
+                }
+            }
+        },
+    )
 }
 
 /** 画布路由：按 workflowId 读取工作流并展示；支持拖动节点后保存坐标 */
@@ -369,6 +459,26 @@ fun WorkflowCanvasRoute(workflowId: String) {
             ?: stringResource(R.string.workflow_untitled),
         nodes = workflow?.nodes ?: emptyList(),
         onBack = { navController.popBackStack() },
+        onNodeUpdate = { updated ->
+            workflow?.let { target ->
+                val newNodes = target.nodes.map { it.updateNodeById(updated) }
+                scope.launch {
+                    settingsStore.update { s ->
+                        s.copy(workflows = s.workflows.map { if (it.id == workflowId) target.copy(nodes = newNodes) else it })
+                    }
+                }
+            }
+        },
+        onNodeDelete = { nodeId ->
+            workflow?.let { target ->
+                val newNodes = target.nodes.mapNotNull { it.removeNodeById(nodeId) }
+                scope.launch {
+                    settingsStore.update { s ->
+                        s.copy(workflows = s.workflows.map { if (it.id == workflowId) target.copy(nodes = newNodes) else it })
+                    }
+                }
+            }
+        },
         onNodeMove = { nodeId, x, y ->
             workflow?.let { target ->
                 val updated = target.copy(
@@ -393,5 +503,27 @@ private fun WorkflowNode.updateNodePosition(nodeId: String, x: Float, y: Float):
         trueBranch = trueBranch?.updateNodePosition(nodeId, x, y),
         falseBranch = falseBranch?.updateNodePosition(nodeId, x, y),
         children = children.map { it.updateNodePosition(nodeId, x, y) },
+    )
+}
+
+/** 递归替换节点（含分支与并行子节点） */
+private fun WorkflowNode.updateNodeById(updated: WorkflowNode): WorkflowNode =
+    if (id == updated.id) {
+        updated
+    } else {
+        copy(
+            trueBranch = trueBranch?.updateNodeById(updated),
+            falseBranch = falseBranch?.updateNodeById(updated),
+            children = children.map { it.updateNodeById(updated) },
+        )
+    }
+
+/** 递归删除节点（返回 null 表示删除自身） */
+private fun WorkflowNode.removeNodeById(nodeId: String): WorkflowNode? {
+    if (id == nodeId) return null
+    return copy(
+        trueBranch = trueBranch?.removeNodeById(nodeId),
+        falseBranch = falseBranch?.removeNodeById(nodeId),
+        children = children.mapNotNull { it.removeNodeById(nodeId) },
     )
 }
