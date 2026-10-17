@@ -33,6 +33,7 @@ import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
