@@ -58,6 +58,8 @@ import me.rerere.rikkahub.data.ai.workflow.WorkflowRunner
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.datastore.findModelById
 import me.rerere.rikkahub.data.model.Workflow
+import me.rerere.rikkahub.data.model.WorkflowNodeType
+import me.rerere.rikkahub.data.model.WorkflowNode
 import me.rerere.rikkahub.data.model.WorkflowRunState
 import me.rerere.rikkahub.data.model.WorkflowStep
 import me.rerere.rikkahub.data.model.WorkflowStepStatus
@@ -156,7 +158,7 @@ fun WorkflowPage() {
                         if (expandedId == workflow.id) {
                             item {
                                 WorkflowFlowView(
-                                    steps = workflow.steps,
+                                    nodes = workflow.displayNodes(),
                                     modifier = Modifier.padding(start = 32.dp, end = 8.dp),
                                 )
                             }
@@ -246,24 +248,24 @@ private fun WorkflowEditSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            draft.steps.forEachIndexed { index, step ->
-                WorkflowStepEditor(
+            draft.nodes.forEachIndexed { index, node ->
+                WorkflowNodeEditor(
                     index = index,
-                    step = step,
+                    node = node,
                     providers = providers,
                     onChange = { updated ->
                         draft = draft.copy(
-                            steps = draft.steps.map { if (it.id == updated.id) updated else it }
+                            nodes = draft.nodes.map { if (it.id == updated.id) updated else it }
                         )
                     },
                     onRemove = {
-                        draft = draft.copy(steps = draft.steps.filterNot { it.id == step.id })
+                        draft = draft.copy(nodes = draft.nodes.filterNot { it.id == node.id })
                     },
                 )
             }
 
             TextButton(
-                onClick = { draft = draft.copy(steps = draft.steps + WorkflowStep()) },
+                onClick = { draft = draft.copy(nodes = draft.nodes + WorkflowNode()) },
             ) {
                 Icon(HugeIcons.PlusSign, contentDescription = null)
                 Text(
@@ -278,7 +280,7 @@ private fun WorkflowEditSheet(
                 }
                 Button(
                     onClick = { onSave(draft) },
-                    enabled = draft.steps.isNotEmpty(),
+                    enabled = draft.nodes.isNotEmpty(),
                 ) {
                     Text(stringResource(R.string.workflow_save))
                 }
@@ -287,13 +289,13 @@ private fun WorkflowEditSheet(
     }
 }
 
-/** 单个步骤编辑 */
+/** 单个节点编辑（支持模型/Agent/条件分支/并行） */
 @Composable
-private fun WorkflowStepEditor(
+private fun WorkflowNodeEditor(
     index: Int,
-    step: WorkflowStep,
+    node: WorkflowNode,
     providers: List<me.rerere.ai.provider.ProviderSetting>,
-    onChange: (WorkflowStep) -> Unit,
+    onChange: (WorkflowNode) -> Unit,
     onRemove: () -> Unit,
 ) {
     Column(
@@ -313,58 +315,122 @@ private fun WorkflowStepEditor(
                 Icon(HugeIcons.Cancel01, contentDescription = null)
             }
         }
-        // 步骤类型
-        val types = listOf(WorkflowStepType.PROMPT, WorkflowStepType.AGENT)
+        // 节点类型（对齐业界模式：模型 / Agent / 条件分支 / 并行）
+        val types = listOf(
+            WorkflowNodeType.PROMPT,
+            WorkflowNodeType.AGENT,
+            WorkflowNodeType.IF_ELSE,
+            WorkflowNodeType.PARALLEL,
+        )
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             types.forEachIndexed { i, type ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(i, types.size),
-                    selected = step.type == type,
-                    onClick = { onChange(step.copy(type = type)) },
+                    selected = node.type == type,
+                    onClick = { onChange(node.copy(type = type)) },
                 ) {
                     Text(
-                        when (type) {
-                            WorkflowStepType.PROMPT -> stringResource(R.string.workflow_step_type_prompt)
-                            WorkflowStepType.AGENT -> stringResource(R.string.workflow_step_type_agent)
-                        }
+                        text = when (type) {
+                            WorkflowNodeType.PROMPT -> stringResource(R.string.workflow_step_type_prompt)
+                            WorkflowNodeType.AGENT -> stringResource(R.string.workflow_step_type_agent)
+                            WorkflowNodeType.IF_ELSE -> stringResource(R.string.workflow_node_type_if_else)
+                            WorkflowNodeType.PARALLEL -> stringResource(R.string.workflow_node_type_parallel)
+                        },
+                        style = MaterialTheme.typography.labelSmall,
                     )
                 }
             }
         }
         OutlinedTextField(
-            value = step.name,
-            onValueChange = { onChange(step.copy(name = it)) },
+            value = node.name,
+            onValueChange = { onChange(node.copy(name = it)) },
+            label = { Text(stringResource(R.string.workflow_step_name)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+        )
+        if (node.type == WorkflowNodeType.IF_ELSE) {
+            OutlinedTextField(
+                value = node.condition,
+                onValueChange = { onChange(node.copy(condition = it)) },
+                label = { Text(stringResource(R.string.workflow_node_condition)) },
+                supportingText = { Text(stringResource(R.string.workflow_node_condition_hint)) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+            )
+            WorkflowBranchEditor(
+                label = stringResource(R.string.workflow_node_true_branch),
+                node = node.trueBranch,
+                onNodeChange = { branch -> onChange(node.copy(trueBranch = branch)) },
+            )
+            WorkflowBranchEditor(
+                label = stringResource(R.string.workflow_node_false_branch),
+                node = node.falseBranch,
+                onNodeChange = { branch -> onChange(node.copy(falseBranch = branch)) },
+            )
+        }
+        if (node.type != WorkflowNodeType.IF_ELSE && node.type != WorkflowNodeType.PARALLEL) {
+            OutlinedTextField(
+                value = node.prompt,
+                onValueChange = { onChange(node.copy(prompt = it)) },
+                label = { Text(stringResource(R.string.workflow_step_prompt)) },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 2,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.workflow_step_model),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                ModelSelector(
+                    modelId = node.modelId,
+                    providers = providers,
+                    type = me.rerere.ai.provider.ModelType.CHAT,
+                    allowClear = true,
+                    onSelect = { model ->
+                        val selectedId = model.id.takeIf { id ->
+                            providers.any { p -> p.models.any { m -> m.id == id } }
+                        }
+                        onChange(node.copy(modelId = selectedId))
+                    },
+                )
+            }
+        }
+    }
+}
+
+/** 条件分支的单个子节点编辑（名称 + 提示词） */
+@Composable
+private fun WorkflowBranchEditor(
+    label: String,
+    node: WorkflowNode?,
+    onNodeChange: (WorkflowNode) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        OutlinedTextField(
+            value = node?.name.orEmpty(),
+            onValueChange = { onNodeChange((node ?: WorkflowNode()).copy(name = it)) },
             label = { Text(stringResource(R.string.workflow_step_name)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
         )
         OutlinedTextField(
-            value = step.prompt,
-            onValueChange = { onChange(step.copy(prompt = it)) },
+            value = node?.prompt.orEmpty(),
+            onValueChange = { onNodeChange((node ?: WorkflowNode()).copy(prompt = it)) },
             label = { Text(stringResource(R.string.workflow_step_prompt)) },
             modifier = Modifier.fillMaxWidth(),
-            minLines = 3,
+            minLines = 2,
         )
-        // 模型（可选）
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(R.string.workflow_step_model),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            ModelSelector(
-                modelId = step.modelId,
-                providers = providers,
-                type = me.rerere.ai.provider.ModelType.CHAT,
-                allowClear = true,
-                onSelect = { model ->
-                    val selectedId = model.id.takeIf { id ->
-                        providers.any { p -> p.models.any { m -> m.id == id } }
-                    }
-                    onChange(step.copy(modelId = selectedId))
-                },
-            )
-        }
     }
 }
 
@@ -430,8 +496,10 @@ private fun WorkflowRunSheet(
             // 树形流程图：每个步骤一个节点，实时显示状态
             if (states.isNotEmpty() || running) {
                 WorkflowFlowView(
-                    steps = workflow.steps,
-                    statusByIndex = states.associate { it.stepIndex to it.status },
+                    nodes = workflow.displayNodes(),
+                    statusByNodeId = states.mapNotNull { state ->
+                        state.nodeId?.let { it to state.status }
+                    }.toMap(),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -460,25 +528,37 @@ private fun WorkflowRunSheet(
     }
 }
 
+/** 旧版步骤列表 → 节点列表（新版 nodes 优先，旧版 steps 自动转换） */
+private fun Workflow.displayNodes(): List<WorkflowNode> =
+    if (nodes.isNotEmpty()) nodes
+    else steps.map { step ->
+        WorkflowNode(
+            id = step.id,
+            name = step.name,
+            type = if (step.type == WorkflowStepType.AGENT) WorkflowNodeType.AGENT else WorkflowNodeType.PROMPT,
+            modelId = step.modelId,
+            prompt = step.prompt,
+        )
+    }
+
 /**
- * 工作流树形流程图：每个步骤一个节点卡片，竖向连接线，运行时可显示实时状态
+ * 工作流树形流程图：节点卡片 + 竖向连接线；条件分支（✓/✗）与并行分支递归展开
  */
 @Composable
 private fun WorkflowFlowView(
-    steps: List<WorkflowStep>,
-    statusByIndex: Map<Int, WorkflowStepStatus> = emptyMap(),
+    nodes: List<WorkflowNode>,
+    statusByNodeId: Map<String, WorkflowStepStatus> = emptyMap(),
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        steps.forEachIndexed { index, step ->
+    Column(modifier = modifier) {
+        nodes.forEachIndexed { index, node ->
             Row(verticalAlignment = Alignment.Top) {
-                // 左侧：节点状态点 + 连接线
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     FlowNodeIndicator(
-                        status = statusByIndex[index] ?: WorkflowStepStatus.PENDING,
+                        status = statusByNodeId[node.id] ?: WorkflowStepStatus.PENDING,
                         modifier = Modifier.width(24.dp),
                     )
-                    if (index < steps.size - 1) {
+                    if (index < nodes.size - 1) {
                         Box(
                             modifier = Modifier
                                 .width(2.dp)
@@ -488,18 +568,62 @@ private fun WorkflowFlowView(
                     }
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                // 右侧：节点卡片
-                WorkflowFlowNodeCard(
-                    index = index,
-                    step = step,
-                    status = statusByIndex[index] ?: WorkflowStepStatus.PENDING,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(bottom = 8.dp),
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    WorkflowFlowNodeCard(
+                        node = node,
+                        status = statusByNodeId[node.id] ?: WorkflowStepStatus.PENDING,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                    if (node.type == WorkflowNodeType.IF_ELSE) {
+                        node.trueBranch?.let { branch ->
+                            FlowBranchLabel(
+                                text = stringResource(R.string.workflow_node_true_branch),
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            WorkflowFlowView(
+                                nodes = listOf(branch),
+                                statusByNodeId = statusByNodeId,
+                                modifier = Modifier.padding(start = 16.dp),
+                            )
+                        }
+                        node.falseBranch?.let { branch ->
+                            FlowBranchLabel(
+                                text = stringResource(R.string.workflow_node_false_branch),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            WorkflowFlowView(
+                                nodes = listOf(branch),
+                                statusByNodeId = statusByNodeId,
+                                modifier = Modifier.padding(start = 16.dp),
+                            )
+                        }
+                    }
+                    if (node.type == WorkflowNodeType.PARALLEL && node.children.isNotEmpty()) {
+                        WorkflowFlowView(
+                            nodes = node.children,
+                            statusByNodeId = statusByNodeId,
+                            modifier = Modifier.padding(start = 16.dp),
+                        )
+                    }
+                }
             }
         }
     }
+}
+
+/** 分支标签（✓ 满足 / ✗ 不满足） */
+@Composable
+private fun FlowBranchLabel(
+    text: String,
+    color: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = color,
+        modifier = modifier.padding(vertical = 2.dp),
+    )
 }
 
 /** 流程节点状态指示：灰点（待运行）/ 环形进度（运行中）/ 对勾（完成）/ 红叉（失败） */
@@ -550,11 +674,10 @@ private fun FlowNodeIndicator(status: WorkflowStepStatus, modifier: Modifier = M
     }
 }
 
-/** 单个流程节点卡片：序号 + 名称 + 类型徽标 + 提示词摘要 */
+/** 单个流程节点卡片：类型徽标 + 名称 + 内容摘要 */
 @Composable
 private fun WorkflowFlowNodeCard(
-    index: Int,
-    step: WorkflowStep,
+    node: WorkflowNode,
     status: WorkflowStepStatus,
     modifier: Modifier = Modifier,
 ) {
@@ -576,37 +699,60 @@ private fun WorkflowFlowNodeCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = stringResource(R.string.workflow_step_index, index + 1),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    text = step.name.ifBlank { stringResource(R.string.workflow_untitled) },
-                    style = MaterialTheme.typography.labelLarge,
-                )
-                // 类型徽标
                 Surface(
                     shape = RoundedCornerShape(6.dp),
                     color = MaterialTheme.colorScheme.secondaryContainer,
                 ) {
                     Text(
-                        text = if (step.type == WorkflowStepType.AGENT) {
-                            stringResource(R.string.workflow_step_type_agent)
-                        } else {
-                            stringResource(R.string.workflow_step_type_prompt)
+                        text = when (node.type) {
+                            WorkflowNodeType.PROMPT -> stringResource(R.string.workflow_step_type_prompt)
+                            WorkflowNodeType.AGENT -> stringResource(R.string.workflow_step_type_agent)
+                            WorkflowNodeType.IF_ELSE -> stringResource(R.string.workflow_node_type_if_else)
+                            WorkflowNodeType.PARALLEL -> stringResource(R.string.workflow_node_type_parallel)
                         },
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
                     )
                 }
+                Text(
+                    text = node.name.ifBlank {
+                        when (node.type) {
+                            WorkflowNodeType.IF_ELSE -> stringResource(R.string.workflow_node_type_if_else)
+                            WorkflowNodeType.PARALLEL -> stringResource(R.string.workflow_node_type_parallel)
+                            else -> stringResource(R.string.workflow_untitled)
+                        }
+                    },
+                    style = MaterialTheme.typography.labelLarge,
+                )
             }
-            Text(
-                text = step.prompt.ifBlank { "{{input}}" },
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            when (node.type) {
+                WorkflowNodeType.IF_ELSE -> {
+                    if (node.condition.isNotBlank()) {
+                        Text(
+                            text = node.condition,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                WorkflowNodeType.PARALLEL -> {
+                    Text(
+                        text = stringResource(R.string.workflow_parallel_count, node.children.size),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                else -> {
+                    Text(
+                        text = node.prompt.ifBlank { "{{input}}" },
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
     }
 }
