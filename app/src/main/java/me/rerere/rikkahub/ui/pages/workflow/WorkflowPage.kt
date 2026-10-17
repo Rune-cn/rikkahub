@@ -114,12 +114,13 @@ fun WorkflowPage() {
 
     /** 复制工作流（新 id + 副本后缀） */
     fun duplicateWorkflow(workflow: Workflow) {
+        val suffix = context.getString(R.string.workflow_duplicate_suffix)
         val copy = workflow.copy(
             id = java.util.UUID.randomUUID().toString(),
             name = if (workflow.name.isBlank()) {
-                stringResource(R.string.workflow_untitled)
+                context.getString(R.string.workflow_untitled)
             } else {
-                workflow.name + stringResource(R.string.workflow_duplicate_suffix)
+                workflow.name + suffix
             },
         )
         save(copy)
@@ -169,74 +170,76 @@ fun WorkflowPage() {
                     }
                 }
             }
-                    workflows.forEach { workflow ->
-                        item(key = workflow.id) {
-                            val dismissState = rememberSwipeToDismissBoxState(
-                                confirmValueChange = { value ->
-                                    if (value == SwipeToDismissBoxValue.EndToStart) {
-                                        deleteTarget = workflow
-                                    }
-                                    false // 阻止真正消失，列表项复位
-                                },
-                            )
-                            SwipeToDismissBox(
-                                state = dismissState,
-                                enableDismissFromStartToEnd = false,
-                                enableDismissFromEndToStart = true,
-                                backgroundContent = {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(MaterialTheme.colorScheme.errorContainer)
-                                            .padding(horizontal = 20.dp),
-                                        contentAlignment = Alignment.CenterEnd,
-                                    ) {
-                                        Icon(
-                                            imageVector = HugeIcons.Cancel01,
-                                            contentDescription = stringResource(R.string.workflow_delete_confirm),
-                                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                                        )
-                                    }
-                                },
+            workflows.forEach { workflow ->
+                item(key = workflow.id) {
+                    val dismissState = rememberSwipeToDismissBoxState(
+                        confirmValueChange = { value ->
+                            if (value == SwipeToDismissBoxValue.EndToStart) {
+                                deleteTarget = workflow
+                            }
+                            false // 阻止真正消失，列表项复位
+                        },
+                    )
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        enableDismissFromStartToEnd = false,
+                        enableDismissFromEndToStart = true,
+                        backgroundContent = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.errorContainer)
+                                    .padding(horizontal = 20.dp),
+                                contentAlignment = Alignment.CenterEnd,
                             ) {
-                                ListItem(
-                                    onClick = { navController.navigate(Screen.WorkflowCanvas(workflow.id)) },
-                                    headlineContent = { Text(workflow.name.ifBlank { stringResource(R.string.workflow_untitled) }) },
-                                    supportingContent = {
-                                        Text(
-                                            text = workflow.description.ifBlank {
-                                                stringResource(R.string.workflow_steps_count, workflow.steps.size)
-                                            },
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                    },
-                                    trailingContent = {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            IconButton(onClick = { editing = workflow }) {
-                                                Icon(
-                                                    imageVector = HugeIcons.Settings03,
-                                                    contentDescription = stringResource(R.string.workflow_edit),
-                                                )
-                                            }
-                                            Switch(
-                                                checked = workflow.enabled,
-                                                onCheckedChange = { enabled ->
-                                                    save(workflow.copy(enabled = enabled))
-                                                },
-                                            )
-                                            TextButton(
-                                                onClick = { running = workflow },
-                                                enabled = workflow.enabled,
-                                            ) {
-                                                Text(stringResource(R.string.workflow_run))
-                                            }
-                                        }
-                                    },
+                                Icon(
+                                    imageVector = HugeIcons.Cancel01,
+                                    contentDescription = stringResource(R.string.workflow_delete_confirm),
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
                                 )
                             }
-                        }
+                        },
+                    ) {
+                        ListItem(
+                            onClick = { navController.navigate(Screen.WorkflowCanvas(workflow.id)) },
+                            headlineContent = {
+                                Text(workflow.name.ifBlank { stringResource(R.string.workflow_untitled) })
+                            },
+                            supportingContent = {
+                                Text(
+                                    text = workflow.description.ifBlank {
+                                        stringResource(R.string.workflow_steps_count, workflow.steps.size)
+                                    },
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
+                            trailingContent = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(onClick = { editing = workflow }) {
+                                        Icon(
+                                            imageVector = HugeIcons.Settings03,
+                                            contentDescription = stringResource(R.string.workflow_edit),
+                                        )
+                                    }
+                                    Switch(
+                                        checked = workflow.enabled,
+                                        onCheckedChange = { enabled ->
+                                            save(workflow.copy(enabled = enabled))
+                                        },
+                                    )
+                                    TextButton(
+                                        onClick = { running = workflow },
+                                        enabled = workflow.enabled,
+                                    ) {
+                                        Text(stringResource(R.string.workflow_run))
+                                    }
+                                }
+                            },
+                        )
                     }
+                }
+            }
             item {
                 Button(
                     onClick = { editing = Workflow() },
