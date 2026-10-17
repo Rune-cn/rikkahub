@@ -44,6 +44,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -83,6 +84,7 @@ fun WorkflowPage() {
     val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
     val workflows = settings.workflows
     val navController = LocalNavController.current
+    val context = LocalContext.current
 
     var editing by remember { mutableStateOf<Workflow?>(null) }
     var running by remember { mutableStateOf<Workflow?>(null) }
@@ -101,6 +103,37 @@ fun WorkflowPage() {
                 )
             }
         }
+    }
+
+    /** 创建示例工作流（含条件分支），方便立即查看画布效果 */
+    fun createSample() {
+        val sample = Workflow(
+            name = context.getString(R.string.workflow_sample_name),
+            description = context.getString(R.string.workflow_sample_desc),
+            nodes = listOf(
+                WorkflowNode(
+                    name = context.getString(R.string.workflow_sample_step_split),
+                    type = WorkflowNodeType.PROMPT,
+                    prompt = "把这个问题拆成 3 个子问题：{{input}}",
+                ),
+                WorkflowNode(
+                    name = context.getString(R.string.workflow_sample_step_check),
+                    type = WorkflowNodeType.IF_ELSE,
+                    condition = "{{prev}} contains \"代码\"",
+                    trueBranch = WorkflowNode(
+                        name = context.getString(R.string.workflow_sample_step_code),
+                        type = WorkflowNodeType.AGENT,
+                        prompt = "根据调研写实现：{{prev}}",
+                    ),
+                    falseBranch = WorkflowNode(
+                        name = context.getString(R.string.workflow_sample_step_summary),
+                        type = WorkflowNodeType.PROMPT,
+                        prompt = "总结成报告：{{prev}}",
+                    ),
+                ),
+            ),
+        )
+        save(sample)
     }
 
     fun remove(id: String) {
@@ -131,7 +164,12 @@ fun WorkflowPage() {
                     if (workflows.isEmpty()) {
                         item(
                             headlineContent = { Text(stringResource(R.string.workflow_no_workflows)) },
-                            supportingContent = { Text(stringResource(R.string.workflow_entry_desc)) },
+                            supportingContent = { Text(stringResource(R.string.workflow_sample_hint)) },
+                            trailingContent = {
+                                TextButton(onClick = { createSample() }) {
+                                    Text(stringResource(R.string.workflow_create_sample))
+                                }
+                            },
                         )
                     }
                     workflows.forEach { workflow ->

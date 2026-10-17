@@ -1464,6 +1464,14 @@
   <string name="workflow_page_title">Workflows</string>
   <string name="workflow_entry_desc">Chain multiple steps into a reusable pipeline you can run with one tap</string>
   <string name="workflow_new">New workflow</string>
+  <string name="workflow_sample_hint">No workflows yet — tap Sample to try one instantly</string>
+  <string name="workflow_create_sample">Sample</string>
+  <string name="workflow_sample_name">Sample: Deep Research</string>
+  <string name="workflow_sample_desc">Split → branch → summarize</string>
+  <string name="workflow_sample_step_split">Split question</string>
+  <string name="workflow_sample_step_check">Involves code?</string>
+  <string name="workflow_sample_step_code">Write code</string>
+  <string name="workflow_sample_step_summary">Summarize</string>
   <string name="workflow_no_workflows">No workflows yet</string>
   <string name="workflow_untitled">Untitled workflow</string>
   <string name="workflow_name">Name</string>
