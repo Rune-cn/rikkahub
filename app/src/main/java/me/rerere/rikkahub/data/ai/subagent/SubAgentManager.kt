@@ -68,10 +68,20 @@ class SubAgentManager(
     @Volatile
     private var mainContext: List<UIMessage> = emptyList()
 
-    /** 由 ChatService 在开始生成前调用，同步主对话上下文 */
-    fun updateMainContext(messages: List<UIMessage>) {
+    /** 当前主会话 id（由 ChatService 同步），用于把子 Agent 输出流式写入主对话 */
+    @Volatile
+    var activeMainConversationId: Uuid? = null
+        private set
+
+    /** 由 ChatService 在开始生成前调用，同步主对话上下文与所在会话 */
+    fun updateMainContext(messages: List<UIMessage>, conversationId: Uuid) {
         mainContext = messages
+        activeMainConversationId = conversationId
     }
+
+    /** 子 Agent 当前流式输出（taskName → 最新文本），供 ChatService 写入主对话 */
+    private val _outputs = MutableStateFlow<Map<String, String>>(emptyMap())
+    val outputs: StateFlow<Map<String, String>> = _outputs.asStateFlow()
 
     /** 启动子 Agent（异步，立即返回） */
     fun spawn(
@@ -204,8 +214,14 @@ class SubAgentManager(
                     chunk.messages.lastOrNull()
                         ?.takeIf { it.role == MessageRole.ASSISTANT }
                         ?.let { finalText = it.toText() }
+                    // 流式输出：推送最新文本（ChatService 会写入主对话）
+                    if (finalText.isNotBlank()) {
+                        _outputs.value = _outputs.value + (task.name to finalText)
+                    }
                 }
             }
+            // 任务结束：移除流式输出（ChatService 用最终结果更新消息）
+            _outputs.value = _outputs.value - task.name
 
             updateTask(task.name) {
                 it.copy(

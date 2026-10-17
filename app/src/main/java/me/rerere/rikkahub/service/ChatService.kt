@@ -56,6 +56,12 @@ import me.rerere.rikkahub.data.event.AppEventBus
 import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.Conversation
+import me.rerere.rikkahub.data.model.AssistantAffectScope
+import me.rerere.rikkahub.data.model.MessageNode
+import me.rerere.ai.ui.ModelSnapshot
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.Clock
+import kotlinx.coroutines.flow.combine
 import me.rerere.rikkahub.data.model.bindConfig
 import me.rerere.rikkahub.data.model.cancelInterruptedTools
 import me.rerere.rikkahub.data.model.deleteMessage
@@ -159,6 +165,90 @@ class ChatService(
     )
 
     // 错误状态
+    // ── 子 Agent 流式输出 → 写入主对话（像普通 AI 回复一样流式显示）──
+    private val subAgentMessageNodes = mutableMapOf<String, Uuid>()
+    private val completedSubAgentTasks = mutableSetOf<String>()
+
+    init {
+        appScope.launch {
+            combine(subAgentManager.outputs, subAgentManager.tasks) { o, t -> o to t }
+                .collect { (outputs, tasks) ->
+                    val cid = subAgentManager.activeMainConversationId ?: return@collect
+                    // 流式更新
+                    outputs.forEach { (taskName, text) ->
+                        if (!completedSubAgentTasks.contains(taskName)) {
+                            upsertSubAgentMessage(cid, taskName, text, finished = false)
+                        }
+                    }
+                    // 完成：更新为最终结果并落库
+                    tasks.filter { it.isFinished }.forEach { task ->
+                        if (completedSubAgentTasks.add(task.name)) {
+                            upsertSubAgentMessage(
+                                cid,
+                                task.name,
+                                task.result ?: task.error ?: "",
+                                finished = true,
+                            )
+                            val latest = sessionManager.get(cid)?.state?.value ?: return@forEach
+                            updateConversation(cid, latest)
+                        }
+                    }
+                }
+        }
+    }
+
+    /** 在会话中创建/更新一条「子 Agent」消息（流式） */
+    private fun upsertSubAgentMessage(
+        conversationId: Uuid,
+        taskName: String,
+        text: String,
+        finished: Boolean,
+    ) {
+        val session = sessionManager.get(conversationId) ?: return
+        val finishedAt = if (finished) {
+            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        } else {
+            null
+        }
+        val nodeId = subAgentMessageNodes[taskName]
+        val current = session.state.value
+        val updated = if (nodeId != null) {
+            current.copy(
+                messageNodes = current.messageNodes.map { node ->
+                    if (node.id == nodeId) {
+                        node.copy(
+                            messages = node.messages.map { message ->
+                                message.copy(
+                                    parts = listOf(UIMessagePart.Text(text)),
+                                    finishedAt = finishedAt,
+                                )
+                            }
+                        )
+                    } else {
+                        node
+                    }
+                }
+            )
+        } else {
+            val newNode = MessageNode(
+                messages = listOf(
+                    UIMessage(
+                        role = MessageRole.ASSISTANT,
+                        parts = listOf(UIMessagePart.Text(text)),
+                        modelSnapshot = ModelSnapshot(
+                            modelId = "sub-agent",
+                            displayName = context.getString(R.string.sub_agent_streaming_name, taskName),
+                        ),
+                        finishedAt = finishedAt,
+                    )
+                ),
+            )
+            subAgentMessageNodes[taskName] = newNode.id
+            current.copy(messageNodes = current.messageNodes + newNode)
+        }
+        session.updateConversation(updated)
+    }
+
     private val _errors = MutableStateFlow<List<ChatError>>(emptyList())
     val errors: StateFlow<List<ChatError>> = _errors.asStateFlow()
 
@@ -613,7 +703,8 @@ class ChatService(
             }
 
             // 同步主对话上下文，供 spawn_agent 的 inherit_context 使用
-            subAgentManager.updateMainContext(conversation.currentMessages)
+            // 同步主对话上下文，供 spawn_agent 的 inherit_context 使用
+            subAgentManager.updateMainContext(conversation.currentMessages, conversationId)
             }
             val replyNodeId = when {
                 history.lastOrNull()?.role == MessageRole.ASSISTANT -> nodes[history.lastIndex].id

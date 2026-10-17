@@ -39,6 +39,7 @@ data class Settings(
     val networkSetting: NetworkSetting = NetworkSetting(),
     val toolAutoAllowSetting: ToolAutoAllowSetting = ToolAutoAllowSetting(),
     val subAgentSetting: SubAgentSetting = SubAgentSetting(),
+    val enableSubAgent: Boolean = false,
     val workflows: List<Workflow> = emptyList(),
     val favoriteModels: List<Uuid> = emptyList(),
     val chatModelId: Uuid = Uuid.random(),

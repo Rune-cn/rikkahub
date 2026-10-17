@@ -17,7 +17,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.rikkahub.R
-import me.rerere.hugeicons.stroke.AiBrain01
 import me.rerere.hugeicons.stroke.AiMagic
 import me.rerere.hugeicons.stroke.Book03
 import me.rerere.hugeicons.stroke.Folder01
@@ -96,12 +95,6 @@ fun ExtensionsPage() {
                         leadingContent = { Icon(HugeIcons.AiMagic, null) },
                         headlineContent = { Text(stringResource(R.string.workflow_page_title)) },
                         supportingContent = { Text(stringResource(R.string.workflow_entry_desc)) },
-                    )
-                    item(
-                        onClick = { navController.navigate(Screen.MultiAgent) },
-                        leadingContent = { Icon(HugeIcons.AiBrain01, null) },
-                        headlineContent = { Text(stringResource(R.string.multi_agent_page_title)) },
-                        supportingContent = { Text(stringResource(R.string.multi_agent_entry_desc)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.OtherSettings) },

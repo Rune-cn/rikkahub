@@ -95,7 +95,6 @@ import me.rerere.rikkahub.ui.pages.debug.DebugPage
 import me.rerere.rikkahub.ui.pages.extensions.ExtensionsPage
 import me.rerere.rikkahub.ui.pages.extensions.OtherSettingsPage
 import me.rerere.rikkahub.ui.pages.workflow.WorkflowPage
-import me.rerere.rikkahub.ui.pages.multiagent.MultiAgentPage
 import me.rerere.rikkahub.ui.pages.extensions.ToolCallPage
 import me.rerere.rikkahub.ui.pages.extensions.PromptPage
 import me.rerere.rikkahub.ui.pages.extensions.QuickMessagesPage
@@ -559,9 +558,6 @@ class RouteActivity : ComponentActivity() {
                                 WorkflowPage()
                             }
 
-                            entry<Screen.MultiAgent> {
-                                MultiAgentPage()
-                            }
 
                             entry<Screen.QuickMessages> {
                                 QuickMessagesPage()
@@ -811,9 +807,6 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object Workflows : Screen
-
-    @Serializable
-    data object MultiAgent : Screen
 
     @Serializable
     data object QuickMessages : Screen

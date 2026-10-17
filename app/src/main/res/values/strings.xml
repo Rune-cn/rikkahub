@@ -422,6 +422,7 @@
   <string name="no_text_content_to_copy">No text content available to copy</string>
   <string name="notification_channel_chat_completed">Chat Completed</string>
   <string name="notification_channel_sub_agent">Sub-agents</string>
+  <string name="sub_agent_streaming_name">Sub-Agent · %1$s</string>
   <string name="sub_agent_notification_title">%1$d sub-agent(s) running</string>
   <string name="sub_agent_notification_empty">Working…</string>
   <string name="notification_channel_chat_live_update">Chat Generation Progress</string>
@@ -1238,6 +1239,8 @@
   <string name="extensions_page_workspace_desc">Manage local working directories accessible by Agent</string>
   <string name="extensions_page_other_category">Other</string>
   <string name="extensions_page_other_desc">More uncategorized features</string>
+  <string name="extensions_page_multi_agent_enable">Multi-agent</string>
+  <string name="extensions_page_multi_agent_enable_desc">Let the main agent spawn sub-agents to run tasks in parallel; sub-agent output streams into this chat</string>
   <string name="extensions_page_retry_section">Retry</string>
   <string name="tool_call_page_title">Tool Calls</string>
   <string name="tool_call_entry_desc">Auto-allow tool calls and choose which tools</string>
