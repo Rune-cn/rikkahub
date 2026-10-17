@@ -98,6 +98,8 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val launchCount by vm.launchCount.collectAsStateWithLifecycle()
     val filesManager: FilesManager = koinInject()
+    // 设置搜索
+    var searchQuery by remember { mutableStateOf("") }
 
     if (!settings.init && launchCount > 100 && (launchCount - settings.sponsorAlertDismissedAt) >= 50) {
         AlertDialog(
@@ -162,6 +164,22 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                 item {
                     ProviderConfigWarningCard(
                         onClick = { navController.navigate(Screen.SettingProvider) }
+                    )
+                }
+            }
+
+            // 设置搜索（放在最上方，方便快速定位功能）
+            item("settingSearch") {
+                SettingSearchBar(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                )
+            }
+            if (searchQuery.isNotBlank()) {
+                item("settingSearchResults") {
+                    SettingSearchResults(
+                        query = searchQuery,
+                        onNavigate = { navController.navigate(it) },
                     )
                 }
             }

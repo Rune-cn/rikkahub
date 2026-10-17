@@ -44,4 +44,8 @@ sealed class LocalToolOption {
     @Serializable
     @SerialName("sub_agent")
     data object SubAgent : LocalToolOption()
+
+    @Serializable
+    @SerialName("workflow_manage")
+    data object Workflow : LocalToolOption()
 }

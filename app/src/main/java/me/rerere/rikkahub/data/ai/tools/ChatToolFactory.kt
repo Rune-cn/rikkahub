@@ -50,11 +50,22 @@ class ChatToolFactory(
         assistant: Assistant,
         model: Model,
         workspaceCwd: String? = null,
+<<<<<<< HEAD
     ): List<Tool> {
         val workspaceTools = createWorkspaceToolsIfReady(assistant.workspaceId?.toString(), workspaceCwd)
         val tools = buildList {
             if (assistant.enableMemory) {
                 addAll(buildMemoryTools(memoryRepository, assistant.memoryId))
+=======
+        /** 子 Agent 场景传 true：排除子 Agent 管理工具，避免无限递归 */
+        excludeSubAgentTools: Boolean = false,
+    ): List<Tool> = buildList {
+        if (assistant.enableMemory) {
+            val memoryAssistantId = if (assistant.useGlobalMemory) {
+                MemoryRepository.GLOBAL_MEMORY_ID
+            } else {
+                assistant.id.toString()
+>>>>>>> a10fbcc1 (feat: 工作流管理工具 + 子Agent上下文开关 + 设置搜索 + 子Agent工具集)
             }
             if (shouldUseExternalWebSearch(assistant, model)) {
                 addAll(createSearchTools(settings))
@@ -71,7 +82,34 @@ class ChatToolFactory(
                         allSkills = skillManager.listSkills(),
                     )
                 )
+<<<<<<< HEAD
             }
+=======
+            )
+        }
+        if (shouldUseExternalWebSearch(assistant, model)) {
+            addAll(createSearchTools(settings))
+        }
+        addAll(localTools.getTools(assistant.localTools).let { localToolsList ->
+            if (excludeSubAgentTools) {
+                localToolsList.filterNot { it.name in SUB_AGENT_TOOL_NAMES }
+            } else {
+                localToolsList
+            }
+        })
+        if (assistant.enableRecentChatsReference) {
+            addAll(createConversationTools(conversationRepository, assistant.id))
+        }
+        addAll(createWorkspaceToolsIfReady(assistant.workspaceId?.toString(), workspaceCwd))
+        if (assistant.enabledSkills.isNotEmpty()) {
+            addAll(
+                createSkillTools(
+                    enabledSkills = assistant.enabledSkills,
+                    allSkills = skillManager.listSkills(),
+                )
+            )
+        }
+>>>>>>> a10fbcc1 (feat: 工作流管理工具 + 子Agent上下文开关 + 设置搜索 + 子Agent工具集)
 
             val mcpTools = mcpManager.getAllAvailableTools(assistant)
             val invalidNames = mcpTools

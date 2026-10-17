@@ -821,6 +821,10 @@
   <string name="setting_page_dynamic_color_desc">是否基于壁纸动态生成 app 主题配色</string>
   <string name="setting_page_extensions">扩展管理</string>
   <string name="setting_page_extensions_desc">管理提示词注入、技能等扩展</string>
+  <string name="setting_search_placeholder">搜索设置</string>
+  <string name="setting_search_results">搜索结果</string>
+  <string name="setting_search_no_result">没有匹配的设置项</string>
+  <string name="setting_search_clear">清除</string>
   <string name="setting_page_general_settings">通用设置</string>
   <string name="setting_page_interaction_notification_settings">互动与通知</string>
   <string name="setting_page_mcp">MCP</string>
@@ -1212,6 +1216,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="extensions_page_auto_retry_desc">根据下方规则自动重试失败的请求</string>
   <string name="extensions_page_retry_add_tag">添加</string>
   <string name="extensions_page_sub_agent_section">子 Agent</string>
+  <string name="extensions_page_sub_agent_inherit_context">共享对话上下文</string>
+  <string name="extensions_page_sub_agent_inherit_context_desc">子 Agent 默认是否继承主 Agent 的最近对话上下文</string>
   <string name="extensions_page_sub_agent_model">子 Agent 模型</string>
   <string name="extensions_page_sub_agent_model_desc">子 Agent 使用的模型；清除则继承当前模型</string>
   <string name="extensions_page_retry_interval">重试间隔</string>
@@ -1411,6 +1417,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="chat_message_tool_chart_display_with_title">显示图表：%1$s</string>
   <string name="assistant_page_local_tools_update_plan_title">任务计划</string>
   <string name="assistant_page_local_tools_update_plan_desc">让 AI 为任务维护分步待办清单并显示进度</string>
+  <string name="assistant_page_local_tools_workflow_title">工作流管理</string>
+  <string name="assistant_page_local_tools_workflow_desc">让 AI 帮你创建和修改工作流</string>
   <string name="assistant_page_local_tools_sub_agent_title">子 Agent 协同</string>
   <string name="assistant_page_local_tools_sub_agent_desc">让 AI 把任务分派给子 Agent 并行处理，子 Agent 拥有自己的工具与模型</string>
   <string name="chat_sub_agent_running">%1$d 个子 Agent 运行中</string>

@@ -77,7 +77,7 @@ class SubAgentManager(
         name: String,
         prompt: String,
         modelId: Uuid? = null,
-        inheritContext: Boolean = false,
+        inheritContext: Boolean? = null,
     ): Result<SubAgentTask> {
         val runningCount = _tasks.value.count { it.status == SubAgentStatus.RUNNING }
         if (runningCount >= MAX_CONCURRENT_SUB_AGENTS) {
@@ -145,16 +145,19 @@ class SubAgentManager(
 
             updateTask(task.name) { it.copy(modelName = model.displayName) }
 
-            // 子 Agent 拥有与主 Agent 同源的工具集（含工作区、MCP、技能等）
+            // 子 Agent 拥有与主 Agent 同源的工具集（含技能、MCP、工作区、搜索、记忆等），
+            // 但排除子 Agent 管理工具本身，避免无限递归
             val tools = chatToolFactory.createTools(
                 settings = settings,
                 assistant = assistant,
                 model = model,
+                excludeSubAgentTools = true,
             )
 
             var messages = resumeMessages ?: buildList {
-                // 可选：继承主 Agent 的最近对话上下文
-                if (task.inheritContext) {
+                // 可选：继承主 Agent 的最近对话上下文（任务未指定时用全局设置）
+                val inheritContext = task.inheritContext ?: settings.subAgentSetting.defaultInheritContext
+                if (inheritContext) {
                     addAll(mainContext.takeLast(MAX_CONTEXT_MESSAGES))
                 }
                 add(
