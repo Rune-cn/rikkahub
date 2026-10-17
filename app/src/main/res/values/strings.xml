@@ -1465,6 +1465,8 @@
   <string name="workflow_steps">Steps</string>
   <string name="workflow_steps_count">%1$d steps</string>
   <string name="workflow_step_index">Step %1$d</string>
+  <string name="workflow_edit_node">Edit node</string>
+  <string name="workflow_step_condition">Condition</string>
   <string name="workflow_step_name">Step name</string>
   <string name="workflow_step_prompt">Prompt</string>
   <string name="workflow_step_prompt_hint">Use {{input}} for the initial input and {{prev}} for the previous step output</string>
