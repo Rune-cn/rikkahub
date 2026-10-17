@@ -120,6 +120,7 @@ class SettingsStore(
         val TOOL_AUTO_ALLOW_SETTING = stringPreferencesKey("tool_auto_allow_setting")
         val SUB_AGENT_SETTING = stringPreferencesKey("sub_agent_setting")
         val ENABLE_SUB_AGENT = booleanPreferencesKey("enable_sub_agent")
+        val CHAT_DRAFTS = stringPreferencesKey("chat_drafts")
         val WORKFLOWS = stringPreferencesKey("workflows")
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode")
 
@@ -213,6 +214,7 @@ class SettingsStore(
                 preferences[TOOL_AUTO_ALLOW_SETTING] = JsonInstant.encodeToString(settings.toolAutoAllowSetting)
                 preferences[SUB_AGENT_SETTING] = JsonInstant.encodeToString(settings.subAgentSetting)
                 preferences[ENABLE_SUB_AGENT] = settings.enableSubAgent
+                preferences[CHAT_DRAFTS] = JsonInstant.encodeToString(settings.chatDrafts)
                 preferences[WORKFLOWS] = JsonInstant.encodeToString(settings.workflows)
 
                 preferences[FAVORITE_MODELS] = JsonInstant.encodeToString(settings.favoriteModels)
@@ -324,6 +326,7 @@ class SettingsStore(
                 toolAutoAllowSetting = JsonInstant.decodeFromString(preferences[TOOL_AUTO_ALLOW_SETTING] ?: "{}"),
                 subAgentSetting = JsonInstant.decodeFromString(preferences[SUB_AGENT_SETTING] ?: "{}"),
                 enableSubAgent = preferences[ENABLE_SUB_AGENT] ?: false,
+                chatDrafts = JsonInstant.decodeFromString(preferences[CHAT_DRAFTS] ?: "{}"),
                 workflows = JsonInstant.decodeFromString(preferences[WORKFLOWS] ?: "[]"),
                 searchServices = preferences[SEARCH_SERVICES]?.let {
                     JsonInstant.decodeFromString(it)
@@ -600,6 +603,8 @@ data class Settings(
     val subAgentSetting: SubAgentSetting = SubAgentSetting(),
     // 多 Agent 工作：主 Agent 可派生子 Agent 并行处理任务
     val enableSubAgent: Boolean = false,
+    // 每个会话的输入框草稿（会话 id -> 文本），关闭 App 后重开可恢复
+    val chatDrafts: Map<String, String> = emptyMap(),
     val workflows: List<Workflow> = emptyList(),
     val favoriteModels: List<Uuid> = emptyList(),
     val chatModelId: Uuid = Uuid.random(),

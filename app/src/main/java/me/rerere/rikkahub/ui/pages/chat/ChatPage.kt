@@ -32,6 +32,7 @@ import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import me.rerere.rikkahub.data.datastore.SettingsStore
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -151,6 +152,25 @@ fun ChatPage(id: Uuid, text: String?, files: List<Uri>, nodeId: Uuid? = null) {
     val startVoiceMode = rememberVoiceModeStarter(vm, setting)
 
     val inputState = vm.inputState
+
+    // 草稿恢复与保存：关闭 App 后重开找回没发出去的话（防抖 400ms 落盘）
+    val draftStore = koinInject<SettingsStore>()
+    LaunchedEffect(conversation.id) {
+        val draft = draftStore.settingsFlow.value.chatDrafts[conversation.id.toString()]
+        if (!draft.isNullOrBlank() && inputState.textContent.text.isEmpty()) {
+            inputState.textContent.setTextAndPlaceCursorAtEnd(draft)
+        }
+    }
+    LaunchedEffect(inputState.textContent.text.toString()) {
+        kotlinx.coroutines.delay(400)
+        val text = inputState.textContent.text.toString()
+        val key = conversation.id.toString()
+        if (text.isNotBlank()) {
+            draftStore.update { s -> s.copy(chatDrafts = s.chatDrafts + (key to text)) }
+        } else {
+            draftStore.update { s -> s.copy(chatDrafts = s.chatDrafts - key) }
+        }
+    }
 
     // 初始化输入状态（处理传入的 files 和 text 参数）
     LaunchedEffect(files, text) {
