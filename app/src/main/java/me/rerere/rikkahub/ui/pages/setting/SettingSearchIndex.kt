@@ -12,7 +12,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -21,116 +20,138 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.ArrowRight01
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.Search01
-import me.rerere.hugeicons.stroke.Settings03
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.ui.components.ui.CardGroup
 
-/**
- * 设置搜索条目：精确到**具体设置项**（不是页面级）
- *
- * - titleRes：设置项标题（命中目标）
- * - pageRes：所属页面（结果分组头 + 面包屑）
- * - screen：点击后跳转的目标路由（尽量精确到子页面）
- * - keywords：额外搜索关键词（中英文，供同义词命中）
- */
-data class SettingSearchItem(
-    @StringRes val titleRes: Int,
-    @StringRes val pageRes: Int,
-    val screen: Screen,
-    val keywords: String = "",
-)
+/** 设置项类型（决定图标，也便于后续做"定位+高亮"） */
+enum class SettingItemType {
+    /** 开关 */
+    SWITCH,
+
+    /** 单选/选择器 */
+    SELECT,
+
+    /** 输入框 */
+    INPUT,
+
+    /** 跳转到子页面 */
+    NAV,
+
+    /** 操作按钮（启动/清空等） */
+    ACTION,
+}
 
 /**
- * 设置搜索索引（新增设置项时，在此登记一行即可被搜索到）
+ * 设置搜索条目：精确到**具体设置项**
  *
- * 注意：新增的字符串资源必须同时存在于 values/ 与 values-zh/。
+ * - [pageRes]：所属页面标题（搜索结果按它分组，形成"页面"层级）
+ * - [titleRes]：设置项标题（关键词匹配 + 高亮显示）
+ * - [screen]：点击后跳转的页面
+ */
+data class SettingSearchItem(
+    @StringRes val pageRes: Int,
+    @StringRes val titleRes: Int,
+    val type: SettingItemType,
+    val keywords: String,
+    val screen: Screen,
+)
+
+/** 页面标题资源（面包屑分组名） */
+private val PAGE_PREFERENCES = R.string.setting_page_preferences
+private val PAGE_UI = R.string.setting_page_preferences_ui
+private val PAGE_GENERAL = R.string.setting_page_preferences_general
+private val PAGE_THEME = R.string.setting_page_preferences_theme
+private val PAGE_MODEL = R.string.setting_page_default_model
+private val PAGE_SEARCH = R.string.setting_page_search_service
+private val PAGE_SPEECH = R.string.setting_page_tts_service
+private val PAGE_MEDIA = R.string.setting_page_media
+private val PAGE_MCP = R.string.setting_page_mcp
+private val PAGE_WEB = R.string.setting_page_web_server
+private val PAGE_FILES = R.string.setting_page_chat_storage
+
+/**
+ * 设置搜索索引（精确到项）
+ *
+ * 新增设置项时在此登记一行即可被搜到。
+ * keywords 放中英文关键词，中英文输入都能命中。
  */
 val SETTING_SEARCH_ITEMS: List<SettingSearchItem> = listOf(
-    // ─── 偏好 · 常规 ───
-    SettingSearchItem(R.string.setting_display_page_create_new_conversation_on_start_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "新对话 启动 launch start new chat"),
-    SettingSearchItem(R.string.setting_display_page_send_on_enter_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "enter 回车 发送 换行 send"),
-    SettingSearchItem(R.string.setting_display_page_show_message_jumper_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "jumper 跳转 导航 按钮"),
-    SettingSearchItem(R.string.setting_display_page_message_jumper_position_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "jumper 位置 position 左侧 左"),
-    SettingSearchItem(R.string.setting_display_page_enable_auto_scroll_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "滚动 到底 底部 scroll bottom"),
-    SettingSearchItem(R.string.setting_display_page_use_app_icon_style_loading_indicator_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "loading 加载 指示器 spinner"),
-    SettingSearchItem(R.string.setting_display_page_background_effect_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "背景 模糊 玻璃 blur glass effect 毛玻璃"),
-    SettingSearchItem(R.string.setting_display_page_background_effect_type, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "背景效果 类型 type"),
-    SettingSearchItem(R.string.setting_display_page_enable_message_generation_haptic_effect_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "触觉 震动 反馈 haptic vibrate"),
-    SettingSearchItem(R.string.setting_display_page_skip_crop_image_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "图片 裁剪 编辑 crop image"),
-    SettingSearchItem(R.string.setting_display_page_paste_long_text_as_file_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "长文本 粘贴 文件 附件 paste file"),
-    SettingSearchItem(R.string.setting_display_page_paste_long_text_threshold_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "阈值 长度 threshold"),
-    SettingSearchItem(R.string.setting_display_page_volume_key_scroll_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "音量键 翻页 墨水屏 volume key"),
-    SettingSearchItem(R.string.setting_display_page_volume_key_scroll_ratio, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "滚动幅度 比例 ratio"),
-    SettingSearchItem(R.string.setting_tts_page_default_playback_speed, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "播放速度 倍速 语速 speed rate"),
-    SettingSearchItem(R.string.setting_display_page_tts_only_read_quoted_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "tts 朗读 引用 引号 quoted"),
-    SettingSearchItem(R.string.setting_display_page_tts_read_outside_brackets_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "tts 括号 朗读 brackets"),
-    SettingSearchItem(R.string.setting_display_page_auto_play_tts_title, R.string.setting_page_preferences_general, Screen.SettingPreferencesGeneral, "tts 朗读 自动播放 语音"),
-    // ─── 偏好 · 界面 ───
-    SettingSearchItem(R.string.setting_display_page_show_user_avatar_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "头像 avatar"),
-    SettingSearchItem(R.string.setting_display_page_show_assistant_bubble_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "气泡 bubble 背景 助手"),
-    SettingSearchItem(R.string.setting_display_page_bubble_opacity_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "气泡 bubble 透明度 不透明 opacity"),
-    SettingSearchItem(R.string.setting_display_page_chat_list_model_icon_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "列表 模型 图标 icon"),
-    SettingSearchItem(R.string.setting_display_page_show_model_name_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "模型 名称 name"),
-    SettingSearchItem(R.string.setting_display_page_show_datetime_in_message_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "日期 时间 datetime 消息"),
-    SettingSearchItem(R.string.setting_display_page_show_token_usage_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "token 上下文 统计 用量 context"),
-    SettingSearchItem(R.string.setting_display_page_show_thinking_content_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "思考 推理 thinking reasoning"),
-    SettingSearchItem(R.string.setting_display_page_auto_collapse_thinking_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "思考 折叠 collapse"),
-    SettingSearchItem(R.string.setting_display_page_enable_latex_rendering_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "latex 公式 数学 math 渲染"),
-    SettingSearchItem(R.string.setting_display_page_chat_font_family_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "字体 font 字型"),
-    SettingSearchItem(R.string.setting_display_page_custom_font_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "自定义字体 font"),
-    SettingSearchItem(R.string.setting_display_page_font_size_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "字体 大小 字号 font size"),
-    SettingSearchItem(R.string.setting_display_page_code_block_auto_wrap_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "代码块 换行 code wrap"),
-    SettingSearchItem(R.string.setting_display_page_code_block_auto_collapse_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "代码块 折叠 code collapse"),
-    SettingSearchItem(R.string.setting_display_page_show_line_numbers_title, R.string.setting_page_preferences_ui, Screen.SettingPreferencesUI, "行号 代码 line number"),
-    // ─── 偏好 · 主题 / 通知 / 网络 ───
-    SettingSearchItem(R.string.setting_page_dynamic_color, R.string.setting_page_preferences_theme, Screen.SettingPreferencesTheme, "动态颜色 壁纸 color"),
-    SettingSearchItem(R.string.setting_display_page_amoled_dark_mode_title, R.string.setting_page_preferences_theme, Screen.SettingPreferencesTheme, "amoled 暗色 深色 纯黑 dark black"),
-    SettingSearchItem(R.string.setting_display_page_show_updates_title, R.string.setting_page_preferences_notification, Screen.SettingPreferencesNotification, "更新 update 提醒"),
-    SettingSearchItem(R.string.setting_display_page_notification_message_generated, R.string.setting_page_preferences_notification, Screen.SettingPreferencesNotification, "通知 消息 生成 notification"),
-    SettingSearchItem(R.string.setting_display_page_live_update_notification, R.string.setting_page_preferences_notification, Screen.SettingPreferencesNotification, "实时 通知 live notification"),
-    SettingSearchItem(R.string.setting_page_preferences_network_auto_retry, R.string.setting_page_preferences_network, Screen.SettingPreferencesNetwork, "重试 retry 网络错误 失败"),
-    // ─── 模型 ───
-    SettingSearchItem(R.string.setting_model_page_chat_model, R.string.setting_model_page_title, Screen.SettingModels, "对话模型 主模型 chat model"),
-    SettingSearchItem(R.string.setting_model_page_fast_model, R.string.setting_model_page_title, Screen.SettingModels, "快速模型 fast model"),
-    SettingSearchItem(R.string.setting_model_page_compress_model, R.string.setting_model_page_title, Screen.SettingModels, "压缩 总结 上下文 compress context"),
-    SettingSearchItem(R.string.setting_model_page_ocr_model, R.string.setting_model_page_title, Screen.SettingModels, "ocr 图片 文字识别 视觉"),
-    SettingSearchItem(R.string.setting_model_page_translate_model, R.string.setting_model_page_title, Screen.SettingModels, "翻译 translate"),
-    SettingSearchItem(R.string.setting_model_page_enable_suggestion, R.string.setting_model_page_title, Screen.SettingModels, "聊天建议 联想 suggestion"),
-    SettingSearchItem(R.string.assistant_page_thinking_budget, R.string.setting_model_page_title, Screen.SettingModels, "思考预算 推理 effort thinking budget"),
-    // ─── 提供商 ───
-    SettingSearchItem(R.string.setting_page_providers, R.string.setting_provider_page_title, Screen.SettingProvider, "提供商 provider api 接口 密钥 key"),
-    SettingSearchItem(R.string.setting_provider_page_add_provider, R.string.setting_provider_page_title, Screen.SettingProvider, "添加 提供商 add provider"),
-    // ─── 搜索 ───
-    SettingSearchItem(R.string.setting_page_search_title, R.string.setting_page_search_title, Screen.SettingSearch, "搜索服务 联网 web search 引擎"),
-    SettingSearchItem(R.string.setting_page_search_result_size, R.string.setting_page_search_title, Screen.SettingSearch, "结果数量 条数 result size"),
-    SettingSearchItem(R.string.search_detail_api_key, R.string.setting_page_search_title, Screen.SettingSearch, "api key 密钥"),
-    SettingSearchItem(R.string.search_detail_api_url, R.string.setting_page_search_title, Screen.SettingSearch, "api url 接口地址"),
-    SettingSearchItem(R.string.search_detail_engines, R.string.setting_page_search_title, Screen.SettingSearch, "引擎 engine"),
-    SettingSearchItem(R.string.search_detail_max_tokens, R.string.setting_page_search_title, Screen.SettingSearch, "最大令牌 max tokens"),
-    SettingSearchItem(R.string.search_detail_search_url, R.string.setting_page_search_title, Screen.SettingSearch, "搜索网址 链接 search url"),
-    SettingSearchItem(R.string.search_detail_scrape_url, R.string.setting_page_search_title, Screen.SettingSearch, "抓取网址 scrape url"),
-    // ─── 语音 ───
-    SettingSearchItem(R.string.speech_page_title, R.string.speech_page_title, Screen.SettingSpeech, "语音 朗读 识别 tts asr 配音"),
-    // ─── MCP ───
-    SettingSearchItem(R.string.setting_mcp_page_title, R.string.setting_mcp_page_title, Screen.SettingMcp, "mcp 服务器 server 工具"),
-    SettingSearchItem(R.string.setting_mcp_page_enable, R.string.setting_mcp_page_title, Screen.SettingMcp, "启用 开启 enable 服务器"),
-    SettingSearchItem(R.string.setting_mcp_page_name, R.string.setting_mcp_page_title, Screen.SettingMcp, "名称 name 服务器"),
-    SettingSearchItem(R.string.setting_mcp_page_transport_type, R.string.setting_mcp_page_title, Screen.SettingMcp, "传输类型 sse http transport"),
-    SettingSearchItem(R.string.setting_mcp_page_server_url, R.string.setting_mcp_page_title, Screen.SettingMcp, "服务器地址 url 地址"),
-    SettingSearchItem(R.string.setting_mcp_page_custom_headers, R.string.setting_mcp_page_title, Screen.SettingMcp, "请求头 headers 自定义"),
-    // ─── Web ───
-    SettingSearchItem(R.string.setting_page_web_server, R.string.setting_page_web_server, Screen.SettingWeb, "web 服务器 网页 局域网 lan"),
-    SettingSearchItem(R.string.setting_page_web_server_port, R.string.setting_page_web_server, Screen.SettingWeb, "端口 port"),
-    SettingSearchItem(R.string.setting_page_web_server_localhost_only, R.string.setting_page_web_server, Screen.SettingWeb, "localhost 本地主机 局域网 lan"),
-    SettingSearchItem(R.string.setting_page_web_server_jwt_enable, R.string.setting_page_web_server, Screen.SettingWeb, "身份验证 认证 密码 auth jwt"),
-    SettingSearchItem(R.string.setting_page_web_server_password, R.string.setting_page_web_server, Screen.SettingWeb, "访问密码 password"),
-    // ─── 文件 / 关于 ───
-    SettingSearchItem(R.string.setting_page_chat_storage, R.string.setting_files_page_title, Screen.SettingFiles, "聊天存储 文件 清理 缓存 files storage"),
-    SettingSearchItem(R.string.about_page_version, R.string.about_page_title, Screen.SettingAbout, "版本 version 号"),
-    SettingSearchItem(R.string.about_page_license, R.string.about_page_title, Screen.SettingAbout, "license 许可 开源"),
+    // ── 偏好设置入口 ──
+    SettingSearchItem(PAGE_PREFERENCES, R.string.setting_page_preferences_ui, SettingItemType.NAV, "界面 显示 ui display 字体 气泡", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_PREFERENCES, R.string.setting_page_preferences_general, SettingItemType.NAV, "通用 发送 滚动 震动 键盘", Screen.SettingPreferencesGeneral),
+    SettingSearchItem(PAGE_PREFERENCES, R.string.setting_page_preferences_theme, SettingItemType.NAV, "主题 外观 颜色 深色 纯黑", Screen.SettingPreferencesTheme),
+    SettingSearchItem(PAGE_PREFERENCES, R.string.setting_page_preferences_network, SettingItemType.NAV, "网络 代理 超时 network proxy timeout", Screen.SettingPreferencesNetwork),
+    SettingSearchItem(PAGE_PREFERENCES, R.string.setting_page_preferences_notification, SettingItemType.NAV, "通知 提醒 notification", Screen.SettingPreferencesNotification),
+
+    // ── 界面设置 ──
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_bubble_opacity_title, SettingItemType.INPUT, "气泡 bubble 透明度 opacity 背景", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_font_size_title, SettingItemType.INPUT, "字体 字号 font size 文字", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_chat_font_family_title, SettingItemType.SELECT, "正文字体 字体 chat font family 等宽 serif", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_custom_font_title, SettingItemType.INPUT, "自定义字体 导入 custom font ttf", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_show_assistant_bubble_title, SettingItemType.SWITCH, "助手气泡 气泡样式 assistant bubble", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_show_datetime_in_message_title, SettingItemType.SWITCH, "时间戳 消息时间 datetime time", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_show_thinking_content_title, SettingItemType.SWITCH, "思考 推理 thinking reasoning", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_show_token_usage_title, SettingItemType.SWITCH, "token 用量 token usage 消耗", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_show_model_name_title, SettingItemType.SWITCH, "模型名 model name 显示模型", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_chat_list_model_icon_title, SettingItemType.SWITCH, "ai 头像 模型图标 model icon avatar", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_show_user_avatar_title, SettingItemType.SWITCH, "用户头像 user avatar 头像", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_show_line_numbers_title, SettingItemType.SWITCH, "行号 代码 line number code", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_code_block_auto_collapse_title, SettingItemType.SWITCH, "代码块 折叠 code collapse", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_code_block_auto_wrap_title, SettingItemType.SWITCH, "代码 换行 code wrap", Screen.SettingPreferencesUI),
+    SettingSearchItem(PAGE_UI, R.string.setting_display_page_enable_latex_rendering_title, SettingItemType.SWITCH, "latex 数学公式 渲染 math formula", Screen.SettingPreferencesUI),
+
+    // ── 通用设置 ──
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_display_page_send_on_enter_title, SettingItemType.SWITCH, "回车发送 发送键 enter send key", Screen.SettingPreferencesGeneral),
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_display_page_enable_auto_scroll_title, SettingItemType.SWITCH, "自动滚动 auto scroll 滚到底", Screen.SettingPreferencesGeneral),
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_display_page_show_message_jumper_title, SettingItemType.SWITCH, "消息跳转 跳转按钮 message jumper", Screen.SettingPreferencesGeneral),
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_display_page_enable_message_generation_haptic_effect_title, SettingItemType.SWITCH, "震动 振动 haptic 反馈", Screen.SettingPreferencesGeneral),
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_display_page_background_effect_title, SettingItemType.SELECT, "背景 毛玻璃 模糊 background glass blur", Screen.SettingPreferencesGeneral),
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_display_page_create_new_conversation_on_start_title, SettingItemType.SWITCH, "新会话 启动 new conversation", Screen.SettingPreferencesGeneral),
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_display_page_paste_long_text_as_file_title, SettingItemType.SWITCH, "粘贴 长文本 文件 paste long text file", Screen.SettingPreferencesGeneral),
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_display_page_volume_key_scroll_title, SettingItemType.SWITCH, "音量键 滚动 volume key scroll", Screen.SettingPreferencesGeneral),
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_display_page_auto_play_tts_title, SettingItemType.SWITCH, "自动播放 tts 朗读 auto play", Screen.SettingPreferencesGeneral),
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_display_page_tts_read_outside_brackets_title, SettingItemType.SWITCH, "朗读 括号外 tts brackets", Screen.SettingPreferencesGeneral),
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_display_page_tts_only_read_quoted_title, SettingItemType.SWITCH, "朗读 引用 quoted tts", Screen.SettingPreferencesGeneral),
+
+    // ── 主题设置 ──
+    SettingSearchItem(PAGE_THEME, R.string.setting_page_dynamic_color, SettingItemType.SWITCH, "动态取色 主题色 dynamic color material", Screen.SettingPreferencesTheme),
+    SettingSearchItem(PAGE_THEME, R.string.setting_display_page_amoled_dark_mode_title, SettingItemType.SWITCH, "纯黑 深色 amoled dark oled", Screen.SettingPreferencesTheme),
+
+    // ── 模型 ──
+    SettingSearchItem(PAGE_MODEL, R.string.setting_model_page_chat_model, SettingItemType.SELECT, "对话模型 chat 主模型 默认", Screen.SettingModels),
+    SettingSearchItem(PAGE_MODEL, R.string.setting_model_page_fast_model, SettingItemType.SELECT, "快速模型 fast 轻量 快", Screen.SettingModels),
+    SettingSearchItem(PAGE_MODEL, R.string.setting_model_page_compress_model, SettingItemType.SELECT, "压缩模型 compress 总结", Screen.SettingModels),
+    SettingSearchItem(PAGE_MODEL, R.string.setting_model_page_translate_model, SettingItemType.SELECT, "翻译模型 translate 翻译", Screen.SettingModels),
+    SettingSearchItem(PAGE_MODEL, R.string.setting_model_page_ocr_model, SettingItemType.SELECT, "ocr 模型 图片识别", Screen.SettingModels),
+
+    // ── 搜索服务 ──
+    SettingSearchItem(PAGE_SEARCH, R.string.setting_page_search_add_provider, SettingItemType.NAV, "搜索提供商 provider 引擎 engine 添加", Screen.SettingSearch),
+    SettingSearchItem(PAGE_SEARCH, R.string.setting_page_search_result_size, SettingItemType.SELECT, "结果数量 条数 result size 每页", Screen.SettingSearch),
+
+    // ── 语音服务 ──
+    SettingSearchItem(PAGE_SPEECH, R.string.setting_tts_page_providers_label, SettingItemType.NAV, "tts 朗读提供商 voice 配音 provider", Screen.SettingSpeech),
+    SettingSearchItem(PAGE_SPEECH, R.string.setting_asr_page_providers_label, SettingItemType.NAV, "asr 语音识别 转写 provider", Screen.SettingSpeech),
+
+    // ── 媒体生成 ──
+    SettingSearchItem(PAGE_MEDIA, R.string.setting_media_page_providers, SettingItemType.NAV, "图片 绘图 生成 提供商 模型 media", Screen.SettingMedia),
+
+    // ── MCP ──
+    SettingSearchItem(PAGE_MCP, R.string.setting_mcp_page_add_header, SettingItemType.NAV, "mcp 服务器 工具 servers 添加", Screen.SettingMcp),
+    SettingSearchItem(PAGE_MCP, R.string.setting_mcp_page_enable, SettingItemType.SWITCH, "mcp 启用 enable", Screen.SettingMcp),
+
+    // ── Web 服务器 ──
+    SettingSearchItem(PAGE_WEB, R.string.setting_page_web_server_start, SettingItemType.ACTION, "web 启动 开启 start server", Screen.SettingWeb),
+    SettingSearchItem(PAGE_WEB, R.string.setting_page_web_server_port, SettingItemType.INPUT, "web 端口 port", Screen.SettingWeb),
+    SettingSearchItem(PAGE_WEB, R.string.setting_page_web_server_password, SettingItemType.INPUT, "web 密码 password 认证", Screen.SettingWeb),
+    SettingSearchItem(PAGE_WEB, R.string.setting_page_web_server_jwt_enable, SettingItemType.SWITCH, "web jwt 令牌 token", Screen.SettingWeb),
+    SettingSearchItem(PAGE_WEB, R.string.setting_page_web_server_localhost_only, SettingItemType.SWITCH, "web 本机 localhost 仅本机", Screen.SettingWeb),
+
+    // ── 数据与存储 ──
+    SettingSearchItem(PAGE_FILES, R.string.setting_files_page_clean_title, SettingItemType.ACTION, "清理 文件 缓存 clean storage 清理空间", Screen.SettingFiles),
 )
 
 /** 按关键词搜索设置项（标题本地化文本 + 关键词，忽略大小写） */
@@ -157,9 +178,7 @@ fun SettingSearchBar(
             .fillMaxWidth()
             .padding(horizontal = 8.dp),
         placeholder = { Text(stringResource(R.string.setting_search_placeholder)) },
-        leadingIcon = {
-            Icon(HugeIcons.Search01, contentDescription = null)
-        },
+        leadingIcon = { Icon(HugeIcons.Search01, contentDescription = null) },
         trailingIcon = {
             if (query.isNotBlank()) {
                 IconButton(onClick = { onQueryChange("") }) {
@@ -175,9 +194,10 @@ fun SettingSearchBar(
 }
 
 /**
- * 设置搜索结果
+ * 设置搜索结果：按「页面」分组展示，命中词高亮
  *
- * 按页面分组展示：组头 = 页面名 + 命中数；每一项标题中**高亮关键词**。
+ * 每组一个分组标题（页面名），组内每项显示：
+ * 类型图标 + 高亮后的设置项标题。
  */
 @Composable
 fun SettingSearchResults(
@@ -187,41 +207,45 @@ fun SettingSearchResults(
 ) {
     val context = LocalContext.current
     val results = remember(query) { searchSettingItems(context, query) }
-
     if (results.isEmpty()) {
-        // 空状态 / 无结果
-        CardGroup(modifier = modifier.padding(horizontal = 8.dp)) {
-            item(
-                headlineContent = { Text(stringResource(R.string.setting_search_no_result)) },
-                supportingContent = { Text(stringResource(R.string.setting_search_suggestion)) },
-            )
-        }
+        Text(
+            text = stringResource(R.string.setting_search_no_result),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+        )
         return
     }
+    // 按页面分组（保留索引顺序）
+    val grouped = LinkedHashMap<Int, List<SettingSearchItem>>()
+    results.forEach { item -> grouped.getOrPut(item.pageRes) { mutableListOf() }.add(item) }
 
-    // 按目标页面分组（groupBy 保持索引顺序）
-    results.groupBy { it.screen }.forEach { (screen, items) ->
-        val pageTitle = stringResource(items.first().pageRes)
+    grouped.forEach { (pageRes, items) ->
         CardGroup(
             modifier = modifier.padding(horizontal = 8.dp),
-            title = {
-                Text("$pageTitle · ${items.size}")
-            },
+            title = { Text(stringResource(pageRes)) },
         ) {
             items.forEach { item ->
                 item(
                     onClick = { onNavigate(item.screen) },
                     leadingContent = {
                         Icon(
-                            imageVector = HugeIcons.Settings03,
+                            imageVector = when (item.type) {
+                                SettingItemType.SWITCH -> HugeIcons.ArrowRight01
+                                SettingItemType.SELECT -> HugeIcons.ArrowRight01
+                                SettingItemType.INPUT -> HugeIcons.ArrowRight01
+                                SettingItemType.NAV -> HugeIcons.ArrowRight01
+                                SettingItemType.ACTION -> HugeIcons.ArrowRight01
+                            },
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     },
                     headlineContent = {
-                        HighlightedText(
-                            text = stringResource(item.titleRes),
-                            query = query,
+                        Text(
+                            text = highlightKeyword(
+                                text = context.getString(item.titleRes),
+                                query = query,
+                            )
                         )
                     },
                 )
@@ -230,37 +254,30 @@ fun SettingSearchResults(
     }
 }
 
-/** 高亮命中的关键词 */
+/** 关键词高亮：命中词加粗 + 主题色 */
 @Composable
-private fun HighlightedText(
-    text: String,
-    query: String,
-    modifier: Modifier = Modifier,
-) {
+private fun highlightKeyword(text: String, query: String): androidx.compose.ui.text.AnnotatedString {
     val q = query.trim()
-    if (q.isEmpty()) {
-        Text(text = text, modifier = modifier)
-        return
-    }
-    val index = text.indexOf(q, ignoreCase = true)
-    if (index < 0) {
-        Text(text = text, modifier = modifier)
-        return
-    }
-    Text(
-        modifier = modifier,
-        text = buildAnnotatedString {
-            append(text.substring(0, index))
-            withStyle(
-                SpanStyle(
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-            ) {
+    if (q.isBlank()) return androidx.compose.ui.text.AnnotatedString(text)
+    val highlightStyle = SpanStyle(
+        color = MaterialTheme.colorScheme.primary,
+        fontWeight = FontWeight.Bold,
+    )
+    return buildAnnotatedString {
+        var start = 0
+        val lower = text.lowercase()
+        val lowerQuery = q.lowercase()
+        while (true) {
+            val index = lower.indexOf(lowerQuery, start)
+            if (index < 0) {
+                append(text.substring(start))
+                break
+            }
+            append(text.substring(start, index))
+            withStyle(highlightStyle) {
                 append(text.substring(index, index + q.length))
             }
-            append(text.substring(index + q.length))
-        },
-        color = Color.Unspecified,
-    )
+            start = index + q.length
+        }
+    }
 }
