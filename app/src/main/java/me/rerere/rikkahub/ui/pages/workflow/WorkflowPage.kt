@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -43,6 +45,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -172,33 +175,31 @@ fun WorkflowPage() {
             }
             workflows.forEach { workflow ->
                 item(key = workflow.id) {
-                    val dismissState = rememberSwipeToDismissBoxState(
-                        confirmValueChange = { value ->
-                            if (value == SwipeToDismissBoxValue.EndToStart) {
-                                deleteTarget = workflow
-                            }
-                            false // 阻止真正消失，列表项复位
-                        },
-                    )
-                    SwipeToDismissBox(
-                        state = dismissState,
-                        enableDismissFromStartToEnd = false,
-                        enableDismissFromEndToStart = true,
-                        backgroundContent = {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.errorContainer)
-                                    .padding(horizontal = 20.dp),
-                                contentAlignment = Alignment.CenterEnd,
-                            ) {
-                                Icon(
-                                    imageVector = HugeIcons.Cancel01,
-                                    contentDescription = stringResource(R.string.workflow_delete_confirm),
-                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    var dragX by remember(workflow.id) { mutableFloatStateOf(0f) }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (dragX < -20f) {
+                                    MaterialTheme.colorScheme.errorContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                }
+                            )
+                            .pointerInput(workflow.id) {
+                                detectHorizontalDragGestures(
+                                    onDragStart = { dragX = 0f },
+                                    onDragEnd = {
+                                        if (dragX < -60f) deleteTarget = workflow
+                                        dragX = 0f
+                                    },
+                                    onDrag = { change, amount ->
+                                        change.consume()
+                                        dragX = (dragX + amount.x).coerceIn(-220f, 0f)
+                                    },
                                 )
-                            }
-                        },
+                            },
                     ) {
                         ListItem(
                             onClick = { navController.navigate(Screen.WorkflowCanvas(workflow.id)) },
@@ -216,6 +217,13 @@ fun WorkflowPage() {
                             },
                             trailingContent = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (dragX < -40f) {
+                                        Icon(
+                                            imageVector = HugeIcons.Cancel01,
+                                            contentDescription = stringResource(R.string.workflow_delete_confirm),
+                                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                                        )
+                                    }
                                     IconButton(onClick = { editing = workflow }) {
                                         Icon(
                                             imageVector = HugeIcons.Settings03,
@@ -239,7 +247,6 @@ fun WorkflowPage() {
                         )
                     }
                 }
-            }
             item {
                 Button(
                     onClick = { editing = Workflow() },
@@ -873,4 +880,5 @@ private fun WorkflowFlowNodeCard(
             }
         }
     }
+}
 }
