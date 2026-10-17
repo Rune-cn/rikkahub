@@ -3,6 +3,7 @@ package me.rerere.rikkahub.di
 import kotlinx.serialization.json.Json
 import me.rerere.rikkahub.AppScope
 import me.rerere.rikkahub.data.ai.subagent.SubAgentManager
+import me.rerere.rikkahub.data.ai.workflow.WorkflowRunner
 import me.rerere.rikkahub.data.ai.tools.local.LocalTools
 import me.rerere.rikkahub.data.ai.tools.ChatToolFactory
 import me.rerere.rikkahub.data.event.AppEventBus
@@ -36,6 +37,10 @@ val appModule = module {
             settingsStore = get(),
             appScope = get(),
         )
+    }
+
+    single {
+        WorkflowRunner(settingsStore = get())
     }
 
     single {

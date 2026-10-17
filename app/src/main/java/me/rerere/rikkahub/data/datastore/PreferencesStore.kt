@@ -118,6 +118,7 @@ class SettingsStore(
         val NETWORK_SETTING = stringPreferencesKey("network_setting")
         val TOOL_AUTO_ALLOW_SETTING = stringPreferencesKey("tool_auto_allow_setting")
         val SUB_AGENT_SETTING = stringPreferencesKey("sub_agent_setting")
+        val WORKFLOWS = stringPreferencesKey("workflows")
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode")
 
         // 模型选择
@@ -209,6 +210,7 @@ class SettingsStore(
                 preferences[NETWORK_SETTING] = JsonInstant.encodeToString(settings.networkSetting)
                 preferences[TOOL_AUTO_ALLOW_SETTING] = JsonInstant.encodeToString(settings.toolAutoAllowSetting)
                 preferences[SUB_AGENT_SETTING] = JsonInstant.encodeToString(settings.subAgentSetting)
+                preferences[WORKFLOWS] = JsonInstant.encodeToString(settings.workflows)
 
                 preferences[FAVORITE_MODELS] = JsonInstant.encodeToString(settings.favoriteModels)
                 preferences[SELECT_MODEL] = settings.chatModelId.toString()
@@ -318,6 +320,7 @@ class SettingsStore(
                 networkSetting = JsonInstant.decodeFromString(preferences[NETWORK_SETTING] ?: "{}"),
                 toolAutoAllowSetting = JsonInstant.decodeFromString(preferences[TOOL_AUTO_ALLOW_SETTING] ?: "{}"),
                 subAgentSetting = JsonInstant.decodeFromString(preferences[SUB_AGENT_SETTING] ?: "{}"),
+                workflows = JsonInstant.decodeFromString(preferences[WORKFLOWS] ?: "[]"),
                 searchServices = preferences[SEARCH_SERVICES]?.let {
                     JsonInstant.decodeFromString(it)
                 } ?: listOf(SearchServiceOptions.DEFAULT),
@@ -591,6 +594,7 @@ data class Settings(
     val networkSetting: NetworkSetting = NetworkSetting(),
     val toolAutoAllowSetting: ToolAutoAllowSetting = ToolAutoAllowSetting(),
     val subAgentSetting: SubAgentSetting = SubAgentSetting(),
+    val workflows: List<Workflow> = emptyList(),
     val favoriteModels: List<Uuid> = emptyList(),
     val chatModelId: Uuid = Uuid.random(),
     val fastModelId: Uuid = Uuid.random(),
