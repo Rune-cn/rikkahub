@@ -217,7 +217,7 @@ fun SettingSearchResults(
         return
     }
     // 按页面分组（保留索引顺序）
-    val grouped = LinkedHashMap<Int, List<SettingSearchItem>>()
+    val grouped = LinkedHashMap<Int, MutableList<SettingSearchItem>>()
     results.forEach { item -> grouped.getOrPut(item.pageRes) { mutableListOf() }.add(item) }
 
     grouped.forEach { (pageRes, items) ->
