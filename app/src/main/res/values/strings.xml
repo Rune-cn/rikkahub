@@ -1444,6 +1444,13 @@
   <string name="workflow_step_prompt_hint">Use {{input}} for the initial input and {{prev}} for the previous step output</string>
   <string name="workflow_step_model">Model</string>
   <string name="workflow_step_type_prompt">Model</string>
+  <string name="workflow_node_type_if_else">Branch</string>
+  <string name="workflow_parallel_count">%1$d parallel branch(es)</string>
+  <string name="workflow_node_type_parallel">Parallel</string>
+  <string name="workflow_node_condition">Condition</string>
+  <string name="workflow_node_condition_hint">e.g. {{prev}} contains "error" (case-insensitive)</string>
+  <string name="workflow_node_true_branch">✓ True branch</string>
+  <string name="workflow_node_false_branch">✗ False branch</string>
   <string name="workflow_step_type_agent">Agent</string>
   <string name="workflow_add_step">Add step</string>
   <string name="workflow_run">Run</string>
