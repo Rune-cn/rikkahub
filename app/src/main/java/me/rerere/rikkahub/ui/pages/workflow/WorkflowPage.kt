@@ -253,7 +253,10 @@ fun WorkflowPage() {
             title = { Text(stringResource(R.string.workflow_delete_title)) },
             text = {
                 Text(
-                    text = stringResource(R.string.workflow_delete_message, target.name),
+                    text = stringResource(
+                        R.string.workflow_delete_message,
+                        target.name.ifBlank { stringResource(R.string.workflow_untitled) },
+                    ),
                     color = MaterialTheme.colorScheme.error,
                 )
             },
@@ -265,7 +268,7 @@ fun WorkflowPage() {
                     },
                 ) {
                     Text(
-                        text = stringResource(R.string.workflow_delete),
+                        text = stringResource(R.string.workflow_delete_confirm),
                         color = MaterialTheme.colorScheme.error,
                     )
                 }

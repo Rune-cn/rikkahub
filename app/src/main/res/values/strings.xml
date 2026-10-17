@@ -1483,6 +1483,9 @@
   <string name="workflow_node_false_branch">✗ False branch</string>
   <string name="workflow_step_type_agent">Agent</string>
   <string name="workflow_add_step">Add step</string>
+  <string name="workflow_delete_title">Delete workflow?</string>
+  <string name="workflow_delete_message">"%1$s" will be permanently deleted. This cannot be undone.</string>
+  <string name="workflow_delete_confirm">Delete</string>
   <string name="workflow_edit">Edit</string>
   <string name="workflow_run">Run</string>
   <string name="workflow_run_output">Output</string>
