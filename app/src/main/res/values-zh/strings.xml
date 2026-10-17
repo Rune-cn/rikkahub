@@ -1488,6 +1488,9 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workflow_run_input">初始输入</string>
   <string name="workflow_run_start">开始</string>
   <string name="workflow_save">保存</string>
+  <string name="workflow_delete_title">删除工作流？</string>
+  <string name="workflow_delete_message">「%1$s」将被永久删除，无法恢复。</string>
+  <string name="workflow_delete">删除</string>
   <string name="workflow_cancel">取消</string>
   <string name="workflow_status_pending">等待中</string>
   <string name="workflow_status_running">运行中</string>

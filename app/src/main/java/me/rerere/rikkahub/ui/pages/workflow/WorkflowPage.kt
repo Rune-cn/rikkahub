@@ -89,6 +89,7 @@ fun WorkflowPage() {
     var editing by remember { mutableStateOf<Workflow?>(null) }
     var running by remember { mutableStateOf<Workflow?>(null) }
     var expandedId by remember { mutableStateOf<String?>(null) }
+    var deleteTarget by remember { mutableStateOf<Workflow?>(null) }
 
     fun save(workflow: Workflow) {
         scope.launch {
@@ -196,7 +197,7 @@ fun WorkflowPage() {
                                     TextButton(onClick = { running = workflow }) {
                                         Text(stringResource(R.string.workflow_run))
                                     }
-                                    IconButton(onClick = { remove(workflow.id) }) {
+                                    IconButton(onClick = { deleteTarget = workflow }) {
                                         Icon(HugeIcons.Cancel01, contentDescription = null)
                                     }
                                 }
@@ -237,6 +238,38 @@ fun WorkflowPage() {
             providers = settings.providers,
             onSave = { save(it); editing = null },
             onDismiss = { editing = null },
+        )
+    }
+
+    // 删除二次确认（红字提示）
+    deleteTarget?.let { target ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { deleteTarget = null },
+            title = { Text(stringResource(R.string.workflow_delete_title)) },
+            text = {
+                Text(
+                    text = stringResource(R.string.workflow_delete_message, target.name),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        remove(target.id)
+                        deleteTarget = null
+                    },
+                ) {
+                    Text(
+                        text = stringResource(R.string.workflow_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteTarget = null }) {
+                    Text(stringResource(R.string.workflow_cancel))
+                }
+            },
         )
     }
 
