@@ -112,6 +112,30 @@ fun WorkflowPage() {
         }
     }
 
+    /** 复制工作流（新 id + 副本后缀） */
+    fun duplicateWorkflow(workflow: Workflow) {
+        val copy = workflow.copy(
+            id = java.util.UUID.randomUUID().toString(),
+            name = if (workflow.name.isBlank()) {
+                stringResource(R.string.workflow_untitled)
+            } else {
+                workflow.name + stringResource(R.string.workflow_duplicate_suffix)
+            },
+        )
+        save(copy)
+    }
+
+    /** 导出工作流为 JSON（分享） */
+    fun exportWorkflow(workflow: Workflow) {
+        val json = kotlinx.serialization.json.Json { prettyPrint = true }
+            .encodeToString(workflow)
+        val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_TEXT, json)
+        }
+        runCatching { context.startActivity(send) }
+    }
+
     fun remove(id: String) {
         scope.launch {
             settingsStore.update { s -> s.copy(workflows = s.workflows.filterNot { it.id == id }) }
@@ -143,6 +167,8 @@ fun WorkflowPage() {
                             supportingContent = { Text(stringResource(R.string.workflow_entry_desc)) },
                         )
                     }
+                }
+            }
                     workflows.forEach { workflow ->
                         item(key = workflow.id) {
                             val dismissState = rememberSwipeToDismissBoxState(
@@ -211,8 +237,6 @@ fun WorkflowPage() {
                             }
                         }
                     }
-                }
-            }
             item {
                 Button(
                     onClick = { editing = Workflow() },
