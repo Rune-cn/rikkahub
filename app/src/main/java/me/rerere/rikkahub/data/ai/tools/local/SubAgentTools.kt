@@ -60,6 +60,7 @@ private fun spawnAgentTool(manager: SubAgentManager): Tool = Tool(
         - task_name: short unique name, used later by wait_agent / close_agent / send_message
         - message: full task description for the sub-agent
         - model: optional model id override; omit to inherit your current model
+        - wait: set true to block until it finishes and get the result immediately (default false)
         - inherit_context: set true to give the sub-agent your recent conversation history
           (default false: it only sees the message, so include everything it needs)
         - Up to ${SubAgentManager.MAX_CONCURRENT_SUB_AGENTS} sub-agents can run at the same time.
@@ -83,6 +84,10 @@ private fun spawnAgentTool(manager: SubAgentManager): Tool = Tool(
                     put("type", "boolean")
                     put("description", "Whether to pass your recent conversation history to the sub-agent (default false).")
                 })
+                put("wait", buildJsonObject {
+                    put("type", "boolean")
+                    put("description", "Set true to block until the sub-agent finishes and return its full result + transcript (default false).")
+                })
             },
             required = listOf("task_name", "message")
         )
@@ -96,6 +101,7 @@ private fun spawnAgentTool(manager: SubAgentManager): Tool = Tool(
             ?.takeIf { it.isNotBlank() }
             ?.let { runCatching { Uuid.parse(it) }.getOrNull() }
         val inheritContext = obj["inherit_context"]?.jsonPrimitive?.booleanOrNull
+        val wait = obj["wait"]?.jsonPrimitive?.booleanOrNull ?: false
 
         val payload = if (name.isBlank() || message.isBlank()) {
             buildJsonObject {
@@ -110,10 +116,21 @@ private fun spawnAgentTool(manager: SubAgentManager): Tool = Tool(
                 inheritContext = inheritContext,
             ).fold(
                 onSuccess = { task ->
-                    buildJsonObject {
-                        put("success", true)
-                        put("task_name", task.name)
-                        put("status", task.status.name)
+                    if (wait) {
+                        val finished = manager.waitFor(listOf(task.name), 300_000L).firstOrNull()
+                        buildJsonObject {
+                            put("success", true)
+                            put("task_name", task.name)
+                            put("status", finished?.status?.name ?: task.status.name)
+                            finished?.result?.let { put("result", it) }
+                            finished?.error?.let { put("error", it) }
+                        }
+                    } else {
+                        buildJsonObject {
+                            put("success", true)
+                            put("task_name", task.name)
+                            put("status", task.status.name)
+                        }
                     }
                 },
                 onFailure = { error ->
@@ -172,6 +189,29 @@ private fun waitAgentTool(manager: SubAgentManager): Tool = Tool(
                             put("status", task.status.name)
                             task.result?.let { put("result", it) }
                             task.error?.let { put("error", it) }
+                            // 完整过程：让主 Agent 看到子 Agent 说了什么、调了哪些工具
+                            put("transcript", buildJsonArray {
+                                task.messages.forEach { msg ->
+                                    val texts = msg.parts
+                                        .filterIsInstance<UIMessagePart.Text>()
+                                        .joinToString("\n") { it.text }
+                                        .trim()
+                                    val tools = msg.parts
+                                        .filterIsInstance<UIMessagePart.Tool>()
+                                        .map { it.toolName }
+                                    if (texts.isNotBlank() || tools.isNotEmpty()) {
+                                        add(buildJsonObject {
+                                            put("role", msg.role.name.lowercase())
+                                            if (texts.isNotBlank()) put("text", texts)
+                                            if (tools.isNotEmpty()) {
+                                                put("tools", buildJsonArray {
+                                                    tools.forEach { add(it) }
+                                                })
+                                            }
+                                        })
+                                    }
+                                }
+                            })
                         }
                     )
                 }
