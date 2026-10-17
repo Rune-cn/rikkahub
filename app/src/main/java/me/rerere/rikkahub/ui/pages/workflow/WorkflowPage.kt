@@ -658,14 +658,7 @@ private fun FlowNodeIndicator(status: WorkflowStepStatus, modifier: Modifier = M
                     .size(16.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "✓",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                )
-            }
+            )
 
             WorkflowStepStatus.FAILED -> Box(
                 modifier = Modifier
@@ -674,10 +667,11 @@ private fun FlowNodeIndicator(status: WorkflowStepStatus, modifier: Modifier = M
                     .background(MaterialTheme.colorScheme.error),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = "✕",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onError,
+                Icon(
+                    imageVector = HugeIcons.Cancel01,
+                    contentDescription = null,
+                    modifier = Modifier.size(10.dp),
+                    tint = MaterialTheme.colorScheme.onError,
                 )
             }
         }
