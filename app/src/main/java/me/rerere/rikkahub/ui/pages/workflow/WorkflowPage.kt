@@ -109,6 +109,25 @@ fun WorkflowPage() {
     }
 
     /** 创建示例工作流（含条件分支），方便立即查看画布效果 */
+    /** 导出工作流为 JSON（分享） */
+    fun exportWorkflow(wf: Workflow) {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }.encodeToString(wf)
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_TEXT, json)
+            putExtra(android.content.Intent.EXTRA_TITLE, wf.name)
+        }
+        runCatching {
+            context.startActivity(android.content.Intent.createChooser(intent, null))
+        }
+    }
+
+    /** 复制工作流（新 id） */
+    fun duplicateWorkflow(wf: Workflow) {
+        val copyName = wf.name.ifBlank { context.getString(R.string.workflow_untitled) } + " (copy)"
+        save(wf.copy(id = kotlin.uuid.Uuid.random().toString(), name = copyName))
+    }
+
     fun createSample() {
         val sample = Workflow(
             name = context.getString(R.string.workflow_sample_name),
@@ -197,11 +216,17 @@ fun WorkflowPage() {
                                         )
                                     }
                                     Switch(
-                                        checked = runningWorkflowId == workflow.id,
-                                        onCheckedChange = { checked ->
-                                            if (checked) running = workflow
+                                        checked = workflow.enabled,
+                                        onCheckedChange = { enabled ->
+                                            save(workflow.copy(enabled = enabled))
                                         },
                                     )
+                                    TextButton(
+                                        onClick = { running = workflow },
+                                        enabled = workflow.enabled,
+                                    ) {
+                                        Text(stringResource(R.string.workflow_run))
+                                    }
                                     IconButton(onClick = { deleteTarget = workflow }) {
                                         Icon(HugeIcons.Cancel01, contentDescription = null)
                                     }
@@ -243,6 +268,8 @@ fun WorkflowPage() {
             providers = settings.providers,
             onSave = { save(it); editing = null },
             onDismiss = { editing = null },
+            onDuplicate = { duplicateWorkflow(workflow); editing = null },
+            onExport = { exportWorkflow(workflow); editing = null },
         )
     }
 
@@ -297,6 +324,8 @@ private fun WorkflowEditSheet(
     providers: List<me.rerere.ai.provider.ProviderSetting>,
     onSave: (Workflow) -> Unit,
     onDismiss: () -> Unit,
+    onDuplicate: (() -> Unit)? = null,
+    onExport: (() -> Unit)? = null,
 ) {
     var draft by remember { mutableStateOf(workflow) }
 
@@ -364,6 +393,17 @@ private fun WorkflowEditSheet(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (onDuplicate != null) {
+                    TextButton(onClick = onDuplicate) {
+                        Text(stringResource(R.string.workflow_duplicate))
+                    }
+                }
+                if (onExport != null) {
+                    TextButton(onClick = onExport) {
+                        Text(stringResource(R.string.workflow_export))
+                    }
+                }
+                Spacer(modifier = Modifier.weight(1f))
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.workflow_cancel))
                 }
