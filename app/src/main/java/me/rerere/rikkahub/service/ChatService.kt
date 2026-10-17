@@ -682,6 +682,8 @@ class ChatService(
         session.replyMessageId.value = null
         // 生成开始前失败时通知只用来取消 Live Update，用不到发送者名称
         var senderName = ""
+        // 生成中途节流落库（约每 1 秒）：进程被杀/退出时对话不丢失
+        var lastStreamSaveTs = 0L
         try {
             val settings = settingsStore.awaitLoaded()
             // 清掉上一轮的建议；没法继续执行的工具调用发给模型会被拒绝，先去掉。
@@ -704,9 +706,7 @@ class ChatService(
             }
 
             // 同步主对话上下文，供 spawn_agent 的 inherit_context 使用
-            // 同步主对话上下文，供 spawn_agent 的 inherit_context 使用
             subAgentManager.updateMainContext(conversation.currentMessages, conversationId)
-            }
             val replyNodeId = when {
                 history.lastOrNull()?.role == MessageRole.ASSISTANT -> nodes[history.lastIndex].id
                 regenerateNodeId != null -> regenerateNodeId
@@ -734,6 +734,12 @@ class ChatService(
                             session.processingStatus.value = null
                             session.update { it.upsertMessage(replyNodeId, event.message) }
                             session.replyMessageId.value = event.message.id
+                            // 生成中途节流落库（约每 1 秒）：进程被杀/退出时对话不丢失
+                            val now = System.currentTimeMillis()
+                            if (now - lastStreamSaveTs >= 1000) {
+                                lastStreamSaveTs = now
+                                session.flush()
+                            }
                             // 通知等边缘副作用由 ChatNotificationManager 消费；
                             // tryEmit 不挂起，事件丢失只影响单次通知更新，不能反压生成链
                             appEventBus.tryEmit(
@@ -800,7 +806,6 @@ class ChatService(
             return TurnResult.Failed
         }
     }
-
     // 模型不支持工具调用时，搜索和 MCP 工具都不会生效，提醒一下
     private fun warnIfToolsUnavailable(turn: ChatTurnContext, conversationId: Uuid) {
         if (ModelAbility.TOOL in turn.model.abilities) return

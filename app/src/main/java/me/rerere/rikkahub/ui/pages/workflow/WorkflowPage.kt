@@ -27,6 +27,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -108,56 +112,6 @@ fun WorkflowPage() {
         }
     }
 
-    /** 创建示例工作流（含条件分支），方便立即查看画布效果 */
-    /** 导出工作流为 JSON（分享） */
-    fun exportWorkflow(wf: Workflow) {
-        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }.encodeToString(wf)
-        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(android.content.Intent.EXTRA_TEXT, json)
-            putExtra(android.content.Intent.EXTRA_TITLE, wf.name)
-        }
-        runCatching {
-            context.startActivity(android.content.Intent.createChooser(intent, null))
-        }
-    }
-
-    /** 复制工作流（新 id） */
-    fun duplicateWorkflow(wf: Workflow) {
-        val copyName = wf.name.ifBlank { context.getString(R.string.workflow_untitled) } + " (copy)"
-        save(wf.copy(id = kotlin.uuid.Uuid.random().toString(), name = copyName))
-    }
-
-    fun createSample() {
-        val sample = Workflow(
-            name = context.getString(R.string.workflow_sample_name),
-            description = context.getString(R.string.workflow_sample_desc),
-            nodes = listOf(
-                WorkflowNode(
-                    name = context.getString(R.string.workflow_sample_step_split),
-                    type = WorkflowNodeType.PROMPT,
-                    prompt = "把这个问题拆成 3 个子问题：{{input}}",
-                ),
-                WorkflowNode(
-                    name = context.getString(R.string.workflow_sample_step_check),
-                    type = WorkflowNodeType.IF_ELSE,
-                    condition = "{{prev}} contains \"代码\"",
-                    trueBranch = WorkflowNode(
-                        name = context.getString(R.string.workflow_sample_step_code),
-                        type = WorkflowNodeType.AGENT,
-                        prompt = "根据调研写实现：{{prev}}",
-                    ),
-                    falseBranch = WorkflowNode(
-                        name = context.getString(R.string.workflow_sample_step_summary),
-                        type = WorkflowNodeType.PROMPT,
-                        prompt = "总结成报告：{{prev}}",
-                    ),
-                ),
-            ),
-        )
-        save(sample)
-    }
-
     fun remove(id: String) {
         scope.launch {
             settingsStore.update { s -> s.copy(workflows = s.workflows.filterNot { it.id == id }) }
@@ -186,59 +140,73 @@ fun WorkflowPage() {
                     if (workflows.isEmpty()) {
                         item(
                             headlineContent = { Text(stringResource(R.string.workflow_no_workflows)) },
-                            supportingContent = { Text(stringResource(R.string.workflow_sample_hint)) },
-                            trailingContent = {
-                                TextButton(onClick = { createSample() }) {
-                                    Text(stringResource(R.string.workflow_create_sample))
-                                }
-                            },
+                            supportingContent = { Text(stringResource(R.string.workflow_entry_desc)) },
                         )
                     }
                     workflows.forEach { workflow ->
-                        item(
-                            onClick = { navController.navigate(Screen.WorkflowCanvas(workflow.id)) },
-                            headlineContent = { Text(workflow.name.ifBlank { stringResource(R.string.workflow_untitled) }) },
-                            supportingContent = {
-                                Text(
-                                    text = workflow.description.ifBlank {
-                                        stringResource(R.string.workflow_steps_count, workflow.steps.size)
-                                    },
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            trailingContent = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    IconButton(onClick = { editing = workflow }) {
+                        item(key = workflow.id) {
+                            val dismissState = rememberSwipeToDismissBoxState(
+                                confirmValueChange = { value ->
+                                    if (value == SwipeToDismissBoxValue.EndToStart) {
+                                        deleteTarget = workflow
+                                    }
+                                    false // 阻止真正消失，列表项复位
+                                },
+                            )
+                            SwipeToDismissBox(
+                                state = dismissState,
+                                enableDismissFromStartToEnd = false,
+                                enableDismissFromEndToStart = true,
+                                backgroundContent = {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(MaterialTheme.colorScheme.errorContainer)
+                                            .padding(horizontal = 20.dp),
+                                        contentAlignment = Alignment.CenterEnd,
+                                    ) {
                                         Icon(
-                                            imageVector = HugeIcons.Settings03,
-                                            contentDescription = stringResource(R.string.workflow_edit),
+                                            imageVector = HugeIcons.Cancel01,
+                                            contentDescription = stringResource(R.string.workflow_delete_confirm),
+                                            tint = MaterialTheme.colorScheme.onErrorContainer,
                                         )
                                     }
-                                    Switch(
-                                        checked = workflow.enabled,
-                                        onCheckedChange = { enabled ->
-                                            save(workflow.copy(enabled = enabled))
-                                        },
-                                    )
-                                    TextButton(
-                                        onClick = { running = workflow },
-                                        enabled = workflow.enabled,
-                                    ) {
-                                        Text(stringResource(R.string.workflow_run))
-                                    }
-                                    IconButton(onClick = { deleteTarget = workflow }) {
-                                        Icon(HugeIcons.Cancel01, contentDescription = null)
-                                    }
-                                }
-                            },
-                        )
-                        // 展开：树形流程图
-                        if (expandedId == workflow.id) {
-                            item {
-                                WorkflowFlowView(
-                                    nodes = workflow.displayNodes(),
-                                    modifier = Modifier.padding(start = 32.dp, end = 8.dp),
+                                },
+                            ) {
+                                ListItem(
+                                    onClick = { navController.navigate(Screen.WorkflowCanvas(workflow.id)) },
+                                    headlineContent = { Text(workflow.name.ifBlank { stringResource(R.string.workflow_untitled) }) },
+                                    supportingContent = {
+                                        Text(
+                                            text = workflow.description.ifBlank {
+                                                stringResource(R.string.workflow_steps_count, workflow.steps.size)
+                                            },
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    },
+                                    trailingContent = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            IconButton(onClick = { editing = workflow }) {
+                                                Icon(
+                                                    imageVector = HugeIcons.Settings03,
+                                                    contentDescription = stringResource(R.string.workflow_edit),
+                                                )
+                                            }
+                                            Switch(
+                                                checked = workflow.enabled,
+                                                onCheckedChange = { enabled ->
+                                                    save(workflow.copy(enabled = enabled))
+                                                },
+                                            )
+                                            TextButton(
+                                                onClick = { running = workflow },
+                                                enabled = workflow.enabled,
+                                            ) {
+                                                Text(stringResource(R.string.workflow_run))
+                                            }
+                                        }
+                                    },
                                 )
                             }
                         }
