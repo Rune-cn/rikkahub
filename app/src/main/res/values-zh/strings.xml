@@ -1462,6 +1462,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workflow_step_prompt">提示词</string>
   <string name="workflow_step_prompt_hint">用 {{input}} 表示初始输入，{{prev}} 表示上一步的输出</string>
   <string name="workflow_step_model">模型</string>
+  <string name="workflow_node_if_else">条件</string>
+  <string name="workflow_node_parallel">并行</string>
   <string name="workflow_step_type_prompt">模型</string>
   <string name="workflow_node_type_if_else">条件分支</string>
   <string name="workflow_parallel_count">%1$d 个并行分支</string>
@@ -1472,6 +1474,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workflow_node_false_branch">✗ 不满足分支</string>
   <string name="workflow_step_type_agent">Agent</string>
   <string name="workflow_add_step">添加步骤</string>
+  <string name="workflow_edit">编辑</string>
   <string name="workflow_run">运行</string>
   <string name="workflow_run_output">输出</string>
   <string name="workflow_run_input">初始输入</string>

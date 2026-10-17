@@ -73,6 +73,9 @@ data class WorkflowNode(
     val falseBranch: WorkflowNode? = null,
     /** PARALLEL 的并行子分支 */
     val children: List<WorkflowNode> = emptyList(),
+    /** 画布坐标（由自动布局或用户拖拽产生） */
+    val x: Float = Float.NaN,
+    val y: Float = Float.NaN,
 )
 
 /**
