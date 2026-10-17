@@ -73,6 +73,7 @@ private val PAGE_MCP = R.string.setting_page_mcp
 private val PAGE_WEB = R.string.setting_page_web_server
 private val PAGE_FILES = R.string.setting_page_chat_storage
 private val PAGE_EXTENSIONS = R.string.setting_page_extensions
+private val PAGE_EXTENSIONS = R.string.setting_page_extensions
 
 /**
  * 设置搜索索引（精确到项）
@@ -165,6 +166,16 @@ val SETTING_SEARCH_ITEMS: List<SettingSearchItem> = listOf(
     SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_workspace, SettingItemType.NAV, "工作区 文件 命令行 终端 workspace files terminal", Screen.Workspaces),
     SettingSearchItem(PAGE_EXTENSIONS, R.string.tool_call_page_title, SettingItemType.NAV, "工具调用 自动允许 审批 tool calls auto allow approval", Screen.ToolCalls),
     SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_other_category, SettingItemType.NAV, "其他 更多 other 子 agent 自动重试", Screen.OtherSettings),
+
+    // ── 扩展管理入口 ──
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.assistant_page_quick_messages, SettingItemType.NAV, "快捷消息 quick messages 常用 预设", Screen.Extensions),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_prompts, SettingItemType.NAV, "提示词 prompts 预设 模板", Screen.Extensions),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_agent_skills, SettingItemType.NAV, "技能 skills agent 自定义能力", Screen.Extensions),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_workspace, SettingItemType.NAV, "工作区 workspace 文件 沙箱 执行 shell", Screen.Extensions),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.tool_call_page_title, SettingItemType.NAV, "工具调用 tool calls 自动允许 审批 approval", Screen.Extensions),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.workflow_page_title, SettingItemType.NAV, "工作流 workflow 流程 自动化 流水线 多步骤 pipeline 编排", Screen.Workflows),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_sub_agent_section, SettingItemType.NAV, "子agent 子Agent sub agent 多agent 并行 多个模型 共享上下文 继承", Screen.OtherSettings),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_auto_retry, SettingItemType.NAV, "自动重试 retry 限流 tpm rpm 重试关键字 状态码", Screen.OtherSettings),
 )
 
 /** 按关键词搜索设置项（标题本地化文本 + 关键词，忽略大小写） */
