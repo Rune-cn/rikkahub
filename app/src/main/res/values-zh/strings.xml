@@ -1450,6 +1450,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="multi_agent_list_title">子 Agent</string>
   <string name="multi_agent_no_tasks">还没有子 Agent，新建一个即可开始对话</string>
   <string name="multi_agent_new">新建子 Agent</string>
+  <string name="multi_agent_dialog_hint">子 Agent 是帮你干一件具体任务的独立 AI（调研/总结/翻译/写代码…），自带工具，可用不同模型。</string>
   <string name="multi_agent_new_title">新建子 Agent</string>
   <string name="multi_agent_task_name">任务名</string>
   <string name="multi_agent_task_prompt">任务说明</string>
