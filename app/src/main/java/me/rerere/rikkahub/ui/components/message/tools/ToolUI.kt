@@ -112,6 +112,7 @@ object ToolUIRegistry {
         UpdatePlanToolUI,
         SpawnAgentToolUI,
         WaitAgentToolUI,
+        SendMessageToolUI,
         ListAgentsToolUI,
         CloseAgentToolUI,
     ).plus(MemoryFileToolUI.all).associateBy { it.toolName }

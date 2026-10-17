@@ -1427,6 +1427,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="chat_message_tool_spawn_agent_with_name">启动子 Agent：%1$s</string>
   <string name="chat_message_tool_wait_agent">等待子 Agent</string>
   <string name="chat_message_tool_list_agents">查看子 Agent</string>
+  <string name="chat_message_tool_send_message">给子 Agent 发消息</string>
+  <string name="chat_message_tool_send_message_with_name">发给子 Agent：%1$s</string>
   <string name="chat_message_tool_close_agent">关闭子 Agent</string>
   <string name="chat_message_tool_update_plan">任务计划</string>
   <string name="chat_message_tool_update_plan_progress">任务计划（%1$d/%2$d）</string>

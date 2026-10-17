@@ -45,6 +45,8 @@ import me.rerere.rikkahub.data.ai.MemoryConsolidationScheduler
 import me.rerere.rikkahub.data.ai.TranslationHandler
 import me.rerere.rikkahub.data.ai.mcp.McpManager
 import me.rerere.rikkahub.data.ai.prompts.buildCompressPrompt
+import me.rerere.rikkahub.data.ai.subagent.SubAgentManager
+import me.rerere.rikkahub.data.ai.tools.ChatToolFactory
 import me.rerere.rikkahub.data.ai.tools.InvalidMcpServerNamesException
 import me.rerere.rikkahub.data.ai.tools.shouldUseExternalWebSearch
 import me.rerere.rikkahub.data.datastore.SettingsStore
@@ -111,6 +113,10 @@ class ChatService(
     private val memoryConsolidationScheduler: MemoryConsolidationScheduler,
     private val translationHandler: TranslationHandler,
     private val metaGenerator: ConversationMetaGenerator,
+    private val templateTransformer: TemplateTransformer,
+    private val providerManager: ProviderManager,
+    private val chatToolFactory: ChatToolFactory,
+    private val subAgentManager: SubAgentManager,
     val mcpManager: McpManager,
     private val filesManager: FilesManager,
     private val folderRepository: FolderRepository,
@@ -604,6 +610,10 @@ class ChatService(
                 conversation.currentMessages.take(index)
             } else {
                 conversation.currentMessages
+            }
+
+            // 同步主对话上下文，供 spawn_agent 的 inherit_context 使用
+            subAgentManager.updateMainContext(conversation.currentMessages)
             }
             val replyNodeId = when {
                 history.lastOrNull()?.role == MessageRole.ASSISTANT -> nodes[history.lastIndex].id

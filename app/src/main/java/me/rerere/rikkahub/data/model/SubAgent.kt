@@ -35,6 +35,8 @@ data class SubAgentTask(
     val prompt: String,
     /** 模型覆盖；null 表示继承主 Agent 当前模型 */
     val modelId: Uuid? = null,
+    /** 是否继承主 Agent 的对话上下文（spawn 时指定） */
+    val inheritContext: Boolean = false,
     /** 实际使用的模型显示名（运行中记录，便于展示） */
     val modelName: String? = null,
     val status: SubAgentStatus = SubAgentStatus.RUNNING,

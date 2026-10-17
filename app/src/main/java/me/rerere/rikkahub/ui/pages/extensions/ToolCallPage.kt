@@ -54,6 +54,7 @@ private val BUILT_IN_TOOL_NAMES = listOf(
     "wait_agent",
     "list_agents",
     "close_agent",
+    "send_message",
 )
 
 @Composable

@@ -49,6 +49,9 @@ class SubAgentManager(
 
         /** 同时运行的子 Agent 上限 */
         const val MAX_CONCURRENT_SUB_AGENTS = 3
+
+        /** 继承主对话上下文时最多带入的消息条数（避免上下文过长） */
+        const val MAX_CONTEXT_MESSAGES = 20
     }
 
     // 延迟解析，避免与 LocalTools / ChatToolFactory 形成 Koin 循环依赖
@@ -60,8 +63,22 @@ class SubAgentManager(
 
     private val jobs = mutableMapOf<String, Job>()
 
+    /** 主 Agent 最近的对话上下文（由 ChatService 在生成前同步），供 inherit_context 使用 */
+    @Volatile
+    private var mainContext: List<UIMessage> = emptyList()
+
+    /** 由 ChatService 在开始生成前调用，同步主对话上下文 */
+    fun updateMainContext(messages: List<UIMessage>) {
+        mainContext = messages
+    }
+
     /** 启动子 Agent（异步，立即返回） */
-    fun spawn(name: String, prompt: String, modelId: Uuid? = null): Result<SubAgentTask> {
+    fun spawn(
+        name: String,
+        prompt: String,
+        modelId: Uuid? = null,
+        inheritContext: Boolean = false,
+    ): Result<SubAgentTask> {
         val runningCount = _tasks.value.count { it.status == SubAgentStatus.RUNNING }
         if (runningCount >= MAX_CONCURRENT_SUB_AGENTS) {
             return Result.failure(
@@ -76,15 +93,47 @@ class SubAgentManager(
             name = name,
             prompt = prompt,
             modelId = modelId,
+            inheritContext = inheritContext,
             startedAt = System.currentTimeMillis(),
         )
         _tasks.value = _tasks.value + task
         jobs[name] = appScope.launch { runTask(task) }
-        Log.i(TAG, "spawn sub-agent: $name")
+        Log.i(TAG, "spawn sub-agent: $name (inheritContext=$inheritContext)")
         return Result.success(task)
     }
 
-    private suspend fun runTask(task: SubAgentTask) {
+    /**
+     * 给子 Agent 追加一条消息，让它继续工作（多轮对话）
+     *
+     * 仅支持已结束的子 Agent；运行中的需先 wait_agent。
+     */
+    fun sendMessage(name: String, message: String): Result<SubAgentTask> {
+        val task = _tasks.value.find { it.name == name }
+            ?: return Result.failure(IllegalStateException("Sub-agent '$name' not found"))
+        if (!task.isFinished) {
+            return Result.failure(
+                IllegalStateException("Sub-agent '$name' is still running; wait for it first")
+            )
+        }
+        val resumed = task.copy(
+            status = SubAgentStatus.RUNNING,
+            result = null,
+            error = null,
+            finishedAt = null,
+            messages = task.messages + UIMessage(
+                role = MessageRole.USER,
+                parts = listOf(UIMessagePart.Text(message)),
+            ),
+        )
+        updateTask(name) { resumed }
+        jobs[name] = appScope.launch {
+            runTask(resumed, resumeMessages = resumed.messages)
+        }
+        Log.i(TAG, "send message to sub-agent: $name")
+        return Result.success(resumed)
+    }
+
+    private suspend fun runTask(task: SubAgentTask, resumeMessages: List<UIMessage>? = null) {
         try {
             val settings = settingsStore.settingsFlow.first { !it.init }
             val assistant = settings.getCurrentAssistant()
@@ -103,12 +152,18 @@ class SubAgentManager(
                 model = model,
             )
 
-            var messages = listOf(
-                UIMessage(
-                    role = MessageRole.USER,
-                    parts = listOf(UIMessagePart.Text(task.prompt)),
+            var messages = resumeMessages ?: buildList {
+                // 可选：继承主 Agent 的最近对话上下文
+                if (task.inheritContext) {
+                    addAll(mainContext.takeLast(MAX_CONTEXT_MESSAGES))
+                }
+                add(
+                    UIMessage(
+                        role = MessageRole.USER,
+                        parts = listOf(UIMessagePart.Text(task.prompt)),
+                    )
                 )
-            )
+            }
             var finalText = ""
 
             generationLoop.generateText(

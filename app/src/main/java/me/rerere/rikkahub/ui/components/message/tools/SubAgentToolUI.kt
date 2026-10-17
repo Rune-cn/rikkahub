@@ -31,6 +31,7 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.ai.subagent.SubAgentManager
 import me.rerere.rikkahub.data.ai.tools.local.CLOSE_AGENT_TOOL_NAME
 import me.rerere.rikkahub.data.ai.tools.local.LIST_AGENTS_TOOL_NAME
+import me.rerere.rikkahub.data.ai.tools.local.SEND_MESSAGE_TOOL_NAME
 import me.rerere.rikkahub.data.ai.tools.local.SPAWN_AGENT_TOOL_NAME
 import me.rerere.rikkahub.data.ai.tools.local.WAIT_AGENT_TOOL_NAME
 import me.rerere.rikkahub.data.model.SubAgentStatus
@@ -197,6 +198,23 @@ object CloseAgentToolUI : ToolUIRenderer {
             stringResource(R.string.chat_message_tool_close_agent)
         } else {
             stringResource(R.string.chat_message_tool_close_agent) + ": " + name
+        }
+    }
+}
+
+/** 给已结束的子 Agent 追加消息（多轮对话） */
+object SendMessageToolUI : ToolUIRenderer {
+    override val toolName: String = SEND_MESSAGE_TOOL_NAME
+
+    override fun icon(context: ToolUIContext): ImageVector = HugeIcons.Tools
+
+    @Composable
+    override fun title(context: ToolUIContext): String {
+        val name = context.arguments.getStringContent("task_name")
+        return if (name.isNullOrBlank()) {
+            stringResource(R.string.chat_message_tool_send_message)
+        } else {
+            stringResource(R.string.chat_message_tool_send_message_with_name, name)
         }
     }
 }

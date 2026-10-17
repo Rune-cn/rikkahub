@@ -1426,6 +1426,8 @@
   <string name="chat_message_tool_spawn_agent_with_name">Spawn sub-agent: %1$s</string>
   <string name="chat_message_tool_wait_agent">Wait for sub-agents</string>
   <string name="chat_message_tool_list_agents">List sub-agents</string>
+  <string name="chat_message_tool_send_message">Send message to sub-agent</string>
+  <string name="chat_message_tool_send_message_with_name">Send to sub-agent: %1$s</string>
   <string name="chat_message_tool_close_agent">Close sub-agent</string>
   <string name="chat_message_tool_update_plan">Task plan</string>
   <string name="chat_message_tool_update_plan_progress">Task plan (%1$d/%2$d)</string>
