@@ -36,6 +36,8 @@ class LocalTools(
 
     val subAgentTools by lazy { buildSubAgentTools(subAgentManager) }
 
+    val workflowTools by lazy { buildWorkflowTools(settingsStore) }
+
     fun getTools(options: List<LocalToolOption>): List<Tool> {
         val tools = mutableListOf<Tool>()
         if (options.contains(LocalToolOption.JavascriptEngine)) {
@@ -68,6 +70,9 @@ class LocalTools(
         }
         if (options.contains(LocalToolOption.SubAgent)) {
             tools.addAll(subAgentTools)
+        }
+        if (options.contains(LocalToolOption.Workflow)) {
+            tools.addAll(workflowTools)
         }
         return tools
     }

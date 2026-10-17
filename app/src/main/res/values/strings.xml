@@ -863,6 +863,10 @@
   <string name="setting_page_dynamic_color_desc">Generate the app theme colors dynamically from your wallpaper</string>
   <string name="setting_page_extensions">Extensions</string>
   <string name="setting_page_extensions_desc">Manage prompt injections, skills and more</string>
+  <string name="setting_search_placeholder">Search settings</string>
+  <string name="setting_search_results">Results</string>
+  <string name="setting_search_no_result">No matching settings</string>
+  <string name="setting_search_clear">Clear</string>
   <string name="setting_page_general_settings">General Settings</string>
   <string name="setting_page_interaction_notification_settings">Interaction &amp;amp; Notifications</string>
   <string name="setting_page_mcp">MCP</string>
@@ -1251,6 +1255,8 @@
   <string name="extensions_page_auto_retry_desc">Automatically retry failed requests that match the rules below</string>
   <string name="extensions_page_retry_add_tag">Add</string>
   <string name="extensions_page_sub_agent_section">Sub-agent</string>
+  <string name="extensions_page_sub_agent_inherit_context">Share conversation context</string>
+  <string name="extensions_page_sub_agent_inherit_context_desc">Whether sub-agents inherit your recent conversation history by default</string>
   <string name="extensions_page_sub_agent_model">Sub-agent model</string>
   <string name="extensions_page_sub_agent_model_desc">Model used by spawned sub-agents; clear it to inherit the current model</string>
   <string name="extensions_page_retry_interval">Retry Interval</string>
@@ -1425,6 +1431,8 @@
   <string name="chat_message_tool_chart_display_with_title">Display chart: %1$s</string>
   <string name="assistant_page_local_tools_update_plan_title">Task Plan</string>
   <string name="assistant_page_local_tools_update_plan_desc">Let the AI keep a step-by-step checklist for the task and show progress</string>
+  <string name="assistant_page_local_tools_workflow_title">Workflow Management</string>
+  <string name="assistant_page_local_tools_workflow_desc">Let the AI create and modify AI workflows for you</string>
   <string name="assistant_page_local_tools_sub_agent_title">Sub-agents</string>
   <string name="assistant_page_local_tools_sub_agent_desc">Let the AI delegate tasks to sub-agents running in parallel, each with its own tools and model</string>
   <string name="chat_sub_agent_running">%1$d sub-agent(s) running</string>

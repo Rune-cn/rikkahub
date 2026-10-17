@@ -55,6 +55,10 @@ private val BUILT_IN_TOOL_NAMES = listOf(
     "list_agents",
     "close_agent",
     "send_message",
+    "list_workflows",
+    "create_workflow",
+    "update_workflow",
+    "delete_workflow",
 )
 
 @Composable

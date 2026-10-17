@@ -40,6 +40,8 @@ class ChatToolFactory(
         assistant: Assistant,
         model: Model,
         workspaceCwd: String? = null,
+        /** 子 Agent 场景传 true：排除子 Agent 管理工具，避免无限递归 */
+        excludeSubAgentTools: Boolean = false,
     ): List<Tool> = buildList {
         if (assistant.enableMemory) {
             val memoryAssistantId = if (assistant.useGlobalMemory) {
@@ -59,7 +61,13 @@ class ChatToolFactory(
         if (shouldUseExternalWebSearch(assistant, model)) {
             addAll(createSearchTools(settings))
         }
-        addAll(localTools.getTools(assistant.localTools))
+        addAll(localTools.getTools(assistant.localTools).let { localToolsList ->
+            if (excludeSubAgentTools) {
+                localToolsList.filterNot { it.name in SUB_AGENT_TOOL_NAMES }
+            } else {
+                localToolsList
+            }
+        })
         if (assistant.enableRecentChatsReference) {
             addAll(createConversationTools(conversationRepository, assistant.id))
         }

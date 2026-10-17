@@ -22,6 +22,15 @@ internal const val LIST_AGENTS_TOOL_NAME = "list_agents"
 internal const val CLOSE_AGENT_TOOL_NAME = "close_agent"
 internal const val SEND_MESSAGE_TOOL_NAME = "send_message"
 
+/** 子 Agent 管理工具名集合（子 Agent 自身不再携带，避免无限递归） */
+internal val SUB_AGENT_TOOL_NAMES = setOf(
+    SPAWN_AGENT_TOOL_NAME,
+    WAIT_AGENT_TOOL_NAME,
+    LIST_AGENTS_TOOL_NAME,
+    CLOSE_AGENT_TOOL_NAME,
+    SEND_MESSAGE_TOOL_NAME,
+)
+
 /**
  * 子 Agent 协同工具集（主 Agent 用来指挥子 Agent）
  *
@@ -86,7 +95,7 @@ private fun spawnAgentTool(manager: SubAgentManager): Tool = Tool(
         val modelId = obj["model"]?.jsonPrimitive?.contentOrNull?.trim()
             ?.takeIf { it.isNotBlank() }
             ?.let { runCatching { Uuid.parse(it) }.getOrNull() }
-        val inheritContext = obj["inherit_context"]?.jsonPrimitive?.booleanOrNull ?: false
+        val inheritContext = obj["inherit_context"]?.jsonPrimitive?.booleanOrNull
 
         val payload = if (name.isBlank() || message.isBlank()) {
             buildJsonObject {

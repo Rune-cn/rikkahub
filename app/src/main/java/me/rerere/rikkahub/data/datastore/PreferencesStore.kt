@@ -659,6 +659,8 @@ data class ToolAutoAllowSetting(
 data class SubAgentSetting(
     // 子 Agent 默认使用的模型；null 表示继承主 Agent 当前模型
     val defaultModelId: Uuid? = null,
+    // 子 Agent 默认是否继承主 Agent 的最近对话上下文
+    val defaultInheritContext: Boolean = false,
 )
 
 @Serializable
