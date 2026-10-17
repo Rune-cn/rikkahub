@@ -1492,8 +1492,6 @@
   <string name="workflow_run_input">Initial input</string>
   <string name="workflow_run_start">Start</string>
   <string name="workflow_save">Save</string>
-  <string name="workflow_delete_title">Delete workflow?</string>
-  <string name="workflow_delete_message">"%1$s" will be permanently deleted. This cannot be undone.</string>
   <string name="workflow_delete">Delete</string>
   <string name="workflow_cancel">Cancel</string>
   <string name="workflow_status_pending">Pending</string>
