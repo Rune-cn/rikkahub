@@ -74,7 +74,7 @@ import me.rerere.rikkahub.data.model.AssistantAffectScope
 import me.rerere.rikkahub.data.model.MessageNode
 import me.rerere.ai.ui.ModelSnapshot
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.combine
 import me.rerere.rikkahub.data.model.bindConfig
 import me.rerere.rikkahub.data.model.fillModelSnapshots
