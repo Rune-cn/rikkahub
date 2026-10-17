@@ -1510,6 +1510,8 @@
   <string name="workflow_run_start">Start</string>
   <string name="workflow_save">Save</string>
   <string name="workflow_delete">Delete</string>
+  <string name="workflow_duplicate">Duplicate</string>
+  <string name="workflow_export">Export JSON</string>
   <string name="workflow_cancel">Cancel</string>
   <string name="workflow_status_pending">Pending</string>
   <string name="workflow_status_running">Running</string>

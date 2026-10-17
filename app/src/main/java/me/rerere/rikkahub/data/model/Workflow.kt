@@ -92,6 +92,8 @@ data class Workflow(
     val steps: List<WorkflowStep> = emptyList(),
     /** 新版：入口节点序列（依次执行） */
     val nodes: List<WorkflowNode> = emptyList(),
+    /** 是否启用；禁用后不可运行 */
+    val enabled: Boolean = true,
 )
 
 /** 工作流单步运行状态 */
