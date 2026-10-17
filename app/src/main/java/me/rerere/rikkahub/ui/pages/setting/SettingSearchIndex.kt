@@ -72,6 +72,7 @@ private val PAGE_MEDIA = R.string.setting_page_media
 private val PAGE_MCP = R.string.setting_page_mcp
 private val PAGE_WEB = R.string.setting_page_web_server
 private val PAGE_FILES = R.string.setting_page_chat_storage
+private val PAGE_EXTENSIONS = R.string.setting_page_extensions
 
 /**
  * 设置搜索索引（精确到项）
@@ -152,6 +153,18 @@ val SETTING_SEARCH_ITEMS: List<SettingSearchItem> = listOf(
 
     // ── 数据与存储 ──
     SettingSearchItem(PAGE_FILES, R.string.setting_files_page_clean_title, SettingItemType.ACTION, "清理 文件 缓存 clean storage 清理空间", Screen.SettingFiles),
+
+    // ── 扩展管理入口（设置搜索可直接直达功能页） ──
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.workflow_page_title, SettingItemType.NAV, "工作流 workflow 流水线 步骤 自动化 pipeline", Screen.Workflows),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_sub_agent_section, SettingItemType.NAV, "子 agent 多 agent 协同 并行 分派 sub-agent delegation spawn", Screen.OtherSettings),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_sub_agent_model, SettingItemType.SELECT, "子 agent 模型 默认模型 sub-agent model", Screen.OtherSettings),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_auto_retry, SettingItemType.NAV, "自动重试 限流 重试 网络错误 状态码 retry rate limit tpm rpm", Screen.OtherSettings),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.assistant_page_quick_messages, SettingItemType.NAV, "快捷消息 快捷指令 quick messages 一键发送", Screen.QuickMessages),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_prompts, SettingItemType.NAV, "提示词 预设 模板 prompt templates", Screen.Prompts),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_agent_skills, SettingItemType.NAV, "技能 能力 skill agent skills", Screen.Skills),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_workspace, SettingItemType.NAV, "工作区 文件 命令行 终端 workspace files terminal", Screen.Workspaces),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.tool_call_page_title, SettingItemType.NAV, "工具调用 自动允许 审批 tool calls auto allow approval", Screen.ToolCalls),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_other_category, SettingItemType.NAV, "其他 更多 other 子 agent 自动重试", Screen.OtherSettings),
 )
 
 /** 按关键词搜索设置项（标题本地化文本 + 关键词，忽略大小写） */
