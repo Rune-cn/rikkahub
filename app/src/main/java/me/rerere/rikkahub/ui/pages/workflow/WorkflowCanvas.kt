@@ -92,11 +92,13 @@ fun WorkflowCanvas(
     // 打开时居中内容
     LaunchedEffect(layout, canvasSize) {
         if (!initialized && canvasSize.width > 0f && layout.nodes.isNotEmpty()) {
-            val contentW = (layout.maxX - layout.minX).dp.toPx() * scale
-            val contentH = (layout.maxY - layout.minY).dp.toPx() * scale
+            val contentW = with(density) { (layout.maxX - layout.minX).dp.toPx() } * scale
+            val contentH = with(density) { (layout.maxY - layout.minY).dp.toPx() } * scale
+            val minX = with(density) { layout.minX.dp.toPx() }
+            val minY = with(density) { layout.minY.dp.toPx() }
             offset = Offset(
-                x = (canvasSize.width - contentW) / 2f - layout.minX.dp.toPx() * scale,
-                y = (canvasSize.height - contentH) / 2f - layout.minY.dp.toPx() * scale,
+                x = (canvasSize.width - contentW) / 2f - minX * scale,
+                y = (canvasSize.height - contentH) / 2f - minY * scale,
             )
             initialized = true
         }
