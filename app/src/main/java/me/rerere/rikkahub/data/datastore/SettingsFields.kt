@@ -69,6 +69,7 @@ internal val SETTINGS_FIELDS: List<SettingsField<*, *>> = with(SettingsStore) {
         json(TOOL_AUTO_ALLOW_SETTING, Settings::toolAutoAllowSetting) { copy(toolAutoAllowSetting = it) },
         json(SUB_AGENT_SETTING, Settings::subAgentSetting) { copy(subAgentSetting = it) },
         plain(ENABLE_SUB_AGENT, Settings::enableSubAgent) { copy(enableSubAgent = it) },
+        json(CHAT_DRAFTS, Settings::chatDrafts) { copy(chatDrafts = it) },
         json(WORKFLOWS, Settings::workflows) { copy(workflows = it) },
         plain(DEVELOPER_MODE, Settings::developerMode) { copy(developerMode = it) },
 

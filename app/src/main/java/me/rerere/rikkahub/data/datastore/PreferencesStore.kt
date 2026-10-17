@@ -109,6 +109,7 @@ class SettingsStore internal constructor(
         val TOOL_AUTO_ALLOW_SETTING = stringPreferencesKey("tool_auto_allow_setting")
         val SUB_AGENT_SETTING = stringPreferencesKey("sub_agent_setting")
         val ENABLE_SUB_AGENT = booleanPreferencesKey("enable_sub_agent")
+        val CHAT_DRAFTS = stringPreferencesKey("chat_drafts")
         val WORKFLOWS = stringPreferencesKey("workflows")
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode")
 

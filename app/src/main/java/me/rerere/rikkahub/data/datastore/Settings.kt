@@ -40,6 +40,7 @@ data class Settings(
     val toolAutoAllowSetting: ToolAutoAllowSetting = ToolAutoAllowSetting(),
     val subAgentSetting: SubAgentSetting = SubAgentSetting(),
     val enableSubAgent: Boolean = false,
+    val chatDrafts: Map<String, String> = emptyMap(),
     val workflows: List<Workflow> = emptyList(),
     val favoriteModels: List<Uuid> = emptyList(),
     val chatModelId: Uuid = Uuid.random(),
