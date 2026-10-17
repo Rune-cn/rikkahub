@@ -154,6 +154,10 @@ val SETTING_SEARCH_ITEMS: List<SettingSearchItem> = listOf(
     // ── 数据与存储 ──
     SettingSearchItem(PAGE_FILES, R.string.setting_files_page_clean_title, SettingItemType.ACTION, "清理 文件 缓存 clean storage 清理空间", Screen.SettingFiles),
 
+
+    // ── 通用设置 ──
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_page_color_mode, SettingItemType.SELECT, "颜色模式 主题 深浅色 深色 浅色 跟随系统 暗色 color mode theme dark light system", Screen.Setting),
+    SettingSearchItem(PAGE_GENERAL, R.string.setting_page_preferences, SettingItemType.NAV, "偏好设置 界面 外观 preferences", Screen.SettingPreferences),
     // ── 扩展管理入口（设置搜索可直接直达功能页） ──
     SettingSearchItem(PAGE_EXTENSIONS, R.string.workflow_page_title, SettingItemType.NAV, "工作流 workflow 流水线 步骤 自动化 pipeline", Screen.Workflows),
     SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_sub_agent_section, SettingItemType.NAV, "子 agent 多 agent 协同 并行 分派 sub-agent delegation spawn", Screen.OtherSettings),

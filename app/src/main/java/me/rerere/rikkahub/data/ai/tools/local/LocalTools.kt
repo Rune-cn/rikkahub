@@ -68,9 +68,8 @@ class LocalTools(
         if (options.contains(LocalToolOption.UpdatePlan)) {
             tools.add(updatePlanTool)
         }
-        if (options.contains(LocalToolOption.SubAgent)) {
-            tools.addAll(subAgentTools)
-        }
+        // 子 Agent 工具始终可用（多 Agent 工作是一级功能，不再是可选工具）
+        tools.addAll(subAgentTools)
         if (options.contains(LocalToolOption.Workflow)) {
             tools.addAll(workflowTools)
         }
