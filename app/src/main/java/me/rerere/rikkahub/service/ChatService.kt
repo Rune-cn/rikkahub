@@ -731,7 +731,7 @@ class ChatService(
     private suspend fun handleMessageComplete(
         conversationId: Uuid,
         messageRange: ClosedRange<Int>? = null
-    ) {
+    ) {        var lastStreamSaveTs = 0L
         val settings = settingsStore.settingsFlow.first()
         val initialConversation = getConversationFlow(conversationId).value
         // 模型、思考级别、搜索、工具等以会话上固定的配置为准
@@ -840,6 +840,13 @@ class ChatService(
                         val updatedConversation = getConversationFlow(conversationId).value
                             .updateCurrentMessages(chunk.messages)
                         updateConversation(conversationId, updatedConversation)
+
+                        // 生成中途节流落库（约每 1 秒）：进程被杀/退出时对话不丢失
+                        val now = System.currentTimeMillis()
+                        if (now - lastStreamSaveTs >= 1000) {
+                            lastStreamSaveTs = now
+                            saveConversation(conversationId, updatedConversation)
+                        }
 
                         // 通知等边缘副作用由 ChatNotificationManager 消费；
                         // tryEmit 不挂起，事件丢失只影响单次通知更新，不能反压生成链
