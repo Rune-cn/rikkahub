@@ -45,6 +45,7 @@ import me.rerere.rikkahub.data.ai.GenerationChunk
 import me.rerere.rikkahub.data.ai.GenerationLoop
 import me.rerere.rikkahub.data.ai.TranslationHandler
 import me.rerere.rikkahub.data.ai.mcp.McpManager
+import me.rerere.rikkahub.data.ai.subagent.SubAgentManager
 import me.rerere.rikkahub.data.ai.tools.ChatToolFactory
 import me.rerere.rikkahub.data.ai.tools.InvalidMcpServerNamesException
 import me.rerere.rikkahub.data.ai.tools.shouldUseExternalWebSearch
@@ -192,6 +193,7 @@ class ChatService(
     private val templateTransformer: TemplateTransformer,
     private val providerManager: ProviderManager,
     private val chatToolFactory: ChatToolFactory,
+    private val subAgentManager: SubAgentManager,
     val mcpManager: McpManager,
     private val filesManager: FilesManager,
     private val workspaceRepository: WorkspaceRepository,
@@ -674,6 +676,9 @@ class ChatService(
             // check invalid messages
             checkInvalidMessages(conversationId)
             val conversation = getConversationFlow(conversationId).value
+
+            // 同步主对话上下文，供 spawn_agent 的 inherit_context 使用
+            subAgentManager.updateMainContext(conversation.currentMessages)
 
             val tools = try {
                 chatToolFactory.createTools(

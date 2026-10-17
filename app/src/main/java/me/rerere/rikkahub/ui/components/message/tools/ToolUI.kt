@@ -110,6 +110,7 @@ object ToolUIRegistry {
         UpdatePlanToolUI,
         SpawnAgentToolUI,
         WaitAgentToolUI,
+        SendMessageToolUI,
         ListAgentsToolUI,
         CloseAgentToolUI,
     ).associateBy { it.toolName }
