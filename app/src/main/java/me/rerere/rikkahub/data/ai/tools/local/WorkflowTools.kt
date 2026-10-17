@@ -39,7 +39,7 @@ internal fun buildWorkflowTools(settingsStore: SettingsStore): List<Tool> = list
     deleteWorkflowTool(settingsStore),
 )
 
-private const val STEPS_DESCRIPTION = """
+private val STEPS_DESCRIPTION = """
     Ordered steps. Each step: name (optional), type ("prompt" = plain model call, "agent" = full toolset),
     prompt (required; supports {{input}} for the initial input and {{prev}} for the previous step output),
     model (optional model id override).
