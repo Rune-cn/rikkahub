@@ -870,6 +870,8 @@
   <string name="setting_theme_page_preview">预览</string>
   <string name="setting_theme_page_save">保存</string>
   <string name="setting_theme_page_dynamic_color_hint">动态颜色已开启，请在偏好设置 &gt; 主题中关闭以使用自定义主题。</string>
+  <string name="setting_tts_page_providers_label">语音合成（TTS）</string>
+  <string name="setting_asr_page_providers_label">语音识别（ASR）</string>
   <string name="setting_page_tts_service">语音服务</string>
   <string name="setting_page_tts_service_desc">配置语音合成与语音识别服务提供商</string>
   <string name="setting_page_tts_settings">TTS设置</string>

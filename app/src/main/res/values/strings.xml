@@ -903,6 +903,8 @@
   <string name="setting_theme_page_export_success">Theme JSON copied to clipboard</string>
   <string name="setting_theme_page_import_success">Theme imported successfully</string>
   <string name="setting_theme_page_dynamic_color_hint">Dynamic color is enabled. Disable it in Preferences &gt; Theme to use custom themes.</string>
+  <string name="setting_tts_page_providers_label">Speech Synthesis (TTS)</string>
+  <string name="setting_asr_page_providers_label">Speech Recognition (ASR)</string>
   <string name="setting_page_tts_service">Speech Services</string>
   <string name="setting_page_tts_service_desc">Configure text-to-speech and speech recognition providers</string>
   <string name="setting_page_tts_settings">TTS Settings</string>
