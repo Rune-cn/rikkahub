@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.flow
 import me.rerere.ai.core.MessageRole
 import me.rerere.ai.ui.UIMessage
@@ -46,11 +49,16 @@ class WorkflowRunner(
         private const val MAX_WORKFLOW_STEPS_PER_RUN = 32
     }
 
+    /** 当前运行中的工作流 id（null = 无） */
+    private val _runningWorkflowId = MutableStateFlow<String?>(null)
+    val runningWorkflowId: StateFlow<String?> = _runningWorkflowId.asStateFlow()
+
     private val generationLoop: GenerationLoop by lazy { getKoin().get() }
     private val chatToolFactory: ChatToolFactory by lazy { getKoin().get() }
 
     /** 运行工作流，逐步发出每一步的状态 */
     fun run(workflow: Workflow, input: String): Flow<WorkflowRunState> = flow {
+        _runningWorkflowId.value = workflow.id
         val settings = settingsStore.settingsFlow.first { !it.init }
         val assistant = settings.getCurrentAssistant()
 
@@ -103,7 +111,7 @@ class WorkflowRunner(
                 }
             }
         }
-    }
+    }.onCompletion { _runningWorkflowId.value = null }
 
     /** 顺序执行一个节点序列 */
     private suspend fun FlowCollector<WorkflowRunState>.runSequence(
