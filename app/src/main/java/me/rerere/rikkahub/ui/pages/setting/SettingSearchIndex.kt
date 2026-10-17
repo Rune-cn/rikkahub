@@ -73,7 +73,6 @@ private val PAGE_MCP = R.string.setting_page_mcp
 private val PAGE_WEB = R.string.setting_page_web_server
 private val PAGE_FILES = R.string.setting_page_chat_storage
 private val PAGE_EXTENSIONS = R.string.setting_page_extensions
-private val PAGE_EXTENSIONS = R.string.setting_page_extensions
 
 /**
  * 设置搜索索引（精确到项）
