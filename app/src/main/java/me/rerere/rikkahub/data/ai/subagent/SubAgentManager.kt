@@ -90,6 +90,22 @@ class SubAgentManager(
         modelId: Uuid? = null,
         inheritContext: Boolean? = null,
     ): Result<SubAgentTask> {
+        // 清理僵尸任务：状态仍是 RUNNING 但协程已不活跃（如上游异常退出）
+        val zombieNames = _tasks.value
+            .filter { it.status == SubAgentStatus.RUNNING && jobs[it.name]?.isActive != true }
+            .map { it.name }
+        if (zombieNames.isNotEmpty()) {
+            _tasks.value = _tasks.value.map {
+                if (it.name in zombieNames) {
+                    it.copy(status = SubAgentStatus.FAILED, error = "stale task cleaned")
+                } else {
+                    it
+                }
+            }
+            zombieNames.forEach { jobs.remove(it) }
+            Log.w(TAG, "cleaned stale sub-agents: $zombieNames")
+        }
+
         val runningCount = _tasks.value.count { it.status == SubAgentStatus.RUNNING }
         if (runningCount >= MAX_CONCURRENT_SUB_AGENTS) {
             return Result.failure(

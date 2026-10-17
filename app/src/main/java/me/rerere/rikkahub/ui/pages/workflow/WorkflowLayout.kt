@@ -61,7 +61,7 @@ fun layoutWorkflow(rootNodes: List<WorkflowNode>): WorkflowLayout {
         parentId: String?,
         edgeLabel: String?,
     ) {
-        val hasCoords = !node.x.isNaN() && !node.y.isNaN()
+        val hasCoords = node.hasPosition
         val px = if (hasCoords) node.x else x
         val py = if (hasCoords) node.y else y
         nodes += LayoutNode(node, px, py, depth)
