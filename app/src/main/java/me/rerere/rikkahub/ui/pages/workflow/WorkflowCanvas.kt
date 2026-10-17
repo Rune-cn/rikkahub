@@ -18,6 +18,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -343,6 +344,7 @@ fun WorkflowCanvasPage(
     onNodeMove: ((nodeId: String, x: Float, y: Float) -> Unit)? = null,
     onNodeUpdate: ((WorkflowNode) -> Unit)? = null,
     onNodeDelete: ((nodeId: String) -> Unit)? = null,
+    onAddNode: (() -> Unit)? = null,
 ) {
     var editingNode by remember { mutableStateOf<WorkflowNode?>(null) }
     Scaffold(
@@ -350,6 +352,16 @@ fun WorkflowCanvasPage(
             TopAppBar(
                 title = { Text(title) },
                 navigationIcon = { BackButton() },
+                actions = {
+                    if (onAddNode != null) {
+                        IconButton(onClick = onAddNode) {
+                            Icon(
+                                imageVector = HugeIcons.Add01,
+                                contentDescription = stringResource(R.string.workflow_add_node),
+                            )
+                        }
+                    }
+                },
                 colors = CustomColors.topBarColors,
             )
         },
@@ -487,6 +499,20 @@ fun WorkflowCanvasRoute(workflowId: String) {
                 scope.launch {
                     settingsStore.update { s ->
                         s.copy(workflows = s.workflows.map { if (it.id == workflowId) updated else it })
+                    }
+                }
+            }
+        },
+        onAddNode = {
+            workflow?.let { target ->
+                val newNode = WorkflowNode(name = "")
+                scope.launch {
+                    settingsStore.update { s ->
+                        s.copy(
+                            workflows = s.workflows.map {
+                                if (it.id == workflowId) target.copy(nodes = target.nodes + newNode) else it
+                            }
+                        )
                     }
                 }
             }

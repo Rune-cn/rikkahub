@@ -1470,6 +1470,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workflow_step_condition">条件</string>
   <string name="workflow_step_name">步骤名称</string>
   <string name="workflow_step_prompt">提示词</string>
+  <string name="workflow_add_node">添加节点</string>
+  <string name="workflow_edit_condition">条件表达式（{{prev}} contains "…"）</string>
   <string name="workflow_step_prompt_hint">用 {{input}} 表示初始输入，{{prev}} 表示上一步的输出</string>
   <string name="workflow_step_model">模型</string>
   <string name="workflow_node_if_else">条件</string>
