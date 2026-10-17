@@ -43,6 +43,7 @@ import me.rerere.rikkahub.data.datastore.findModelById
 import me.rerere.rikkahub.data.model.SubAgentStatus
 import me.rerere.rikkahub.data.model.SubAgentTask
 import me.rerere.rikkahub.ui.components.ai.ModelSelector
+import me.rerere.rikkahub.ui.components.multiagent.SubAgentCreatorDialog
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.CardGroup
 import me.rerere.rikkahub.ui.theme.CustomColors
@@ -204,7 +205,7 @@ fun MultiAgentPage() {
 
     // 新建子 Agent
     if (showCreate) {
-        NewSubAgentDialog(
+        SubAgentCreatorDialog(
             onCreate = { name, prompt ->
                 subAgentManager.spawn(name = name, prompt = prompt)
                 showCreate = false
@@ -331,50 +332,4 @@ private fun SubAgentChatSheet(
             }
         }
     }
-}
-
-/** 新建子 Agent 对话框 */
-@Composable
-private fun NewSubAgentDialog(
-    onCreate: (String, String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var name by remember { mutableStateOf("") }
-    var prompt by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.multi_agent_new_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.multi_agent_task_name)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-                OutlinedTextField(
-                    value = prompt,
-                    onValueChange = { prompt = it },
-                    label = { Text(stringResource(R.string.multi_agent_task_prompt)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onCreate(name.trim(), prompt.trim()) },
-                enabled = name.isNotBlank() && prompt.isNotBlank(),
-            ) {
-                Text(stringResource(R.string.multi_agent_create))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.multi_agent_cancel))
-            }
-        },
-    )
 }

@@ -1434,6 +1434,7 @@
   <string name="multi_agent_list_title">Sub-agents</string>
   <string name="multi_agent_no_tasks">No sub-agents yet. Create one to start a conversation.</string>
   <string name="multi_agent_new">New sub-agent</string>
+  <string name="multi_agent_dialog_hint">A sub-agent is an independent AI that runs one concrete task for you (research, summarize, translate, write code…). It has its own tools and can use a different model.</string>
   <string name="multi_agent_new_title">New sub-agent</string>
   <string name="multi_agent_task_name">Name</string>
   <string name="multi_agent_task_prompt">Task description</string>

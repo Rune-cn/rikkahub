@@ -1,5 +1,6 @@
 package me.rerere.rikkahub.ui.components.message.tools
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -219,14 +220,17 @@ object SendMessageToolUI : ToolUIRenderer {
     }
 }
 
-/** 输入框上方的子 Agent 运行进度（有子 Agent 运行时显示） */
+/** 输入框上方的子 Agent 运行进度（有子 Agent 运行时显示，可点击进入多 Agent 工作页） */
 @Composable
 internal fun SubAgentRunningBanner(
     count: Int,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
     Surface(
-        modifier = modifier,
+        modifier = modifier.then(
+            if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+        ),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
         tonalElevation = 3.dp,

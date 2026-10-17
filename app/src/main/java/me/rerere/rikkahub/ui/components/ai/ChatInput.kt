@@ -86,6 +86,7 @@ import me.rerere.ai.provider.ModelType
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.asr.ASRStatus
 import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.AiBrain01
 import me.rerere.hugeicons.stroke.Add01
 import me.rerere.hugeicons.stroke.ArrowUp02
 import me.rerere.hugeicons.stroke.Cancel01
@@ -133,6 +134,7 @@ fun ChatInput(
     onUpdateChatModel: (Model) -> Unit,
     onUpdateAssistant: (Assistant) -> Unit,
     onUpdateSearchService: (Int) -> Unit,
+    onOpenMultiAgent: () -> Unit = {},
     onMoreClick: () -> Unit,
     onCancelClick: () -> Unit,
     onSendClick: () -> Unit,
@@ -331,6 +333,16 @@ fun ChatInput(
                                 )
                             }
 
+                        }
+
+                        // Multi-agent：主动派一个子 Agent 干一件具体任务
+                        IconButton(
+                            onClick = onOpenMultiAgent,
+                        ) {
+                            Icon(
+                                imageVector = HugeIcons.AiBrain01,
+                                contentDescription = stringResource(R.string.multi_agent_page_title),
+                            )
                         }
 
                         ActionIconButton(

@@ -65,6 +65,7 @@ import me.rerere.hugeicons.stroke.LeftToRightListBullet
 import me.rerere.hugeicons.stroke.Menu03
 import me.rerere.hugeicons.stroke.MessageAdd01
 import me.rerere.rikkahub.R
+import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.datastore.findProvider
 import me.rerere.rikkahub.data.datastore.getSelectedASRProvider
@@ -80,6 +81,7 @@ import me.rerere.rikkahub.data.model.SubAgentStatus
 import me.rerere.rikkahub.ui.components.ai.ChatInput
 import me.rerere.rikkahub.ui.components.message.TaskProgressBanner
 import me.rerere.rikkahub.ui.components.message.tools.SubAgentRunningBanner
+import me.rerere.rikkahub.ui.components.multiagent.SubAgentCreatorDialog
 import me.rerere.rikkahub.ui.components.message.tools.parseTaskPlan
 import org.koin.compose.koinInject
 import me.rerere.rikkahub.ui.components.ai.FilesPicker
@@ -339,6 +341,7 @@ private fun ChatPageContent(
     val subAgentManager: SubAgentManager = koinInject()
     val subAgentTasks by subAgentManager.tasks.collectAsStateWithLifecycle()
     val runningSubAgentCount = subAgentTasks.count { it.status == SubAgentStatus.RUNNING }
+    var showSubAgentCreator by remember { mutableStateOf(false) }
 
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -379,10 +382,21 @@ private fun ChatPageContent(
                                 .padding(horizontal = 16.dp, vertical = 4.dp),
                         )
                     }
+                    // 聊天中主动创建子 Agent
+                    if (showSubAgentCreator) {
+                        SubAgentCreatorDialog(
+                            onCreate = { name, prompt ->
+                                subAgentManager.spawn(name = name, prompt = prompt)
+                                showSubAgentCreator = false
+                            },
+                            onDismiss = { showSubAgentCreator = false },
+                        )
+                    }
                     // 子 Agent 运行进度
                     if (runningSubAgentCount > 0) {
                         SubAgentRunningBanner(
                             count = runningSubAgentCount,
+                            onClick = { navController.navigate(Screen.MultiAgent) },
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
                                 .padding(horizontal = 16.dp, vertical = 4.dp),
@@ -451,6 +465,7 @@ private fun ChatPageContent(
                     onUpdateSearchService = { index ->
                         vm.updateSettings { it.copy(searchServiceSelected = index) }
                     },
+                    onOpenMultiAgent = { showSubAgentCreator = true },
                     onMoreClick = {
                         showFilesSheet = true
                     },
