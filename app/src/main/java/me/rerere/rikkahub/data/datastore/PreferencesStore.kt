@@ -119,6 +119,7 @@ class SettingsStore(
         val NETWORK_SETTING = stringPreferencesKey("network_setting")
         val TOOL_AUTO_ALLOW_SETTING = stringPreferencesKey("tool_auto_allow_setting")
         val SUB_AGENT_SETTING = stringPreferencesKey("sub_agent_setting")
+        val ENABLE_SUB_AGENT = booleanPreferencesKey("enable_sub_agent")
         val WORKFLOWS = stringPreferencesKey("workflows")
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode")
 
@@ -211,6 +212,7 @@ class SettingsStore(
                 preferences[NETWORK_SETTING] = JsonInstant.encodeToString(settings.networkSetting)
                 preferences[TOOL_AUTO_ALLOW_SETTING] = JsonInstant.encodeToString(settings.toolAutoAllowSetting)
                 preferences[SUB_AGENT_SETTING] = JsonInstant.encodeToString(settings.subAgentSetting)
+                preferences[ENABLE_SUB_AGENT] = settings.enableSubAgent
                 preferences[WORKFLOWS] = JsonInstant.encodeToString(settings.workflows)
 
                 preferences[FAVORITE_MODELS] = JsonInstant.encodeToString(settings.favoriteModels)
@@ -321,6 +323,7 @@ class SettingsStore(
                 networkSetting = JsonInstant.decodeFromString(preferences[NETWORK_SETTING] ?: "{}"),
                 toolAutoAllowSetting = JsonInstant.decodeFromString(preferences[TOOL_AUTO_ALLOW_SETTING] ?: "{}"),
                 subAgentSetting = JsonInstant.decodeFromString(preferences[SUB_AGENT_SETTING] ?: "{}"),
+                enableSubAgent = preferences[ENABLE_SUB_AGENT] ?: false,
                 workflows = JsonInstant.decodeFromString(preferences[WORKFLOWS] ?: "[]"),
                 searchServices = preferences[SEARCH_SERVICES]?.let {
                     JsonInstant.decodeFromString(it)
@@ -595,6 +598,8 @@ data class Settings(
     val networkSetting: NetworkSetting = NetworkSetting(),
     val toolAutoAllowSetting: ToolAutoAllowSetting = ToolAutoAllowSetting(),
     val subAgentSetting: SubAgentSetting = SubAgentSetting(),
+    // 多 Agent 工作：主 Agent 可派生子 Agent 并行处理任务
+    val enableSubAgent: Boolean = false,
     val workflows: List<Workflow> = emptyList(),
     val favoriteModels: List<Uuid> = emptyList(),
     val chatModelId: Uuid = Uuid.random(),

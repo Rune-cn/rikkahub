@@ -431,6 +431,7 @@
   <string name="no_text_content_to_copy">暂无可复制的文本内容</string>
   <string name="notification_channel_chat_completed">聊天完成</string>
   <string name="notification_channel_sub_agent">子 Agent</string>
+  <string name="sub_agent_streaming_name">子 Agent · %1$s</string>
   <string name="sub_agent_notification_title">%1$d 个子 Agent 运行中</string>
   <string name="sub_agent_notification_empty">工作中…</string>
   <string name="notification_channel_chat_live_update">聊天生成进度</string>
@@ -1229,6 +1230,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="extensions_page_workspace_desc">管理可由Agent访问的本地工作目录</string>
   <string name="extensions_page_other_category">其他</string>
   <string name="extensions_page_other_desc">更多未分类功能</string>
+  <string name="extensions_page_multi_agent_enable">多 Agent 工作</string>
+  <string name="extensions_page_multi_agent_enable_desc">让主 Agent 派生子 Agent 并行处理任务；子 Agent 的输出会流式显示在对话中</string>
   <string name="extensions_page_retry_section">重试</string>
   <string name="tool_call_page_title">工具调用</string>
   <string name="tool_call_entry_desc">自动允许工具调用，并可自由选择工具</string>

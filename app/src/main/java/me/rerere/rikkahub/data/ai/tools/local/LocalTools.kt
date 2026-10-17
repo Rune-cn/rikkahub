@@ -68,8 +68,10 @@ class LocalTools(
         if (options.contains(LocalToolOption.UpdatePlan)) {
             tools.add(updatePlanTool)
         }
-        // 子 Agent 工具始终可用（多 Agent 工作是一级功能，不再是可选工具）
-        tools.addAll(subAgentTools)
+        // 多 Agent 工作（设置开关控制；关闭时 AI 无法派生子 Agent）
+        if (settingsStore.settingsFlow.value.enableSubAgent) {
+            tools.addAll(subAgentTools)
+        }
         if (options.contains(LocalToolOption.Workflow)) {
             tools.addAll(workflowTools)
         }

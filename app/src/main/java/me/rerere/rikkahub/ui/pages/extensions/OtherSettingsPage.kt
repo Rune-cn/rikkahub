@@ -80,6 +80,92 @@ fun OtherSettingsPage() {
             item {
                 CardGroup(
                     modifier = Modifier.padding(horizontal = 8.dp),
+                    title = { Text(stringResource(R.string.extensions_page_multi_agent_enable)) },
+                ) {
+                    item(
+                        headlineContent = {
+                            Text(stringResource(R.string.extensions_page_multi_agent_enable))
+                        },
+                        supportingContent = {
+                            Text(stringResource(R.string.extensions_page_multi_agent_enable_desc))
+                        },
+                        trailingContent = {
+                            Switch(
+                                checked = settings.enableSubAgent,
+                                onCheckedChange = { enabled ->
+                                    coroutineScope.launch {
+                                        settingsStore.update { s -> s.copy(enableSubAgent = enabled) }
+                                    }
+                                },
+                            )
+                        },
+                    )
+                    if (settings.enableSubAgent) {
+                        item(
+                            headlineContent = {
+                                Text(stringResource(R.string.extensions_page_sub_agent_model))
+                            },
+                            supportingContent = {
+                                Column {
+                                    Text(
+                                        text = stringResource(R.string.extensions_page_sub_agent_model_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    ModelSelector(
+                                        modelId = settings.subAgentSetting.defaultModelId,
+                                        providers = settings.providers,
+                                        type = me.rerere.ai.provider.ModelType.CHAT,
+                                        allowClear = true,
+                                        modifier = Modifier.padding(top = 4.dp),
+                                        onSelect = { model ->
+                                            val selectedId = model.id.takeIf { id ->
+                                                settings.findModelById(id) != null
+                                            }
+                                            coroutineScope.launch {
+                                                settingsStore.update { s ->
+                                                    s.copy(
+                                                        subAgentSetting = s.subAgentSetting.copy(
+                                                            defaultModelId = selectedId,
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                        },
+                                    )
+                                }
+                            },
+                        )
+                        item(
+                            headlineContent = {
+                                Text(stringResource(R.string.extensions_page_sub_agent_inherit_context))
+                            },
+                            supportingContent = {
+                                Text(stringResource(R.string.extensions_page_sub_agent_inherit_context_desc))
+                            },
+                            trailingContent = {
+                                Switch(
+                                    checked = settings.subAgentSetting.defaultInheritContext,
+                                    onCheckedChange = { enabled ->
+                                        coroutineScope.launch {
+                                            settingsStore.update { s ->
+                                                s.copy(
+                                                    subAgentSetting = s.subAgentSetting.copy(
+                                                        defaultInheritContext = enabled,
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    },
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+            item {
+                CardGroup(
+                    modifier = Modifier.padding(horizontal = 8.dp),
                     title = { Text(stringResource(R.string.extensions_page_retry_section)) },
                 ) {
                     item(
