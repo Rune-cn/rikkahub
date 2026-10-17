@@ -1499,6 +1499,9 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workflow_node_false_branch">✗ 不满足分支</string>
   <string name="workflow_step_type_agent">Agent</string>
   <string name="workflow_add_step">添加步骤</string>
+  <string name="workflow_delete_title">删除工作流？</string>
+  <string name="workflow_delete_message">「%1$s」将被永久删除，此操作不可恢复。</string>
+  <string name="workflow_delete_confirm">删除</string>
   <string name="workflow_edit">编辑</string>
   <string name="workflow_run">运行</string>
   <string name="workflow_run_output">输出</string>

@@ -139,8 +139,9 @@ internal fun TaskProgressBanner(
         Column(modifier = Modifier.padding(vertical = 2.dp)) {
             Row(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .clickable { expanded = !expanded }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
