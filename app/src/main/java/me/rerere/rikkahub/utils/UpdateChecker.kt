@@ -73,6 +73,7 @@ class UpdateChecker(
                     version = release.name.ifBlank { release.publishedAt.take(10).replace("-", ".") },
                     publishedAt = release.publishedAt,
                     changelog = release.body,
+                    prerelease = release.prerelease,
                     downloads = release.assets.map { asset ->
                         UpdateDownload(
                             name = asset.name,
@@ -132,7 +133,9 @@ data class UpdateInfo(
     val version: String,
     val publishedAt: String,
     val changelog: String,
-    val downloads: List<UpdateDownload>
+    val downloads: List<UpdateDownload>,
+    // 是否为预发布（测试版）Release
+    val prerelease: Boolean = false,
 )
 
 /** GitHub Release API 响应（仅取所需字段） */
@@ -141,6 +144,7 @@ private data class GitHubRelease(
     @SerialName("name") val name: String = "",
     @SerialName("published_at") val publishedAt: String = "",
     @SerialName("body") val body: String = "",
+    @SerialName("prerelease") val prerelease: Boolean = false,
     @SerialName("assets") val assets: List<GitHubAsset> = emptyList(),
 )
 

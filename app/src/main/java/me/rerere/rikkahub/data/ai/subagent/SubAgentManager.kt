@@ -27,6 +27,7 @@ import me.rerere.rikkahub.data.datastore.getCurrentAssistant
 import me.rerere.rikkahub.data.datastore.getCurrentChatModel
 import me.rerere.rikkahub.data.model.SubAgentStatus
 import me.rerere.rikkahub.data.model.SubAgentTask
+import me.rerere.rikkahub.service.SubAgentForegroundService
 import org.koin.java.KoinJavaComponent.getKoin
 
 /**
@@ -97,6 +98,7 @@ class SubAgentManager(
             startedAt = System.currentTimeMillis(),
         )
         _tasks.value = _tasks.value + task
+        syncSubAgentService()
         jobs[name] = appScope.launch { runTask(task) }
         Log.i(TAG, "spawn sub-agent: $name (inheritContext=$inheritContext)")
         return Result.success(task)
@@ -157,6 +159,23 @@ class SubAgentManager(
             var messages = resumeMessages ?: buildList {
                 // 可选：继承主 Agent 的最近对话上下文（任务未指定时用全局设置）
                 val inheritContext = task.inheritContext ?: settings.subAgentSetting.defaultInheritContext
+                // 子 Agent 身份与规则说明（让它清楚自己是谁、能力边界、结果如何上交）
+                add(
+                    UIMessage(
+                        role = MessageRole.SYSTEM,
+                        parts = listOf(
+                            UIMessagePart.Text(
+                                """
+                                You are a SUB-AGENT spawned by the main agent Rikka to work on a delegated task.
+                                - Your task name: ${task.name}
+                                - You have the same toolset as the main agent, except you cannot spawn sub-agents.
+                                - You cannot chat with the main agent directly; your final answer is returned to it automatically when you finish. Make it complete and self-contained (plain human-readable text, not JSON).
+                                ${if (inheritContext) "- Your main conversation context is included below; use it to stay consistent with the main discussion." else "- You do NOT see the main conversation; the task description you are given is your only context."}
+                                """.trimIndent()
+                            )
+                        )
+                    )
+                )
                 if (inheritContext) {
                     addAll(mainContext.takeLast(MAX_CONTEXT_MESSAGES))
                 }
@@ -215,7 +234,27 @@ class SubAgentManager(
     }
 
     private fun updateTask(name: String, transform: (SubAgentTask) -> SubAgentTask) {
+        val beforeStatus = _tasks.value.find { it.name == name }?.status
         _tasks.value = _tasks.value.map { if (it.name == name) transform(it) else it }
+        val afterStatus = _tasks.value.find { it.name == name }?.status
+        // 仅状态变化时同步前台服务/通知，避免频繁刷新
+        if (beforeStatus != afterStatus) syncSubAgentService()
+    }
+
+    private var lastRunningSubAgents = 0
+
+    /** 按运行中子 Agent 数量启停前台服务（保活）并刷新通知 */
+    private fun syncSubAgentService() {
+        val running = _tasks.value.count { it.status == SubAgentStatus.RUNNING }
+        if (running > 0 && lastRunningSubAgents == 0) {
+            SubAgentForegroundService.start(context)
+        }
+        if (running > 0) {
+            SubAgentForegroundService.refresh(context)
+        } else if (lastRunningSubAgents > 0) {
+            SubAgentForegroundService.stop(context)
+        }
+        lastRunningSubAgents = running
     }
 
     /**

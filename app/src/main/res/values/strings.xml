@@ -421,6 +421,9 @@
   <string name="more_options">More options</string>
   <string name="no_text_content_to_copy">No text content available to copy</string>
   <string name="notification_channel_chat_completed">Chat Completed</string>
+  <string name="notification_channel_sub_agent">Sub-agents</string>
+  <string name="sub_agent_notification_title">%1$d sub-agent(s) running</string>
+  <string name="sub_agent_notification_empty">Working…</string>
   <string name="notification_channel_chat_live_update">Chat Generation Progress</string>
   <string name="notification_channel_web_server">Web Server</string>
   <string name="notification_live_update_chip_thinking">Thinking</string>
@@ -1144,6 +1147,7 @@
   <string name="update_card_check_failed">Check update failed</string>
   <string name="update_card_close">Close</string>
   <string name="update_card_downloading">Downloading, please check status bar for progress</string>
+  <string name="update_card_prerelease">Beta</string>
   <string name="update_card_new_version_found">New version found %s</string>
   <string name="update_card_unknown_error">Unknown error</string>
   <string name="upload_file">Upload File</string>
@@ -1443,6 +1447,7 @@
   <string name="workflow_step_type_agent">Agent</string>
   <string name="workflow_add_step">Add step</string>
   <string name="workflow_run">Run</string>
+  <string name="workflow_run_output">Output</string>
   <string name="workflow_run_input">Initial input</string>
   <string name="workflow_run_start">Start</string>
   <string name="workflow_save">Save</string>

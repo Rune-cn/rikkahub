@@ -420,6 +420,9 @@
   <string name="more_options">更多选项</string>
   <string name="no_text_content_to_copy">暂无可复制的文本内容</string>
   <string name="notification_channel_chat_completed">聊天完成</string>
+  <string name="notification_channel_sub_agent">子 Agent</string>
+  <string name="sub_agent_notification_title">%1$d 个子 Agent 运行中</string>
+  <string name="sub_agent_notification_empty">工作中…</string>
   <string name="notification_channel_chat_live_update">聊天生成进度</string>
   <string name="notification_channel_web_server">Web服务器</string>
   <string name="notification_live_update_chip_thinking">思考中</string>
@@ -1110,6 +1113,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="update_card_check_failed">检查更新失败</string>
   <string name="update_card_close">关闭</string>
   <string name="update_card_downloading">正在下载，请在状态栏查看进度</string>
+  <string name="update_card_prerelease">测试版</string>
   <string name="update_card_new_version_found">发现新版本 %s</string>
   <string name="update_card_unknown_error">未知错误</string>
   <string name="upload_file">上传文件</string>
@@ -1444,6 +1448,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workflow_step_type_agent">Agent</string>
   <string name="workflow_add_step">添加步骤</string>
   <string name="workflow_run">运行</string>
+  <string name="workflow_run_output">输出</string>
   <string name="workflow_run_input">初始输入</string>
   <string name="workflow_run_start">开始</string>
   <string name="workflow_save">保存</string>
