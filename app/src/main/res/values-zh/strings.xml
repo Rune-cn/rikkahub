@@ -1450,6 +1450,14 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workflow_page_title">工作流</string>
   <string name="workflow_entry_desc">把多个步骤串成可一键运行的流水线</string>
   <string name="workflow_new">新建工作流</string>
+  <string name="workflow_sample_hint">还没有工作流，点「示例」快速体验画布</string>
+  <string name="workflow_create_sample">示例</string>
+  <string name="workflow_sample_name">示例：深度研究</string>
+  <string name="workflow_sample_desc">拆解 → 条件分支 → 总结</string>
+  <string name="workflow_sample_step_split">拆解问题</string>
+  <string name="workflow_sample_step_check">涉及代码？</string>
+  <string name="workflow_sample_step_code">写实现</string>
+  <string name="workflow_sample_step_summary">总结报告</string>
   <string name="workflow_no_workflows">还没有工作流</string>
   <string name="workflow_untitled">未命名工作流</string>
   <string name="workflow_name">名称</string>
