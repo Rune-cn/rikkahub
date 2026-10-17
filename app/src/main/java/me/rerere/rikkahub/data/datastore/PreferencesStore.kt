@@ -108,6 +108,7 @@ class SettingsStore internal constructor(
         val NETWORK_SETTING = stringPreferencesKey("network_setting")
         val TOOL_AUTO_ALLOW_SETTING = stringPreferencesKey("tool_auto_allow_setting")
         val SUB_AGENT_SETTING = stringPreferencesKey("sub_agent_setting")
+        val WORKFLOWS = stringPreferencesKey("workflows")
         val DEVELOPER_MODE = booleanPreferencesKey("developer_mode")
 
         // 模型选择

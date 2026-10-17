@@ -94,6 +94,7 @@ import me.rerere.rikkahub.ui.pages.chat.ChatPage
 import me.rerere.rikkahub.ui.pages.debug.DebugPage
 import me.rerere.rikkahub.ui.pages.extensions.ExtensionsPage
 import me.rerere.rikkahub.ui.pages.extensions.OtherSettingsPage
+import me.rerere.rikkahub.ui.pages.workflow.WorkflowPage
 import me.rerere.rikkahub.ui.pages.extensions.ToolCallPage
 import me.rerere.rikkahub.ui.pages.extensions.PromptPage
 import me.rerere.rikkahub.ui.pages.extensions.QuickMessagesPage
@@ -553,6 +554,10 @@ class RouteActivity : ComponentActivity() {
                                 ToolCallPage()
                             }
 
+                            entry<Screen.Workflows> {
+                                WorkflowPage()
+                            }
+
                             entry<Screen.QuickMessages> {
                                 QuickMessagesPage()
                             }
@@ -798,6 +803,9 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object OtherSettings : Screen
+
+    @Serializable
+    data object Workflows : Screen
 
     @Serializable
     data object QuickMessages : Screen

@@ -18,6 +18,7 @@ import me.rerere.rikkahub.data.model.Lorebook
 import me.rerere.rikkahub.data.model.PromptInjection
 import me.rerere.rikkahub.data.model.QuickMessage
 import me.rerere.rikkahub.data.model.Tag
+import me.rerere.rikkahub.data.model.Workflow
 import me.rerere.rikkahub.data.sync.s3.S3Config
 import me.rerere.rikkahub.ui.theme.CustomTheme
 import me.rerere.rikkahub.ui.theme.PresetThemes
@@ -38,6 +39,7 @@ data class Settings(
     val networkSetting: NetworkSetting = NetworkSetting(),
     val toolAutoAllowSetting: ToolAutoAllowSetting = ToolAutoAllowSetting(),
     val subAgentSetting: SubAgentSetting = SubAgentSetting(),
+    val workflows: List<Workflow> = emptyList(),
     val favoriteModels: List<Uuid> = emptyList(),
     val chatModelId: Uuid = Uuid.random(),
     val fastModelId: Uuid = Uuid.random(),
