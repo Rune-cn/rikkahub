@@ -60,7 +60,8 @@ private fun spawnAgentTool(manager: SubAgentManager): Tool = Tool(
         - task_name: short unique name, used later by wait_agent / close_agent / send_message
         - message: full task description for the sub-agent
         - model: optional model id override; omit to inherit your current model
-        - wait: set true to block until it finishes and get the result immediately (default false)
+        - wait: defaults to true: blocks until the sub-agent finishes and returns its result + status.
+          Set false only for fire-and-forget (then you MUST call wait_agent later to get the result)
         - inherit_context: set true to give the sub-agent your recent conversation history
           (default false: it only sees the message, so include everything it needs)
         - Up to ${SubAgentManager.MAX_CONCURRENT_SUB_AGENTS} sub-agents can run at the same time.
@@ -101,7 +102,7 @@ private fun spawnAgentTool(manager: SubAgentManager): Tool = Tool(
             ?.takeIf { it.isNotBlank() }
             ?.let { runCatching { Uuid.parse(it) }.getOrNull() }
         val inheritContext = obj["inherit_context"]?.jsonPrimitive?.booleanOrNull
-        val wait = obj["wait"]?.jsonPrimitive?.booleanOrNull ?: false
+        val wait = obj["wait"]?.jsonPrimitive?.booleanOrNull ?: true
 
         val payload = if (name.isBlank() || message.isBlank()) {
             buildJsonObject {
@@ -163,7 +164,7 @@ private fun waitAgentTool(manager: SubAgentManager): Tool = Tool(
                 })
                 put("timeout_seconds", buildJsonObject {
                     put("type", "number")
-                    put("description", "Maximum seconds to wait (default 120, max 600).")
+                    put("description", "Maximum seconds to wait (default 300, max 900).")
                 })
             },
             required = listOf("task_names")
@@ -176,8 +177,8 @@ private fun waitAgentTool(manager: SubAgentManager): Tool = Tool(
             ?.mapNotNull { it.jsonPrimitive.contentOrNull?.trim() }
             ?.filter { it.isNotEmpty() }
             ?: emptyList()
-        val timeoutSeconds = (obj["timeout_seconds"]?.jsonPrimitive?.intOrNull ?: 120)
-            .coerceIn(1, 600)
+        val timeoutSeconds = (obj["timeout_seconds"]?.jsonPrimitive?.intOrNull ?: 300)
+            .coerceIn(1, 900)
 
         val tasks = if (names.isEmpty()) emptyList() else manager.waitFor(names, timeoutSeconds * 1000L)
         val payload = buildJsonObject {
