@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.width
@@ -83,6 +84,7 @@ fun WorkflowPage() {
     val runner = koinInject<WorkflowRunner>()
     val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
     val workflows = settings.workflows
+    val runningWorkflowId by runner.runningWorkflowId.collectAsStateWithLifecycle()
     val navController = LocalNavController.current
     val context = LocalContext.current
 
@@ -194,9 +196,12 @@ fun WorkflowPage() {
                                             contentDescription = stringResource(R.string.workflow_edit),
                                         )
                                     }
-                                    TextButton(onClick = { running = workflow }) {
-                                        Text(stringResource(R.string.workflow_run))
-                                    }
+                                    Switch(
+                                        checked = runningWorkflowId == workflow.id,
+                                        onCheckedChange = { checked ->
+                                            if (checked) running = workflow
+                                        },
+                                    )
                                     IconButton(onClick = { deleteTarget = workflow }) {
                                         Icon(HugeIcons.Cancel01, contentDescription = null)
                                     }
