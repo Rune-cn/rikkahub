@@ -54,6 +54,9 @@ import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.PlusSign
 import me.rerere.rikkahub.R
+import me.rerere.hugeicons.stroke.Settings03
+import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.ai.workflow.WorkflowRunner
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.datastore.findModelById
@@ -79,6 +82,7 @@ fun WorkflowPage() {
     val runner = koinInject<WorkflowRunner>()
     val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
     val workflows = settings.workflows
+    val navController = LocalNavController.current
 
     var editing by remember { mutableStateOf<Workflow?>(null) }
     var running by remember { mutableStateOf<Workflow?>(null) }
@@ -132,7 +136,7 @@ fun WorkflowPage() {
                     }
                     workflows.forEach { workflow ->
                         item(
-                            onClick = { expandedId = if (expandedId == workflow.id) null else workflow.id },
+                            onClick = { navController.navigate(Screen.WorkflowCanvas(workflow.id)) },
                             headlineContent = { Text(workflow.name.ifBlank { stringResource(R.string.workflow_untitled) }) },
                             supportingContent = {
                                 Text(
@@ -145,6 +149,12 @@ fun WorkflowPage() {
                             },
                             trailingContent = {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(onClick = { editing = workflow }) {
+                                        Icon(
+                                            imageVector = HugeIcons.Settings03,
+                                            contentDescription = stringResource(R.string.workflow_edit),
+                                        )
+                                    }
                                     TextButton(onClick = { running = workflow }) {
                                         Text(stringResource(R.string.workflow_run))
                                     }

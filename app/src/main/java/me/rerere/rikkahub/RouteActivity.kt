@@ -93,6 +93,7 @@ import me.rerere.rikkahub.ui.pages.chat.ChatPage
 import me.rerere.rikkahub.ui.pages.debug.DebugPage
 import me.rerere.rikkahub.ui.pages.extensions.ExtensionsPage
 import me.rerere.rikkahub.ui.pages.extensions.OtherSettingsPage
+import me.rerere.rikkahub.ui.pages.workflow.WorkflowCanvasRoute
 import me.rerere.rikkahub.ui.pages.workflow.WorkflowPage
 import me.rerere.rikkahub.ui.pages.extensions.ToolCallPage
 import me.rerere.rikkahub.ui.pages.extensions.PromptPage
@@ -541,6 +542,10 @@ class RouteActivity : ComponentActivity() {
                                 WorkflowPage()
                             }
 
+                            entry<Screen.WorkflowCanvas> { key ->
+                                WorkflowCanvasRoute(key.workflowId)
+                            }
+
 
                             entry<Screen.QuickMessages> {
                                 QuickMessagesPage()
@@ -775,6 +780,9 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object Workflows : Screen
+
+    @Serializable
+    data class WorkflowCanvas(val workflowId: String) : Screen
 
     @Serializable
     data object QuickMessages : Screen
