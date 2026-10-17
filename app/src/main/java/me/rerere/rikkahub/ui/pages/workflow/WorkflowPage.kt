@@ -196,7 +196,7 @@ fun WorkflowPage() {
                                     },
                                     onHorizontalDrag = { change, amount ->
                                         change.consume()
-                                        dragX = (dragX + amount.x).coerceIn(-220f, 0f)
+                                        dragX = (dragX + amount).coerceIn(-220f, 0f)
                                     },
                                 )
                             },
