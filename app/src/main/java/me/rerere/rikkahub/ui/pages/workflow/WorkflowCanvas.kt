@@ -168,8 +168,8 @@ fun WorkflowCanvas(
                                 if (dragX != 0f || dragY != 0f) {
                                     onNodeMove?.invoke(
                                         layoutNode.node.id,
-                                        layoutNode.node.x + dragX,
-                                        layoutNode.node.y + dragY,
+                                        layoutNode.x + dragX,
+                                        layoutNode.y + dragY,
                                     )
                                     dragX = 0f
                                     dragY = 0f
@@ -347,6 +347,7 @@ fun WorkflowCanvasPage(
     onAddNode: (() -> Unit)? = null,
 ) {
     var editingNode by remember { mutableStateOf<WorkflowNode?>(null) }
+    var addingType by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -374,6 +375,51 @@ fun WorkflowCanvasPage(
             onNodeClick = { editingNode = it },
         )
     }
+    // 添加节点：先选类型（Prompt / Agent / 条件 / 并行），再自动打开编辑
+    if (addingType) {
+        AlertDialog(
+            onDismissRequest = { addingType = false },
+            title = { Text(stringResource(R.string.workflow_add_node)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    listOf(
+                        WorkflowNodeType.PROMPT to stringResource(R.string.workflow_step_type_prompt),
+                        WorkflowNodeType.AGENT to stringResource(R.string.workflow_step_type_agent),
+                        WorkflowNodeType.IF_ELSE to stringResource(R.string.workflow_node_if_else),
+                        WorkflowNodeType.PARALLEL to stringResource(R.string.workflow_node_parallel),
+                    ).forEach { (type, label) ->
+                        TextButton(
+                            onClick = {
+                                addingType = false
+                                workflow?.let { target ->
+                                    val newNode = WorkflowNode(name = "", type = type)
+                                    scope.launch {
+                                        settingsStore.update { s ->
+                                            s.copy(
+                                                workflows = s.workflows.map {
+                                                    if (it.id == workflowId) {
+                                                        target.copy(nodes = target.nodes + newNode)
+                                                    } else {
+                                                        it
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+                                    editingNode = newNode
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(label, modifier = Modifier.fillMaxWidth())
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+        )
+    }
+
     editingNode?.let { node ->
         NodeEditDialog(
             node = node,
@@ -503,20 +549,7 @@ fun WorkflowCanvasRoute(workflowId: String) {
                 }
             }
         },
-        onAddNode = {
-            workflow?.let { target ->
-                val newNode = WorkflowNode(name = "")
-                scope.launch {
-                    settingsStore.update { s ->
-                        s.copy(
-                            workflows = s.workflows.map {
-                                if (it.id == workflowId) target.copy(nodes = target.nodes + newNode) else it
-                            }
-                        )
-                    }
-                }
-            }
-        },
+        onAddNode = { addingType = true },
     )
 }
 

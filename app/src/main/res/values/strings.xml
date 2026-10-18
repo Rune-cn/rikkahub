@@ -1491,6 +1491,8 @@
   <string name="workflow_edit">Edit</string>
   <string name="workflow_run">Run</string>
   <string name="workflow_duplicate_suffix"> (copy)</string>
+  <string name="workflow_duplicate">Duplicate</string>
+  <string name="workflow_export">Export</string>
   <string name="workflow_run_output">Output</string>
   <string name="workflow_run_input">Initial input</string>
   <string name="workflow_run_start">Start</string>
