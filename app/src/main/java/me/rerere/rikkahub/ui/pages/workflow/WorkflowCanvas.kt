@@ -37,6 +37,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.drawscope.drawBehind
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -126,28 +128,30 @@ fun WorkflowCanvas(
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawGrid(offset, scale, gridColor)
         }
-        // 连线层
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val byId = layout.nodes.associateBy { it.node.id }
-            layout.edges.forEach { edge ->
-                val from = byId[edge.fromId] ?: return@forEach
-                val to = byId[edge.toId] ?: return@forEach
-                drawEdge(from, to, scale, offset, nodeW, nodeH, edgeColor)
-                edge.label?.let { label ->
-                    val lx = offset.x + (from.x.dp.toPx() + nodeW) * scale + 6f
-                    val ly = offset.y + (from.y.dp.toPx() + nodeH + 10f) * scale
-                    drawContext.canvas.nativeCanvas.drawText(
-                        label,
-                        lx,
-                        ly,
-                        android.graphics.Paint().apply {
-                            color = labelColor.toArgb()
-                            textSize = 10.dp.toPx() * scale
-                        },
-                    )
+        // 连线层：drawWithCache 缓存 Path/Paint（平移不重建，仅缩放/布局变化时重建）
+        Modifier
+            .fillMaxSize()
+            .drawWithCache {
+                val edgePath = Path()
+                val arrowPath = Path()
+                val labelPaint = android.graphics.Paint().apply {
+                    color = labelColor.toArgb()
+                }
+                onDrawBehind {
+                    val byId = layout.nodes.associateBy { it.node.id }
+                    layout.edges.forEach { edge ->
+                        val from = byId[edge.fromId] ?: return@forEach
+                        val to = byId[edge.toId] ?: return@forEach
+                        drawEdge(from, to, scale, offset, nodeW, nodeH, edgeColor, edgePath, arrowPath)
+                        edge.label?.let { label ->
+                            val lx = offset.x + (from.x.dp.toPx() + nodeW) * scale + 6f
+                            val ly = offset.y + (from.y.dp.toPx() + nodeH + 10f) * scale
+                            labelPaint.textSize = 10.dp.toPx() * scale
+                            drawContext.canvas.nativeCanvas.drawText(label, lx, ly, labelPaint)
+                        }
+                    }
                 }
             }
-        }
         // 节点层
         layout.nodes.forEach { layoutNode ->
             var dragX by remember(layoutNode.node.id) { mutableFloatStateOf(0f) }
@@ -313,25 +317,25 @@ private fun DrawScope.drawEdge(
     nodeW: Float,
     nodeH: Float,
     color: Color,
+    path: Path,
+    arrowPath: Path,
 ) {
     val startX = offset.x + from.x.dp.toPx() * scale + nodeW * scale / 2f
     val startY = offset.y + from.y.dp.toPx() * scale + nodeH * scale
     val endX = offset.x + to.x.dp.toPx() * scale + nodeW * scale / 2f
     val endY = offset.y + to.y.dp.toPx() * scale
     val midY = (startY + endY) / 2f
-    val path = Path().apply {
-        moveTo(startX, startY)
-        cubicTo(startX, midY, endX, midY, endX, endY)
-    }
+    path.rewind()
+    path.moveTo(startX, startY)
+    path.cubicTo(startX, midY, endX, midY, endX, endY)
     drawPath(path, color, style = Stroke(width = 1.8f * scale))
-    // 箭头
+    // 箭头（复用 Path）
     val arrow = 5f * scale
-    val arrowPath = Path().apply {
-        moveTo(endX, endY)
-        lineTo(endX - arrow, endY - arrow * 1.6f)
-        lineTo(endX + arrow, endY - arrow * 1.6f)
-        close()
-    }
+    arrowPath.rewind()
+    arrowPath.moveTo(endX, endY)
+    arrowPath.lineTo(endX - arrow, endY - arrow * 1.6f)
+    arrowPath.lineTo(endX + arrow, endY - arrow * 1.6f)
+    arrowPath.close()
     drawPath(arrowPath, color)
 }
 
