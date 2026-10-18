@@ -1507,6 +1507,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workflow_edit">编辑</string>
   <string name="workflow_run">运行</string>
   <string name="workflow_duplicate_suffix">（副本）</string>
+  <string name="workflow_duplicate">复制</string>
+  <string name="workflow_export">导出</string>
   <string name="workflow_run_output">输出</string>
   <string name="workflow_run_input">初始输入</string>
   <string name="workflow_run_start">开始</string>
