@@ -37,8 +37,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.drawscope.drawBehind
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -128,30 +126,28 @@ fun WorkflowCanvas(
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawGrid(offset, scale, gridColor)
         }
-        // 连线层：drawWithCache 缓存 Path/Paint（平移不重建，仅缩放/布局变化时重建）
-        Modifier
-            .fillMaxSize()
-            .drawWithCache {
-                val edgePath = Path()
-                val arrowPath = Path()
-                val labelPaint = android.graphics.Paint().apply {
-                    color = labelColor.toArgb()
-                }
-                onDrawBehind {
-                    val byId = layout.nodes.associateBy { it.node.id }
-                    layout.edges.forEach { edge ->
-                        val from = byId[edge.fromId] ?: return@forEach
-                        val to = byId[edge.toId] ?: return@forEach
-                        drawEdge(from, to, scale, offset, nodeW, nodeH, edgeColor, edgePath, arrowPath)
-                        edge.label?.let { label ->
-                            val lx = offset.x + (from.x.dp.toPx() + nodeW) * scale + 6f
-                            val ly = offset.y + (from.y.dp.toPx() + nodeH + 10f) * scale
-                            labelPaint.textSize = 10.dp.toPx() * scale
-                            drawContext.canvas.nativeCanvas.drawText(label, lx, ly, labelPaint)
-                        }
-                    }
+        // 连线层
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val byId = layout.nodes.associateBy { it.node.id }
+            layout.edges.forEach { edge ->
+                val from = byId[edge.fromId] ?: return@forEach
+                val to = byId[edge.toId] ?: return@forEach
+                drawEdge(from, to, scale, offset, nodeW, nodeH, edgeColor)
+                edge.label?.let { label ->
+                    val lx = offset.x + (from.x.dp.toPx() + nodeW) * scale + 6f
+                    val ly = offset.y + (from.y.dp.toPx() + nodeH + 10f) * scale
+                    drawContext.canvas.nativeCanvas.drawText(
+                        label,
+                        lx,
+                        ly,
+                        android.graphics.Paint().apply {
+                            color = labelColor.toArgb()
+                            textSize = 10.dp.toPx() * scale
+                        },
+                    )
                 }
             }
+        }
         // 节点层
         layout.nodes.forEach { layoutNode ->
             var dragX by remember(layoutNode.node.id) { mutableFloatStateOf(0f) }
@@ -317,25 +313,25 @@ private fun DrawScope.drawEdge(
     nodeW: Float,
     nodeH: Float,
     color: Color,
-    path: Path,
-    arrowPath: Path,
 ) {
     val startX = offset.x + from.x.dp.toPx() * scale + nodeW * scale / 2f
     val startY = offset.y + from.y.dp.toPx() * scale + nodeH * scale
     val endX = offset.x + to.x.dp.toPx() * scale + nodeW * scale / 2f
     val endY = offset.y + to.y.dp.toPx() * scale
     val midY = (startY + endY) / 2f
-    path.rewind()
-    path.moveTo(startX, startY)
-    path.cubicTo(startX, midY, endX, midY, endX, endY)
+    val path = Path().apply {
+        moveTo(startX, startY)
+        cubicTo(startX, midY, endX, midY, endX, endY)
+    }
     drawPath(path, color, style = Stroke(width = 1.8f * scale))
-    // 箭头（复用 Path）
+    // 箭头
     val arrow = 5f * scale
-    arrowPath.rewind()
-    arrowPath.moveTo(endX, endY)
-    arrowPath.lineTo(endX - arrow, endY - arrow * 1.6f)
-    arrowPath.lineTo(endX + arrow, endY - arrow * 1.6f)
-    arrowPath.close()
+    val arrowPath = Path().apply {
+        moveTo(endX, endY)
+        lineTo(endX - arrow, endY - arrow * 1.6f)
+        lineTo(endX + arrow, endY - arrow * 1.6f)
+        close()
+    }
     drawPath(arrowPath, color)
 }
 
@@ -350,6 +346,7 @@ fun WorkflowCanvasPage(
     onNodeDelete: ((nodeId: String) -> Unit)? = null,
     onAddNode: (() -> Unit)? = null,
 ) {
+    var editingNode by remember { mutableStateOf<WorkflowNode?>(null) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -374,22 +371,102 @@ fun WorkflowCanvasPage(
             nodes = nodes,
             modifier = Modifier.padding(padding),
             onNodeMove = onNodeMove,
-            onNodeClick = onNodeClick,
+            onNodeClick = { editingNode = it },
+        )
+    }
+    editingNode?.let { node ->
+        NodeEditDialog(
+            node = node,
+            onSave = { updated ->
+                onNodeUpdate?.invoke(updated)
+                editingNode = null
+            },
+            onDelete = {
+                onNodeDelete?.invoke(node.id)
+                editingNode = null
+            },
+            onDismiss = { editingNode = null },
         )
     }
 }
 
-/** 画布路由：按 workflowId 读取工作流并展示；支持编辑/删除/拖动/添加节点 */
+/** 节点编辑对话框（名称 / 提示词 / 条件，可删除） */
+@Composable
+private fun NodeEditDialog(
+    node: WorkflowNode,
+    onSave: (WorkflowNode) -> Unit,
+    onDelete: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var name by remember { mutableStateOf(node.name) }
+    var prompt by remember { mutableStateOf(node.prompt) }
+    var condition by remember { mutableStateOf(node.condition) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.workflow_edit_node)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(stringResource(R.string.workflow_step_name)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                if (node.type == WorkflowNodeType.IF_ELSE) {
+                    OutlinedTextField(
+                        value = condition,
+                        onValueChange = { condition = it },
+                        label = { Text(stringResource(R.string.workflow_step_condition)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2,
+                    )
+                } else {
+                    OutlinedTextField(
+                        value = prompt,
+                        onValueChange = { prompt = it },
+                        label = { Text(stringResource(R.string.workflow_step_prompt)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onSave(node.copy(name = name, prompt = prompt, condition = condition))
+                },
+            ) {
+                Text(stringResource(R.string.workflow_save))
+            }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onDelete) {
+                    Text(
+                        text = stringResource(R.string.workflow_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.workflow_cancel))
+                }
+            }
+        },
+    )
+}
+
+/** 画布路由：按 workflowId 读取工作流并展示；支持拖动节点后保存坐标 */
 @Composable
 fun WorkflowCanvasRoute(workflowId: String) {
     val settingsStore: SettingsStore = koinInject()
     val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
     val navController = LocalNavController.current
     val scope = rememberCoroutineScope()
-    val workflow = settings.workflows.find { it.id == workflowId }
-    var editingNode by remember { mutableStateOf<WorkflowNode?>(null) }
     var addingType by remember { mutableStateOf(false) }
-
+    val workflow = settings.workflows.find { it.id == workflowId }
     WorkflowCanvasPage(
         title = workflow?.name?.ifBlank { stringResource(R.string.workflow_untitled) }
             ?: stringResource(R.string.workflow_untitled),
@@ -428,10 +505,9 @@ fun WorkflowCanvasRoute(workflowId: String) {
             }
         },
         onAddNode = { addingType = true },
-        onNodeClick = { editingNode = it },
     )
 
-    // 添加节点：先选类型（Prompt / Agent / 条件 / 并行），再自动打开编辑
+    // 添加节点：先选类型（Prompt / Agent / 条件 / 并行）
     if (addingType) {
         AlertDialog(
             onDismissRequest = { addingType = false },
@@ -462,7 +538,6 @@ fun WorkflowCanvasRoute(workflowId: String) {
                                             )
                                         }
                                     }
-                                    editingNode = newNode
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -475,86 +550,6 @@ fun WorkflowCanvasRoute(workflowId: String) {
             confirmButton = {},
         )
     }
-
-    editingNode?.let { node ->
-        NodeEditDialog(
-            node = node,
-            onSave = { updated ->
-                workflow?.let { target ->
-                    val newNodes = target.nodes.map { it.updateNodeById(updated) }
-                    scope.launch {
-                        settingsStore.update { s ->
-                            s.copy(workflows = s.workflows.map {
-                                if (it.id == workflowId) target.copy(nodes = newNodes) else it
-                            })
-                        }
-                    }
-                }
-                editingNode = null
-            },
-            onDelete = {
-                workflow?.let { target ->
-                    val newNodes = target.nodes.mapNotNull { it.removeNodeById(node.id) }
-                    scope.launch {
-                        settingsStore.update { s ->
-                            s.copy(workflows = s.workflows.map {
-                                if (it.id == workflowId) target.copy(nodes = newNodes) else it
-                            })
-                        }
-                    }
-                }
-                editingNode = null
-            },
-            onDismiss = { editingNode = null },
-        )
-    }
-}
-
-fun WorkflowCanvasRoute(workflowId: String) {
-    val settingsStore: SettingsStore = koinInject()
-    val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
-    val navController = LocalNavController.current
-    val scope = rememberCoroutineScope()
-    val workflow = settings.workflows.find { it.id == workflowId }
-    WorkflowCanvasPage(
-        title = workflow?.name?.ifBlank { stringResource(R.string.workflow_untitled) }
-            ?: stringResource(R.string.workflow_untitled),
-        nodes = workflow?.nodes ?: emptyList(),
-        onBack = { navController.popBackStack() },
-        onNodeUpdate = { updated ->
-            workflow?.let { target ->
-                val newNodes = target.nodes.map { it.updateNodeById(updated) }
-                scope.launch {
-                    settingsStore.update { s ->
-                        s.copy(workflows = s.workflows.map { if (it.id == workflowId) target.copy(nodes = newNodes) else it })
-                    }
-                }
-            }
-        },
-        onNodeDelete = { nodeId ->
-            workflow?.let { target ->
-                val newNodes = target.nodes.mapNotNull { it.removeNodeById(nodeId) }
-                scope.launch {
-                    settingsStore.update { s ->
-                        s.copy(workflows = s.workflows.map { if (it.id == workflowId) target.copy(nodes = newNodes) else it })
-                    }
-                }
-            }
-        },
-        onNodeMove = { nodeId, x, y ->
-            workflow?.let { target ->
-                val updated = target.copy(
-                    nodes = target.nodes.map { it.updateNodePosition(nodeId, x, y) }
-                )
-                scope.launch {
-                    settingsStore.update { s ->
-                        s.copy(workflows = s.workflows.map { if (it.id == workflowId) updated else it })
-                    }
-                }
-            }
-        },
-        onAddNode = { addingType = true },
-    )
 }
 
 /** 递归更新节点坐标（含分支与并行子节点） */
