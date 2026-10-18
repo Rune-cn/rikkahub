@@ -61,7 +61,6 @@ import kotlinx.coroutines.launch
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Copy01
 import me.rerere.hugeicons.stroke.Download01
-import me.rerere.hugeicons.stroke.MoreHorizontal01
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.PlusSign
 import me.rerere.rikkahub.R
@@ -222,9 +221,10 @@ fun WorkflowPage() {
                         }
                         Box {
                             IconButton(onClick = { menuExpanded = true }) {
-                                Icon(
-                                    imageVector = HugeIcons.MoreHorizontal01,
-                                    contentDescription = null,
+                                Text(
+                                    text = "⋮",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             DropdownMenu(
