@@ -1,5 +1,8 @@
 package me.rerere.rikkahub.ui.pages.workflow
 
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,6 +42,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -164,52 +168,82 @@ fun WorkflowPage() {
                             supportingContent = { Text(stringResource(R.string.workflow_entry_desc)) },
                         )
                     }
-                    workflows.forEach { workflow ->
-                        item(
-                            onClick = { navController.navigate(Screen.WorkflowCanvas(workflow.id)) },
-                            headlineContent = { Text(workflow.name.ifBlank { stringResource(R.string.workflow_untitled) }) },
-                            supportingContent = {
+                }
+            }
+            workflows.forEach { workflow ->
+                item(key = workflow.id) {
+                    var dragX by remember(workflow.id) { mutableFloatStateOf(0f) }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(
+                                if (dragX < -20f) {
+                                    MaterialTheme.colorScheme.errorContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                }
+                            )
+                            .pointerInput(workflow.id) {
+                                detectHorizontalDragGestures(
+                                    onDragStart = { dragX = 0f },
+                                    onDragEnd = {
+                                        if (dragX < -60f) deleteTarget = workflow
+                                        dragX = 0f
+                                    },
+                                    onHorizontalDrag = { change, amount ->
+                                        change.consume()
+                                        dragX = (dragX + amount).coerceIn(-220f, 0f)
+                                    },
+                                )
+                            },
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { navController.navigate(Screen.WorkflowCanvas(workflow.id)) }
+                                .padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = workflow.name.ifBlank { stringResource(R.string.workflow_untitled) },
+                                    style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
                                 Text(
                                     text = workflow.description.ifBlank {
                                         stringResource(R.string.workflow_steps_count, workflow.steps.size)
                                     },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
-                            },
-                            trailingContent = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    IconButton(onClick = { editing = workflow }) {
-                                        Icon(
-                                            imageVector = HugeIcons.Settings03,
-                                            contentDescription = stringResource(R.string.workflow_edit),
-                                        )
-                                    }
-                                    Switch(
-                                        checked = workflow.enabled,
-                                        onCheckedChange = { enabled ->
-                                            save(workflow.copy(enabled = enabled))
-                                        },
-                                    )
-                                    TextButton(
-                                        onClick = { running = workflow },
-                                        enabled = workflow.enabled,
-                                    ) {
-                                        Text(stringResource(R.string.workflow_run))
-                                    }
-                                    IconButton(onClick = { deleteTarget = workflow }) {
-                                        Icon(HugeIcons.Cancel01, contentDescription = null)
-                                    }
-                                }
-                            },
-                        )
-                        // 展开：树形流程图
-                        if (expandedId == workflow.id) {
-                            item {
-                                WorkflowFlowView(
-                                    nodes = workflow.displayNodes(),
-                                    modifier = Modifier.padding(start = 32.dp, end = 8.dp),
+                            }
+                            if (dragX < -40f) {
+                                Icon(
+                                    imageVector = HugeIcons.Cancel01,
+                                    contentDescription = stringResource(R.string.workflow_delete_confirm),
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
                                 )
+                            }
+                            IconButton(onClick = { editing = workflow }) {
+                                Icon(
+                                    imageVector = HugeIcons.Settings03,
+                                    contentDescription = stringResource(R.string.workflow_edit),
+                                )
+                            }
+                            Switch(
+                                checked = workflow.enabled,
+                                onCheckedChange = { enabled -> save(workflow.copy(enabled = enabled)) },
+                            )
+                            TextButton(
+                                onClick = { running = workflow },
+                                enabled = workflow.enabled,
+                            ) {
+                                Text(stringResource(R.string.workflow_run))
                             }
                         }
                     }
