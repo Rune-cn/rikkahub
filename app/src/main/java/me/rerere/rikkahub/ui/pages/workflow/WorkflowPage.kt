@@ -59,6 +59,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Copy01
+import me.rerere.hugeicons.stroke.Download01
+import me.rerere.hugeicons.stroke.MoreHorizontal01
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.PlusSign
 import me.rerere.rikkahub.R
