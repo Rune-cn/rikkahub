@@ -350,8 +350,6 @@ fun WorkflowCanvasPage(
     onNodeDelete: ((nodeId: String) -> Unit)? = null,
     onAddNode: (() -> Unit)? = null,
 ) {
-    var editingNode by remember { mutableStateOf<WorkflowNode?>(null) }
-    var addingType by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -376,9 +374,63 @@ fun WorkflowCanvasPage(
             nodes = nodes,
             modifier = Modifier.padding(padding),
             onNodeMove = onNodeMove,
-            onNodeClick = { editingNode = it },
+            onNodeClick = onNodeClick,
         )
     }
+}
+
+/** 画布路由：按 workflowId 读取工作流并展示；支持编辑/删除/拖动/添加节点 */
+@Composable
+fun WorkflowCanvasRoute(workflowId: String) {
+    val settingsStore: SettingsStore = koinInject()
+    val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
+    val navController = LocalNavController.current
+    val scope = rememberCoroutineScope()
+    val workflow = settings.workflows.find { it.id == workflowId }
+    var editingNode by remember { mutableStateOf<WorkflowNode?>(null) }
+    var addingType by remember { mutableStateOf(false) }
+
+    WorkflowCanvasPage(
+        title = workflow?.name?.ifBlank { stringResource(R.string.workflow_untitled) }
+            ?: stringResource(R.string.workflow_untitled),
+        nodes = workflow?.nodes ?: emptyList(),
+        onBack = { navController.popBackStack() },
+        onNodeUpdate = { updated ->
+            workflow?.let { target ->
+                val newNodes = target.nodes.map { it.updateNodeById(updated) }
+                scope.launch {
+                    settingsStore.update { s ->
+                        s.copy(workflows = s.workflows.map { if (it.id == workflowId) target.copy(nodes = newNodes) else it })
+                    }
+                }
+            }
+        },
+        onNodeDelete = { nodeId ->
+            workflow?.let { target ->
+                val newNodes = target.nodes.mapNotNull { it.removeNodeById(nodeId) }
+                scope.launch {
+                    settingsStore.update { s ->
+                        s.copy(workflows = s.workflows.map { if (it.id == workflowId) target.copy(nodes = newNodes) else it })
+                    }
+                }
+            }
+        },
+        onNodeMove = { nodeId, x, y ->
+            workflow?.let { target ->
+                val updated = target.copy(
+                    nodes = target.nodes.map { it.updateNodePosition(nodeId, x, y) }
+                )
+                scope.launch {
+                    settingsStore.update { s ->
+                        s.copy(workflows = s.workflows.map { if (it.id == workflowId) updated else it })
+                    }
+                }
+            }
+        },
+        onAddNode = { addingType = true },
+        onNodeClick = { editingNode = it },
+    )
+
     // 添加节点：先选类型（Prompt / Agent / 条件 / 并行），再自动打开编辑
     if (addingType) {
         AlertDialog(
@@ -428,11 +480,29 @@ fun WorkflowCanvasPage(
         NodeEditDialog(
             node = node,
             onSave = { updated ->
-                onNodeUpdate?.invoke(updated)
+                workflow?.let { target ->
+                    val newNodes = target.nodes.map { it.updateNodeById(updated) }
+                    scope.launch {
+                        settingsStore.update { s ->
+                            s.copy(workflows = s.workflows.map {
+                                if (it.id == workflowId) target.copy(nodes = newNodes) else it
+                            })
+                        }
+                    }
+                }
                 editingNode = null
             },
             onDelete = {
-                onNodeDelete?.invoke(node.id)
+                workflow?.let { target ->
+                    val newNodes = target.nodes.mapNotNull { it.removeNodeById(node.id) }
+                    scope.launch {
+                        settingsStore.update { s ->
+                            s.copy(workflows = s.workflows.map {
+                                if (it.id == workflowId) target.copy(nodes = newNodes) else it
+                            })
+                        }
+                    }
+                }
                 editingNode = null
             },
             onDismiss = { editingNode = null },
@@ -440,76 +510,6 @@ fun WorkflowCanvasPage(
     }
 }
 
-/** 节点编辑对话框（名称 / 提示词 / 条件，可删除） */
-@Composable
-private fun NodeEditDialog(
-    node: WorkflowNode,
-    onSave: (WorkflowNode) -> Unit,
-    onDelete: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var name by remember { mutableStateOf(node.name) }
-    var prompt by remember { mutableStateOf(node.prompt) }
-    var condition by remember { mutableStateOf(node.condition) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.workflow_edit_node)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.workflow_step_name)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-                if (node.type == WorkflowNodeType.IF_ELSE) {
-                    OutlinedTextField(
-                        value = condition,
-                        onValueChange = { condition = it },
-                        label = { Text(stringResource(R.string.workflow_step_condition)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 2,
-                    )
-                } else {
-                    OutlinedTextField(
-                        value = prompt,
-                        onValueChange = { prompt = it },
-                        label = { Text(stringResource(R.string.workflow_step_prompt)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3,
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onSave(node.copy(name = name, prompt = prompt, condition = condition))
-                },
-            ) {
-                Text(stringResource(R.string.workflow_save))
-            }
-        },
-        dismissButton = {
-            Row {
-                TextButton(onClick = onDelete) {
-                    Text(
-                        text = stringResource(R.string.workflow_delete),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.workflow_cancel))
-                }
-            }
-        },
-    )
-}
-
-/** 画布路由：按 workflowId 读取工作流并展示；支持拖动节点后保存坐标 */
-@Composable
 fun WorkflowCanvasRoute(workflowId: String) {
     val settingsStore: SettingsStore = koinInject()
     val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
