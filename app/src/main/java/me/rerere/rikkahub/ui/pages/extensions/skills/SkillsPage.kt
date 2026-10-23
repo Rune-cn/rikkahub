@@ -72,6 +72,23 @@ import me.rerere.ui.components.RikkaConfirmDialog
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
+/** Skill 自动分类（按名称/描述关键词，未命中归通用） */
+private enum class SkillCategory(val labelRes: Int, val keywords: List<String>) {
+    SEARCH(R.string.skill_category_search, listOf("search", "web search", "research", "搜索", "查找", "资料", "联网")),
+    CODE(R.string.skill_category_code, listOf("code", "coding", "kotlin", "java", "python", "android", "gradle", "代码", "开发", "编译", "bug")),
+    WRITING(R.string.skill_category_writing, listOf("write", "writing", "translate", "translation", "写作", "翻译", "文案", "文章")),
+    MEDIA(R.string.skill_category_media, listOf("image", "video", "audio", "picture", "图片", "图像", "音频", "视频", "照片")),
+    TOOLS(R.string.skill_category_tools, listOf("tool", "tools", "workflow", "automation", "工具", "自动化", "工作流", "效率")),
+    GENERAL(R.string.skill_category_general, emptyList()),
+}
+
+private fun SkillMetadata.category(): SkillCategory {
+    val text = (name + " " + description).lowercase()
+    return SkillCategory.entries.firstOrNull { cat ->
+        cat.keywords.isNotEmpty() && cat.keywords.any { text.contains(it) }
+    } ?: SkillCategory.GENERAL
+}
+
 fun SkillsPage() {
     val navController = LocalNavController.current
     val vm = koinViewModel<SkillsVM>()
@@ -200,12 +217,27 @@ fun SkillsPage() {
                 }
             }
 
-            items(filteredSkills, key = { it.skillDir.absolutePath }) { skill ->
-                SkillCard(
-                    skill = skill,
-                    onClick = { navController.navigate(Screen.SkillDetail(skill.name)) },
-                    onDelete = { deleteTarget = skill },
-                )
+            val grouped = remember(filteredSkills) {
+                filteredSkills.groupBy { it.category() }
+            }
+            SkillCategory.entries.forEach { category ->
+                val list = grouped[category] ?: return@forEach
+                if (list.isEmpty()) return@forEach
+                item(key = "header_${category.name}") {
+                    Text(
+                        text = stringResource(category.labelRes),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
+                    )
+                }
+                items(list, key = { it.skillDir.absolutePath }) { skill ->
+                    SkillCard(
+                        skill = skill,
+                        onClick = { navController.navigate(Screen.SkillDetail(skill.name)) },
+                        onDelete = { deleteTarget = skill },
+                    )
+                }
             }
         }
     }
