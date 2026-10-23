@@ -34,7 +34,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.OutlinedButton
 import kotlinx.serialization.decodeFromString
-import me.rerere.hugeicons.stroke.Pencil01
+import me.rerere.hugeicons.stroke.Pencil
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -72,6 +72,7 @@ import me.rerere.hugeicons.stroke.PlusSign
 import me.rerere.rikkahub.R
 import me.rerere.hugeicons.stroke.Settings03
 import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.ai.workflow.WorkflowRunner
 import me.rerere.rikkahub.data.datastore.SettingsStore
@@ -108,7 +109,10 @@ fun WorkflowPage() {
                         ignoreUnknownKeys = true
                         encodeDefaults = true
                     }.decodeFromString<Workflow>(json)
-                    save(wf.copy(id = java.util.UUID.randomUUID().toString()))
+                    val imported = wf.copy(id = java.util.UUID.randomUUID().toString())
+                    scope.launch {
+                        settingsStore.update { s -> s.copy(workflows = s.workflows + imported) }
+                    }
                 }.onSuccess {
                     importToaster.show(context.getString(R.string.workflow_import_success))
                 }.onFailure {
@@ -266,7 +270,7 @@ fun WorkflowPage() {
                                 )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.workflow_rename)) },
-                                    leadingIcon = { Icon(HugeIcons.Pencil01, null) },
+                                    leadingIcon = { Icon(HugeIcons.Pencil, null) },
                                     onClick = {
                                         menuExpanded = false
                                         editing = workflow
