@@ -61,6 +61,7 @@ import kotlinx.coroutines.launch
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Copy01
 import me.rerere.hugeicons.stroke.Download01
+import me.rerere.hugeicons.stroke.Play
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.PlusSign
 import me.rerere.rikkahub.R
@@ -203,21 +204,18 @@ fun WorkflowPage() {
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
-                        IconButton(onClick = { editing = workflow }) {
-                            Icon(
-                                imageVector = HugeIcons.Settings03,
-                                contentDescription = stringResource(R.string.workflow_edit),
-                            )
-                        }
                         Switch(
                             checked = workflow.enabled,
                             onCheckedChange = { enabled -> save(workflow.copy(enabled = enabled)) },
                         )
-                        TextButton(
+                        IconButton(
                             onClick = { running = workflow },
                             enabled = workflow.enabled,
                         ) {
-                            Text(stringResource(R.string.workflow_run))
+                            Icon(
+                                imageVector = HugeIcons.Play,
+                                contentDescription = stringResource(R.string.workflow_run),
+                            )
                         }
                         Box {
                             IconButton(onClick = { menuExpanded = true }) {
@@ -231,6 +229,14 @@ fun WorkflowPage() {
                                 expanded = menuExpanded,
                                 onDismissRequest = { menuExpanded = false },
                             ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.workflow_edit)) },
+                                    leadingIcon = { Icon(HugeIcons.Settings03, null) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        editing = workflow
+                                    },
+                                )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.workflow_duplicate)) },
                                     leadingIcon = { Icon(HugeIcons.Copy01, null) },
