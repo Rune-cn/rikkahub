@@ -1351,6 +1351,7 @@
   <string name="setting_provider_page_test_tool_call">Tool Call</string>
   <string name="setting_provider_page_test_tool_called">Called: %1$s  Args: %2$s</string>
   <string name="setting_provider_page_test_tool_not_called">Tool not called, response: %s</string>
+  <string name="chat_generation_retrying">Retrying (%1$d/%2$d)…</string>
   <string name="chat_generation_network_retrying">%1$s. Retrying (%2$d/%3$d)…</string>
   <string name="chat_generation_rate_limit_error">Rate limit exceeded</string>
   <string name="chat_generation_rate_limit_retrying">%1$s, retrying (%2$d/%3$d)…</string>
@@ -1493,6 +1494,10 @@
   <string name="workflow_duplicate_suffix"> (copy)</string>
   <string name="workflow_duplicate">Duplicate</string>
   <string name="workflow_export">Export</string>
+  <string name="workflow_import">Import</string>
+  <string name="workflow_import_success">Workflow imported</string>
+  <string name="workflow_import_failed">Import failed: invalid file</string>
+  <string name="workflow_rename">Rename</string>
   <string name="workflow_run_output">Output</string>
   <string name="workflow_run_input">Initial input</string>
   <string name="workflow_run_start">Start</string>

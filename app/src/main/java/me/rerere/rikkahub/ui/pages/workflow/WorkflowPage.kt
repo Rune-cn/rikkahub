@@ -30,6 +30,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.OutlinedButton
+import kotlinx.serialization.decodeFromString
+import me.rerere.hugeicons.stroke.Pencil01
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -89,6 +94,28 @@ import org.koin.compose.koinInject
 fun WorkflowPage() {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val scope = rememberCoroutineScope()
+    val importToaster = LocalToaster.current
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        uri?.let { u ->
+            scope.launch {
+                runCatching {
+                    val bytes = context.contentResolver.openInputStream(u)?.use { it.readBytes() }
+                    val json = bytes?.decodeToString() ?: error("empty")
+                    val wf = kotlinx.serialization.json.Json {
+                        ignoreUnknownKeys = true
+                        encodeDefaults = true
+                    }.decodeFromString<Workflow>(json)
+                    save(wf.copy(id = java.util.UUID.randomUUID().toString()))
+                }.onSuccess {
+                    importToaster.show(context.getString(R.string.workflow_import_success))
+                }.onFailure {
+                    importToaster.show(context.getString(R.string.workflow_import_failed))
+                }
+            }
+        }
+    }
     val settingsStore = koinInject<SettingsStore>()
     val runner = koinInject<WorkflowRunner>()
     val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
@@ -238,6 +265,14 @@ fun WorkflowPage() {
                                     },
                                 )
                                 DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.workflow_rename)) },
+                                    leadingIcon = { Icon(HugeIcons.Pencil01, null) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        editing = workflow
+                                    },
+                                )
+                                DropdownMenuItem(
                                     text = { Text(stringResource(R.string.workflow_duplicate)) },
                                     leadingIcon = { Icon(HugeIcons.Copy01, null) },
                                     onClick = {
@@ -278,17 +313,32 @@ fun WorkflowPage() {
                 }
             }
             item {
-                Button(
-                    onClick = { editing = Workflow() },
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Icon(HugeIcons.PlusSign, contentDescription = null)
-                    Text(
-                        text = stringResource(R.string.workflow_new),
-                        modifier = Modifier.padding(start = 8.dp),
-                    )
+                    Button(
+                        onClick = { editing = Workflow() },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(HugeIcons.PlusSign, contentDescription = null)
+                        Text(
+                            text = stringResource(R.string.workflow_new),
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = { importLauncher.launch(arrayOf("application/json")) },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(HugeIcons.Download01, contentDescription = null)
+                        Text(
+                            text = stringResource(R.string.workflow_import),
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
                 }
             }
         }
