@@ -83,7 +83,6 @@ import me.rerere.rikkahub.utils.plus
 import me.rerere.ui.components.RikkaConfirmDialog
 import org.koin.androidx.compose.koinViewModel
 
-@Composable
 /** Skill 自动分类（按名称/描述关键词，未命中归通用） */
 private enum class SkillCategory(val labelRes: Int, val keywords: List<String>) {
     SEARCH(R.string.skill_category_search, listOf("search", "web search", "research", "搜索", "查找", "资料", "联网")),
@@ -101,6 +100,7 @@ private fun SkillMetadata.category(): SkillCategory {
     } ?: SkillCategory.GENERAL
 }
 
+@Composable
 fun SkillsPage() {
     val navController = LocalNavController.current
     val vm = koinViewModel<SkillsVM>()
