@@ -601,12 +601,7 @@ class GenerationLoop(
                 ?: context.getString(R.string.chat_generation_network_disconnected)
         }
         processingStatus.value = context.getString(
-            if (isRetryable) {
-                R.string.chat_generation_rate_limit_retrying
-            } else {
-                R.string.chat_generation_network_retrying
-            },
-            statusMessage,
+            R.string.chat_generation_retrying,
             nextRetryCount,
             maxRetries,
         )

@@ -1360,6 +1360,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workspace_terminal_close_confirm_title">关闭终端 %1$d？</string>
   <string name="workspace_terminal_close_confirm_message">关闭此标签页将终止其中仍在运行的任何进程。</string>
   <string name="workspace_terminal_close">关闭</string>
+  <string name="chat_generation_retrying">正在重试（%1$d/%2$d）…</string>
   <string name="chat_generation_network_retrying">%1$s，正在重试（%2$d/%3$d）…</string>
   <string name="chat_generation_rate_limit_error">触发限流</string>
   <string name="chat_generation_rate_limit_retrying">%1$s，正在重试（%2$d/%3$d）…</string>
@@ -1509,6 +1510,10 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workflow_duplicate_suffix">（副本）</string>
   <string name="workflow_duplicate">复制</string>
   <string name="workflow_export">导出</string>
+  <string name="workflow_import">导入</string>
+  <string name="workflow_import_success">已导入工作流</string>
+  <string name="workflow_import_failed">导入失败：文件无效</string>
+  <string name="workflow_rename">重命名</string>
   <string name="workflow_run_output">输出</string>
   <string name="workflow_run_input">初始输入</string>
   <string name="workflow_run_start">开始</string>
