@@ -1419,6 +1419,12 @@
   <string name="setting_display_page_background_effect_type">Background effect type</string>
   <string name="setting_display_page_background_effect_blur">Blur</string>
   <string name="setting_display_page_background_effect_glass">Glass</string>
+  <string name="skill_category_search">Search</string>
+  <string name="skill_category_code">Code</string>
+  <string name="skill_category_writing">Writing</string>
+  <string name="skill_category_media">Image &amp; Video</string>
+  <string name="skill_category_tools">Tools</string>
+  <string name="skill_category_general">General</string>
   <string name="skills_page_search_placeholder">Search skills</string>
   <string name="skills_page_search_no_result">No matching skills</string>
   <string name="assistant_page_local_tools_chart_display_title">Chart Display</string>
