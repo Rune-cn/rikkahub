@@ -93,6 +93,7 @@ import org.koin.compose.koinInject
 @Composable
 fun WorkflowPage() {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val importToaster = LocalToaster.current
     val importLauncher = rememberLauncherForActivityResult(
@@ -122,7 +123,6 @@ fun WorkflowPage() {
     val workflows = settings.workflows
     val runningWorkflowId by runner.runningWorkflowId.collectAsStateWithLifecycle()
     val navController = LocalNavController.current
-    val context = LocalContext.current
 
     var editing by remember { mutableStateOf<Workflow?>(null) }
     var running by remember { mutableStateOf<Workflow?>(null) }
