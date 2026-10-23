@@ -96,7 +96,8 @@ fun WorkflowPage() {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val importToaster = LocalToaster.current
+    val settingsStore = koinInject<SettingsStore>()
+   val importToaster = LocalToaster.current
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
     ) { uri ->
@@ -121,7 +122,6 @@ fun WorkflowPage() {
             }
         }
     }
-    val settingsStore = koinInject<SettingsStore>()
     val runner = koinInject<WorkflowRunner>()
     val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
     val workflows = settings.workflows
@@ -173,6 +173,7 @@ fun WorkflowPage() {
         runCatching { context.startActivity(send) }
     }
 
+ 
     fun remove(id: String) {
         scope.launch {
             settingsStore.update { s -> s.copy(workflows = s.workflows.filterNot { it.id == id }) }
