@@ -200,7 +200,7 @@ fun SkillDetailPage(skillName: String) {
                 ) {
                     presets.forEach { (nameRes, descRes, valueRes) ->
                         TextButton(
-                            onClick = { categoryInput = stringResource(valueRes) },
+                            onClick = { categoryInput = valueRes },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Column(modifier = Modifier.fillMaxWidth()) {
