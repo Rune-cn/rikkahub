@@ -122,6 +122,8 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
 
     LaunchedEffect(searchExpanded) {
         if (searchExpanded) {
+            // 顶栏 AnimatedContent 切换动画完成后输入框才就位，稍等再聚焦确保键盘弹出
+            kotlinx.coroutines.delay(90)
             searchFocusRequester.requestFocus()
         }
     }
