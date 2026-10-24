@@ -29,8 +29,10 @@ import me.rerere.ui.toast.ToastType
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Calendar03
 import me.rerere.hugeicons.stroke.ChartLineData01
+import me.rerere.hugeicons.stroke.CheckList
 import me.rerere.hugeicons.stroke.ClipboardPaste
 import me.rerere.hugeicons.stroke.Clock01
+import me.rerere.hugeicons.stroke.GitFork
 import me.rerere.hugeicons.stroke.JavaScript
 import me.rerere.hugeicons.stroke.MessageQuestion
 import me.rerere.hugeicons.stroke.SmartPhone01
@@ -223,33 +225,17 @@ private fun AssistantLocalToolContent(
                 title = R.string.assistant_page_local_tools_chart_display_title,
                 description = R.string.assistant_page_local_tools_chart_display_desc,
             )
-            item(
-                headlineContent = {
-                    Text(stringResource(R.string.assistant_page_local_tools_update_plan_title))
-                },
-                supportingContent = {
-                    Text(stringResource(R.string.assistant_page_local_tools_update_plan_desc))
-                },
-                trailingContent = {
-                    Switch(
-                        checked = assistant.localTools.contains(LocalToolOption.UpdatePlan),
-                        onCheckedChange = { toggleLocalTool(LocalToolOption.UpdatePlan, it) }
-                    )
-                }
+            toolItem(
+                option = LocalToolOption.UpdatePlan,
+                icon = HugeIcons.CheckList,
+                title = R.string.assistant_page_local_tools_update_plan_title,
+                description = R.string.assistant_page_local_tools_update_plan_desc,
             )
-            item(
-                headlineContent = {
-                    Text(stringResource(R.string.assistant_page_local_tools_workflow_title))
-                },
-                supportingContent = {
-                    Text(stringResource(R.string.assistant_page_local_tools_workflow_desc))
-                },
-                trailingContent = {
-                    Switch(
-                        checked = assistant.localTools.contains(LocalToolOption.Workflow),
-                        onCheckedChange = { toggleLocalTool(LocalToolOption.Workflow, it) }
-                    )
-                }
+            toolItem(
+                option = LocalToolOption.Workflow,
+                icon = HugeIcons.GitFork,
+                title = R.string.assistant_page_local_tools_workflow_title,
+                description = R.string.assistant_page_local_tools_workflow_desc,
             )
         }
     }

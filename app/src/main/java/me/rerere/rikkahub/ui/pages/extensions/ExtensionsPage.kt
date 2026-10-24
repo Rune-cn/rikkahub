@@ -87,19 +87,19 @@ fun ExtensionsPage() {
                     )
                     item(
                         onClick = { navController.navigate(Screen.ToolCalls) },
-                        leadingContent = { Icon(HugeIcons.Tools, null) },
+                        leadingContent = { CardGroupIcon(HugeIcons.Tools, containerColor = containerColor, contentColor = contentColor) },
                         headlineContent = { Text(stringResource(R.string.tool_call_page_title)) },
                         supportingContent = { Text(stringResource(R.string.tool_call_entry_desc)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.Workflows) },
-                        leadingContent = { Icon(HugeIcons.AiMagic, null) },
+                        leadingContent = { CardGroupIcon(HugeIcons.AiMagic, containerColor = containerColor, contentColor = contentColor) },
                         headlineContent = { Text(stringResource(R.string.workflow_page_title)) },
                         supportingContent = { Text(stringResource(R.string.workflow_entry_desc)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.OtherSettings) },
-                        leadingContent = { Icon(HugeIcons.Settings03, null) },
+                        leadingContent = { CardGroupIcon(HugeIcons.Settings03, containerColor = containerColor, contentColor = contentColor) },
                         headlineContent = { Text(stringResource(R.string.extensions_page_other_category)) },
                         supportingContent = { Text(stringResource(R.string.extensions_page_other_desc)) },
                     )
