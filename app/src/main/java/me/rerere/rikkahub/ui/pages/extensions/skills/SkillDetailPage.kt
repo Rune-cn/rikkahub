@@ -221,12 +221,12 @@ fun SkillDetailPage(skillName: String) {
                         ) {
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 Text(
-                                    text = stringResource(nameRes),
+                                    text = nameRes,
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.fillMaxWidth(),
                                 )
                                 Text(
-                                    text = stringResource(descRes),
+                                    text = descRes,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.fillMaxWidth(),
