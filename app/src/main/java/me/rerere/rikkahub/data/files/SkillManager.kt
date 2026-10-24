@@ -245,6 +245,7 @@ class SkillManager(
                 name = name,
                 description = description,
                 compatibility = frontmatter["compatibility"],
+                category = frontmatter["category"]?.takeIf { it.isNotBlank() },
                 skillDir = skillDir,
                 builtin = builtin,
             )
@@ -259,6 +260,8 @@ data class SkillMetadata(
     val name: String,
     val description: String,
     val compatibility: String? = null,
+    /** 手动分类（SKILL.md frontmatter 的 category），null 表示未分类 */
+    val category: String? = null,
     val skillDir: File,
     /** 内置技能，来自 assets 解压，只读 */
     val builtin: Boolean = false,

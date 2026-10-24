@@ -72,6 +72,8 @@ fun SkillDetailPage(skillName: String) {
 
     val tree by vm.tree.collectAsStateWithLifecycle()
     val readOnly by vm.readOnly.collectAsStateWithLifecycle()
+    val category by vm.category.collectAsStateWithLifecycle()
+    var showCategoryDialog by rememberSaveable { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val toaster = LocalToaster.current
 
@@ -119,6 +121,37 @@ fun SkillDetailPage(skillName: String) {
                 .verticalScroll(scrollState)
                 .padding(innerPadding + PaddingValues(8.dp)),
         ) {
+            // 手动分类（预置分类带名称与描述，也可自定义）
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.skill_detail_category),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        Text(
+                            text = category?.takeIf { it.isNotBlank() }
+                                ?: stringResource(R.string.skill_category_uncategorized),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (!readOnly) {
+                        TextButton(onClick = { showCategoryDialog = true }) {
+                            Text(stringResource(R.string.skill_detail_change))
+                        }
+                    }
+                }
+            }
             FileTree(
                 nodes = tree,
                 depth = 0,
@@ -139,6 +172,71 @@ fun SkillDetailPage(skillName: String) {
                 vm.saveFile(skillFile.relativePath, content) { error ->
                     if (error == null) editingFile = null
                     else toaster.show(error)
+                }
+            },
+        )
+    }
+
+    if (showCategoryDialog) {
+        var categoryInput by remember { mutableStateOf(category.orEmpty()) }
+        val presets = listOf(
+            Triple(R.string.skill_preset_search, R.string.skill_preset_search_desc, R.string.skill_category_search),
+            Triple(R.string.skill_preset_code, R.string.skill_preset_code_desc, R.string.skill_category_code),
+            Triple(R.string.skill_preset_writing, R.string.skill_preset_writing_desc, R.string.skill_category_writing),
+            Triple(R.string.skill_preset_media, R.string.skill_preset_media_desc, R.string.skill_category_media),
+            Triple(R.string.skill_preset_tools, R.string.skill_preset_tools_desc, R.string.skill_category_tools),
+            Triple(R.string.skill_preset_general, R.string.skill_preset_general_desc, R.string.skill_category_general),
+        )
+        AlertDialog(
+            onDismissRequest = { showCategoryDialog = false },
+            title = { Text(stringResource(R.string.skill_detail_category)) },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    presets.forEach { (nameRes, descRes, valueRes) ->
+                        TextButton(
+                            onClick = { categoryInput = stringResource(valueRes) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = stringResource(nameRes),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                Text(
+                                    text = stringResource(descRes),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                        }
+                    }
+                    OutlinedTextField(
+                        value = categoryInput,
+                        onValueChange = { categoryInput = it },
+                        label = { Text(stringResource(R.string.skill_detail_custom_category)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        vm.updateCategory(categoryInput)
+                        showCategoryDialog = false
+                    },
+                ) {
+                    Text(stringResource(R.string.common_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCategoryDialog = false }) {
+                    Text(stringResource(R.string.common_cancel))
                 }
             },
         )

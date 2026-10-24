@@ -31,6 +31,11 @@ class SkillsVM(
         loadSkills()
     }
 
+    /** 重新加载 skill 列表（分类修改后刷新） */
+    fun refresh() {
+        _skills.value = skillManager.listSkills()
+    }
+
     private fun loadSkills() {
         viewModelScope.launch(Dispatchers.IO) {
             _skills.value = skillManager.listSkills()

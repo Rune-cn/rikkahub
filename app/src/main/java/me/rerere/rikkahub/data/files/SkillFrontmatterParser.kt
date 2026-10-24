@@ -24,6 +24,29 @@ object SkillFrontmatterParser {
         }.getOrDefault(SkillFrontmatter.Empty)
     }
 
+    /** 更新 frontmatter 中的单个字段并写回（无 frontmatter 时新建） */
+    fun update(content: String, key: String, value: String): String {
+        if (!content.startsWith("---")) {
+            return "---\n$key: \"$value\"\n---\n" + content
+        }
+        val endRange = findFrontmatterEndRange(content) ?: return content
+        val yamlContent = content.substring(3, endRange.first).trim()
+        val body = extractBody(content)
+        val prefix = "$key:"
+        val out = mutableListOf<String>()
+        var replaced = false
+        yamlContent.split('\n').forEach { line ->
+            if (line.trimStart().startsWith(prefix) && !replaced) {
+                out += "$key: \"$value\""
+                replaced = true
+            } else {
+                out += line
+            }
+        }
+        if (!replaced) out += "$key: \"$value\""
+        return "---\n" + out.joinToString("\n") + "\n---\n" + body
+    }
+
     fun extractBody(content: String): String {
         if (!content.startsWith("---")) return content
         val endRange = findFrontmatterEndRange(content) ?: return content

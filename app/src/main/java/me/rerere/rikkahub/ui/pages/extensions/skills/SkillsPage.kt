@@ -71,23 +71,6 @@ import me.rerere.rikkahub.utils.plus
 import me.rerere.ui.components.RikkaConfirmDialog
 import org.koin.androidx.compose.koinViewModel
 
-/** Skill 自动分类（按名称/描述关键词，未命中归通用） */
-private enum class SkillCategory(val labelRes: Int, val keywords: List<String>) {
-    SEARCH(R.string.skill_category_search, listOf("search", "web search", "research", "搜索", "查找", "资料", "联网")),
-    CODE(R.string.skill_category_code, listOf("code", "coding", "kotlin", "java", "python", "android", "gradle", "代码", "开发", "编译", "bug")),
-    WRITING(R.string.skill_category_writing, listOf("write", "writing", "translate", "translation", "写作", "翻译", "文案", "文章")),
-    MEDIA(R.string.skill_category_media, listOf("image", "video", "audio", "picture", "图片", "图像", "音频", "视频", "照片")),
-    TOOLS(R.string.skill_category_tools, listOf("tool", "tools", "workflow", "automation", "工具", "自动化", "工作流", "效率")),
-    GENERAL(R.string.skill_category_general, emptyList()),
-}
-
-private fun SkillMetadata.category(): SkillCategory {
-    val text = (name + " " + description).lowercase()
-    return SkillCategory.entries.firstOrNull { cat ->
-        cat.keywords.isNotEmpty() && cat.keywords.any { text.contains(it) }
-    } ?: SkillCategory.GENERAL
-}
-
 @Composable
 fun SkillsPage() {
     val navController = LocalNavController.current
@@ -111,8 +94,11 @@ fun SkillsPage() {
             }
         }
     }
-    val groupedSkills = remember(filteredSkills) {
-        filteredSkills.groupBy { it.category() }
+    val uncategorized = stringResource(R.string.skill_category_uncategorized)
+    val groupedSkills = remember(filteredSkills, uncategorized) {
+        filteredSkills.groupBy { skill ->
+            skill.category?.takeIf { it.isNotBlank() } ?: uncategorized
+        }
     }
     val fileImportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -220,12 +206,11 @@ fun SkillsPage() {
                 }
             }
 
-            SkillCategory.entries.forEach { category ->
-                val list = groupedSkills[category] ?: return@forEach
+            groupedSkills.forEach { (categoryName, list) ->
                 if (list.isEmpty()) return@forEach
-                item(key = "header_${category.name}") {
+                item(key = "header_$categoryName") {
                     Text(
-                        text = stringResource(category.labelRes),
+                        text = categoryName,
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
