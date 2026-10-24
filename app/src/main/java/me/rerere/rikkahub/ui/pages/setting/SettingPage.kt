@@ -3,6 +3,13 @@ package me.rerere.rikkahub.ui.pages.setting
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -76,7 +83,6 @@ import me.rerere.hugeicons.stroke.ServerStack01
 import me.rerere.hugeicons.stroke.Settings03
 import me.rerere.hugeicons.stroke.Share04
 import me.rerere.hugeicons.stroke.SmartPhone01
-import me.rerere.hugeicons.stroke.Search01
 import me.rerere.hugeicons.stroke.Sun01
 import me.rerere.hugeicons.stroke.Tiktok
 import me.rerere.hugeicons.stroke.WavingHand01
@@ -154,54 +160,56 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
 
     Scaffold(
         topBar = {
-            if (searchExpanded) {
-                // 搜索态：顶栏整条变成圆角搜索输入框
-                LargeFlexibleTopAppBar(
-                    title = {
-                        SettingSearchField(
-                            query = searchQuery,
-                            onQueryChange = { searchQuery = it },
-                            onCollapse = { collapseSearch() },
-                            focusRequester = searchFocusRequester,
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { collapseSearch() }) {
-                            Icon(
-                                imageVector = HugeIcons.ArrowDown01,
-                                contentDescription = stringResource(R.string.setting_search_collapse),
+            // 顶栏在「设置标题」与「搜索输入框」之间切换，带淡入淡出 + 轻微位移动画
+            AnimatedContent(
+                targetState = searchExpanded,
+                transitionSpec = {
+                    (fadeIn(tween(220)) + slideInVertically(tween(220)) { -it / 2 })
+                        .togetherWith(fadeOut(tween(150)) + slideOutVertically(tween(150)) { it / 2 })
+                },
+                label = "settingSearchBar",
+            ) { expanded ->
+                if (expanded) {
+                    // 搜索态：顶栏整条变成圆角搜索输入框
+                    LargeFlexibleTopAppBar(
+                        title = {
+                            SettingSearchField(
+                                query = searchQuery,
+                                onQueryChange = { searchQuery = it },
+                                onCollapse = { collapseSearch() },
+                                focusRequester = searchFocusRequester,
                             )
-                        }
-                    },
-                    scrollBehavior = scrollBehavior,
-                    colors = CustomColors.topBarColors,
-                )
-            } else {
-                LargeFlexibleTopAppBar(
-                    title = {
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(percent = 50))
-                                .clickable { searchExpanded = true }
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(text = stringResource(R.string.settings))
-                            Spacer(modifier = Modifier.size(6.dp))
-                            Icon(
-                                imageVector = HugeIcons.Search01,
-                                contentDescription = stringResource(R.string.setting_search_placeholder),
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = { collapseSearch() }) {
+                                Icon(
+                                    imageVector = HugeIcons.ArrowDown01,
+                                    contentDescription = stringResource(R.string.setting_search_collapse),
+                                )
+                            }
+                        },
+                        scrollBehavior = scrollBehavior,
+                        colors = CustomColors.topBarColors,
+                    )
+                } else {
+                    // 收起态：纯「设置」标题，点击展开搜索（收起后无任何痕迹）
+                    LargeFlexibleTopAppBar(
+                        title = {
+                            Text(
+                                text = stringResource(R.string.settings),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(percent = 50))
+                                    .clickable { searchExpanded = true }
+                                    .padding(horizontal = 10.dp, vertical = 4.dp),
                             )
-                        }
-                    },
-                    navigationIcon = {
-                        BackButton()
-                    },
-                    scrollBehavior = scrollBehavior,
-                    colors = CustomColors.topBarColors,
-                )
+                        },
+                        navigationIcon = {
+                            BackButton()
+                        },
+                        scrollBehavior = scrollBehavior,
+                        colors = CustomColors.topBarColors,
+                    )
+                }
             }
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
