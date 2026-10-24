@@ -324,7 +324,6 @@ class ChatVM(
         }
     }
 
-    private val _errors = MutableStateFlow<List<ChatError>>(emptyList())
     fun updateTitle(title: String) {
         viewModelScope.launch {
             chatService.updateTitle(_conversationId, title)
