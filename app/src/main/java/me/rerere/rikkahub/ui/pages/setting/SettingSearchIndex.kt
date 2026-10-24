@@ -41,6 +41,7 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.ui.components.ui.CardGroup
 import me.rerere.rikkahub.ui.components.ui.CardGroupIcon
+import me.rerere.rikkahub.utils.RunLog
 
 /** 设置项类型（决定图标，也便于后续做"定位+高亮"） */
 enum class SettingItemType {
@@ -269,7 +270,18 @@ fun SettingSearchResults(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val results = remember(query) { searchSettingItems(context, query) }
+    val results = remember(query) {
+        // 搜出来记录到运行日志，方便排查「搜不到」的问题
+        runCatching { searchSettingItems(context, query) }
+            .onSuccess { runLog ->
+                RunLog.log("SettingSearch", "query=\"${query.trim()}\" -> ${runLog.size} 条")
+            }
+            .onFailure { e ->
+                RunLog.log("SettingSearch", "搜索异常: $e", 'E')
+                RunLog.log("SettingSearch", e.stackTraceToString(), 'E')
+            }
+            .getOrDefault(emptyList())
+    }
     if (results.isEmpty()) {
         Text(
             text = stringResource(R.string.setting_search_no_result),

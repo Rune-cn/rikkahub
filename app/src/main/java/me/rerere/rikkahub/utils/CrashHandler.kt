@@ -16,6 +16,8 @@ object CrashHandler {
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             Log.e(TAG, "Uncaught exception on thread ${thread.name}", throwable)
+            RunLog.log("CRASH", "${thread.name}: $throwable", 'E')
+            RunLog.log("CRASH", throwable.stackTraceToString(), 'E')
             markCrashed(appContext, thread, throwable)
             defaultHandler?.uncaughtException(thread, throwable)
         }

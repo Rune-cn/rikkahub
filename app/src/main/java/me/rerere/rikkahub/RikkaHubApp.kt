@@ -43,6 +43,7 @@ import me.rerere.rikkahub.service.WebServerService
 import me.rerere.rikkahub.utils.CrashHandler
 import me.rerere.rikkahub.utils.DatabaseUtil
 import me.rerere.rikkahub.utils.JsonInstant
+import me.rerere.rikkahub.utils.RunLog
 import me.rerere.workspace.WorkspaceManager
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
@@ -64,6 +65,7 @@ const val MEMORY_DREAM_NOTIFICATION_CHANNEL_ID = "memory_dream"
 class RikkaHubApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        RunLog.log("App", "启动 ${BuildConfig.VERSION_NAME}(${BuildConfig.VERSION_CODE})")
         // Restore files and settings before eager Koin singletons or workers can access them.
         try {
             val restored = runBlocking(Dispatchers.IO) {

@@ -112,6 +112,7 @@ import me.rerere.rikkahub.ui.pages.favorite.FavoritePage
 import me.rerere.rikkahub.ui.pages.history.HistoryPage
 import me.rerere.rikkahub.ui.pages.imggen.ImageGenPage
 import me.rerere.rikkahub.ui.pages.log.LogPage
+import me.rerere.rikkahub.ui.pages.log.RunLogPage
 import me.rerere.rikkahub.ui.pages.mediacreation.MediaCreationPage
 import me.rerere.rikkahub.ui.pages.mediacreation.MediaCreationSessionsPage
 import me.rerere.rikkahub.ui.pages.search.SearchPage
@@ -543,6 +544,10 @@ class RouteActivity : ComponentActivity() {
                                 LogPage()
                             }
 
+                            entry<Screen.RunLog> {
+                                RunLogPage()
+                            }
+
                             entry<Screen.Extensions> {
                                 ExtensionsPage()
                             }
@@ -800,6 +805,9 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object Log : Screen
+
+    @Serializable
+    data object RunLog : Screen
 
     @Serializable
     data object Extensions : Screen

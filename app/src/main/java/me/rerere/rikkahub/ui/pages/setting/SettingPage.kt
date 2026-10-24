@@ -99,6 +99,7 @@ import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.hooks.rememberColorMode
 import me.rerere.rikkahub.ui.theme.ColorMode
 import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.utils.RunLog
 import me.rerere.rikkahub.utils.joinQQGroup
 import me.rerere.rikkahub.utils.openUrl
 import me.rerere.rikkahub.utils.plus
@@ -122,6 +123,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
 
     LaunchedEffect(searchExpanded) {
         if (searchExpanded) {
+            RunLog.log("SettingSearch", "展开搜索")
             // 顶栏 AnimatedContent 切换动画完成后输入框才就位，稍等再聚焦确保键盘弹出
             kotlinx.coroutines.delay(90)
             searchFocusRequester.requestFocus()
@@ -132,6 +134,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
         if (searchQuery.isNotBlank()) searchQuery = ""
         searchExpanded = false
         searchKeyboardController?.hide()
+        RunLog.log("SettingSearch", "收起搜索")
     }
 
     if (!settings.init && launchCount > 100 && (launchCount - settings.sponsorAlertDismissedAt) >= 50) {
@@ -430,6 +433,12 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                         leadingContent = { CardGroupIcon(HugeIcons.Bookshelf01, containerColor = containerColor, contentColor = contentColor) },
                         supportingContent = { Text(stringResource(R.string.setting_page_request_logs_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_request_logs)) },
+                    )
+                    item(
+                        onClick = { navController.navigate(Screen.RunLog) },
+                        leadingContent = { CardGroupIcon(HugeIcons.Database02, containerColor = containerColor, contentColor = contentColor) },
+                        supportingContent = { Text(stringResource(R.string.setting_page_run_logs_desc)) },
+                        headlineContent = { Text(stringResource(R.string.setting_page_run_logs)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingDonate) },
