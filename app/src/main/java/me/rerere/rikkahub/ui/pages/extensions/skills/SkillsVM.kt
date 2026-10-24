@@ -36,6 +36,18 @@ class SkillsVM(
         _skills.value = skillManager.listSkills()
     }
 
+    /** 修改 skill 分类（写回 SKILL.md frontmatter 的 category） */
+    fun updateCategory(skill: SkillMetadata, category: String) {
+        val normalized = category.trim()
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                val file = skill.skillFile
+                file.writeText(SkillFrontmatterParser.update(file.readText(), "category", normalized))
+            }
+            refresh()
+        }
+    }
+
     private fun loadSkills() {
         viewModelScope.launch(Dispatchers.IO) {
             _skills.value = skillManager.listSkills()
