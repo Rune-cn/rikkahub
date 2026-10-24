@@ -128,6 +128,9 @@ fun SkillsPage() {
             }
         }
     }
+    val groupedSkills = remember(filteredSkills) {
+        filteredSkills.groupBy { it.category() }
+    }
     val fileImportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -221,11 +224,8 @@ fun SkillsPage() {
                 }
             }
 
-            val grouped = remember(filteredSkills) {
-                filteredSkills.groupBy { it.category() }
-            }
             SkillCategory.entries.forEach { category ->
-                val list = grouped[category] ?: return@forEach
+                val list = groupedSkills[category] ?: return@forEach
                 if (list.isEmpty()) return@forEach
                 item(key = "header_${category.name}") {
                     Text(
