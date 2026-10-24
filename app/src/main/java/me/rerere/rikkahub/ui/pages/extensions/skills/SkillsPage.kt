@@ -22,6 +22,10 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -97,6 +101,7 @@ fun SkillsPage() {
     val invalidSkillDirs by vm.invalidSkillDirs.collectAsStateWithLifecycle()
     var deleteTarget by remember { mutableStateOf<SkillMetadata?>(null) }
     var invalidDeleteTarget by remember { mutableStateOf<InvalidSkillDir?>(null) }
+    var categoryTarget by remember { mutableStateOf<SkillMetadata?>(null) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     val filteredInvalidSkillDirs = remember(invalidSkillDirs, searchQuery) {
         invalidSkillDirs.filter { it.dirName.contains(searchQuery, ignoreCase = true) }
@@ -225,6 +230,7 @@ fun SkillsPage() {
                         skill = skill,
                         onClick = { navController.navigate(Screen.SkillDetail(skill.name)) },
                         onDelete = { deleteTarget = skill },
+                        onCategory = { categoryTarget = skill },
                     )
                 }
             }
@@ -239,6 +245,76 @@ fun SkillsPage() {
                 }
             }
         }
+    }
+
+    categoryTarget?.let { skill ->
+        var categoryInput by remember(skill.skillDir.absolutePath) {
+            mutableStateOf(skill.category.orEmpty())
+        }
+        val presets = listOf(
+            Triple(R.string.skill_preset_search, R.string.skill_preset_search_desc, R.string.skill_category_search),
+            Triple(R.string.skill_preset_code, R.string.skill_preset_code_desc, R.string.skill_category_code),
+            Triple(R.string.skill_preset_writing, R.string.skill_preset_writing_desc, R.string.skill_category_writing),
+            Triple(R.string.skill_preset_media, R.string.skill_preset_media_desc, R.string.skill_category_media),
+            Triple(R.string.skill_preset_tools, R.string.skill_preset_tools_desc, R.string.skill_category_tools),
+            Triple(R.string.skill_preset_general, R.string.skill_preset_general_desc, R.string.skill_category_general),
+        ).map { (nameRes, descRes, valueRes) ->
+            Triple(stringResource(nameRes), stringResource(descRes), stringResource(valueRes))
+        }
+        AlertDialog(
+            onDismissRequest = { categoryTarget = null },
+            title = { Text(stringResource(R.string.skill_detail_category)) },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    presets.forEach { (name, desc, value) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { categoryInput = value },
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = categoryInput == value,
+                                onClick = { categoryInput = value },
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(name, style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    text = desc,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                    OutlinedTextField(
+                        value = categoryInput,
+                        onValueChange = { categoryInput = it },
+                        label = { Text(stringResource(R.string.skill_detail_custom_category)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        vm.updateCategory(skill, categoryInput)
+                        categoryTarget = null
+                    },
+                ) {
+                    Text(stringResource(R.string.common_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { categoryTarget = null }) {
+                    Text(stringResource(R.string.common_cancel))
+                }
+            },
+        )
     }
 
     if (showImportSheet) {
@@ -391,8 +467,10 @@ private fun SkillCard(
     skill: SkillMetadata,
     onClick: () -> Unit,
     onDelete: () -> Unit,
+    onCategory: () -> Unit,
 ) {
-    Surface(
+    var menuExpanded by remember { mutableStateOf(false) }
+    Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -433,6 +511,21 @@ private fun SkillCard(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
+                if (skill.builtin) {
+                    Text(
+                        text = "Built-in",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                    )
+                } else {
+                    skill.category?.takeIf { it.isNotBlank() }?.let { category ->
+                        Text(
+                            text = category,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
                 if (!skill.compatibility.isNullOrBlank()) {
                     Text(
                         text = skill.compatibility,
@@ -441,10 +534,15 @@ private fun SkillCard(
                     )
                 }
             }
-            // 内置技能只读，不提供删除
+            // 内置技能只读，不提供操作菜单
             if (!skill.builtin) {
                 ItemActionMenu(
                     actions = listOf(
+                        ItemAction(
+                            text = stringResource(R.string.skill_detail_category),
+                            icon = HugeIcons.Puzzle,
+                            onClick = onCategory,
+                        ),
                         ItemAction(
                             text = stringResource(R.string.delete),
                             icon = HugeIcons.Delete01,
