@@ -1,6 +1,7 @@
 package me.rerere.rikkahub.data.ai.tools.local
 
-import androidx.compose.ui.text.input.InputSchema
+import me.rerere.ai.core.InputSchema
+import me.rerere.ai.core.Tool
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
