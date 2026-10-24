@@ -34,14 +34,5 @@ class SettingVM(
         }
     }
 
-    /**
-     * 基于最新设置更新（推荐）
-     *
-     * 避免用 UI 旧快照整体写回而覆盖其他并发修改（例如「自动允许」开关）。
-     */
-    fun updateSettings(update: (Settings) -> Settings) {
-        viewModelScope.launch {
-            settingsStore.update(update)
-        }
-    }
+    
 }

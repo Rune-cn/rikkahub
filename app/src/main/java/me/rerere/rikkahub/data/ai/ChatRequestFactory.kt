@@ -45,6 +45,7 @@ import me.rerere.rikkahub.data.model.getChatModelOf
 import me.rerere.rikkahub.data.repository.MemoryRepository
 import me.rerere.rikkahub.data.repository.WorkspaceRepository
 import me.rerere.rikkahub.data.repository.memoryId
+import java.io.IOException
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
@@ -298,5 +299,23 @@ internal fun backgroundTextGenerationParams(
     sessionId = sessionId.toString(),
 )
 
-internal fun Settings.retryPolicy() =
-    if (networkSetting.enableAutoRetry) RetryPolicy.NETWORK else RetryPolicy.NONE
+internal fun Settings.retryPolicy(): RetryPolicy {
+    val net = networkSetting
+    if (!net.enableAutoRetry) return RetryPolicy.NONE
+    // fork：重试次数、限流开关、可重试状态码与关键字都按「扩展管理 → 其他」页的设置生效；
+    // 停止重试关键字优先级最高。间隔策略沿用上游内建的指数退避（1s、2s、4s…）。
+    return RetryPolicy(
+        maxRetries = net.rateLimitRetryCount,
+        retryOn = { error ->
+            val msg = error.message?.lowercase().orEmpty()
+            val stopped = net.stopRetryKeywords.any { it.isNotBlank() && it.lowercase() in msg }
+            !stopped && (error is IOException || (
+                net.enableRateLimitRetry && (
+                    net.retryableStatusCodes.any { it.toString() in msg } ||
+                    net.retryKeywords.any { it.isNotBlank() && it.lowercase() in msg }
+                )
+                )
+            )
+        },
+    )
+}
