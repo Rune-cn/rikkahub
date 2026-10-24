@@ -170,7 +170,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                 label = "settingSearchBar",
             ) { expanded ->
                 if (expanded) {
-                    // 搜索态：顶栏整条变成圆角搜索输入框
+                    // 搜索态：顶栏整条变成圆角搜索输入框（收起只靠输入框右侧的 ↓）
                     LargeFlexibleTopAppBar(
                         title = {
                             SettingSearchField(
@@ -179,14 +179,6 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                                 onCollapse = { collapseSearch() },
                                 focusRequester = searchFocusRequester,
                             )
-                        },
-                        navigationIcon = {
-                            IconButton(onClick = { collapseSearch() }) {
-                                Icon(
-                                    imageVector = HugeIcons.ArrowDown01,
-                                    contentDescription = stringResource(R.string.setting_search_collapse),
-                                )
-                            }
                         },
                         scrollBehavior = scrollBehavior,
                         colors = CustomColors.topBarColors,

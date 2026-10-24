@@ -3,27 +3,24 @@ package me.rerere.rikkahub.ui.pages.setting
 import android.content.Context
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -42,6 +39,7 @@ import me.rerere.hugeicons.stroke.SlidersHorizontal
 import me.rerere.hugeicons.stroke.Zap
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
+import me.rerere.rikkahub.ui.components.ui.CardGroup
 import me.rerere.rikkahub.ui.components.ui.CardGroupIcon
 
 /** 设置项类型（决定图标，也便于后续做"定位+高亮"） */
@@ -212,6 +210,7 @@ fun SettingSearchField(
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester? = null,
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
     TextField(
         value = query,
         onValueChange = onQueryChange,
@@ -252,15 +251,16 @@ fun SettingSearchField(
             unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
             disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
         ),
+        // 键盘右下角「搜索」= 完成输入（只收起键盘，结果区保留可点选）；彻底收起靠右侧 ↓
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { onCollapse() }),
+        keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
     )
 }
 
 /**
- * 设置搜索结果：每个命中项渲染为一张完整圆角卡片。
+ * 设置搜索结果：按「页面」分组，每组渲染成与设置页一致的原生卡片组（CardGroup）。
  *
- * 卡片内容：圆底类型图标 + 高亮标题 + 所属设置页名 + 进入箭头，点击直达对应页面。
+ * 组内每项：圆底类型图标 + 命中词高亮标题，点击直达对应设置页。
  */
 @Composable
 fun SettingSearchResults(
@@ -279,54 +279,36 @@ fun SettingSearchResults(
         )
         return
     }
+    // 按页面分组（保留索引顺序），每组就是一张原生的整卡片
+    val grouped = LinkedHashMap<Int, MutableList<SettingSearchItem>>()
+    results.forEach { item -> grouped.getOrPut(item.pageRes) { mutableListOf() }.add(item) }
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
     ) {
-        results.forEach { item ->
-            Surface(
-                onClick = { onNavigate(item.screen) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        grouped.forEach { (pageRes, items) ->
+            CardGroup(
+                title = { Text(stringResource(pageRes)) },
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CardGroupIcon(
-                        icon = settingItemIcon(item.type),
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 14.dp),
-                        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(2.dp),
-                    ) {
-                        Text(
-                            text = highlightKeyword(
-                                text = context.getString(item.titleRes),
-                                query = query,
-                            ),
-                            style = MaterialTheme.typography.titleSmall,
-                            maxLines = 2,
-                        )
-                        Text(
-                            text = context.getString(item.pageRes),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Icon(
-                        imageVector = HugeIcons.ArrowRight01,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp),
+                items.forEach { item ->
+                    item(
+                        onClick = { onNavigate(item.screen) },
+                        leadingContent = {
+                            CardGroupIcon(
+                                icon = settingItemIcon(item.type),
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                        headlineContent = {
+                            Text(
+                                text = highlightKeyword(
+                                    text = context.getString(item.titleRes),
+                                    query = query,
+                                )
+                            )
+                        },
                     )
                 }
             }
