@@ -465,13 +465,17 @@ private data class QQGroup(
     val name: String,
     val key: String? = null,
     val number: String? = null,
+    // 分享加群链接（qun.qq.com/universal-share/...）；authKey 有时效，过期后需换新链接
+    val link: String? = null,
     val icon: ImageVector = TencentQQIcon,
 )
 
 private val QQ_GROUPS = listOf(
-    // 一键跳转加群需要群主在 https://qun.qq.com/join.html 为对应群生成的专属 key；
-    // 未提供 key 前暂用复制群号（number），拿到 key 后改填 key 即可一键跳转
-    QQGroup("Rune 交流群", number = "1131916400"),
+    QQGroup(
+        "RikkaHub分支交流群",
+        number = "1131916400",
+        link = "https://qun.qq.com/universal-share/share?ac=1&authKey=S6F%2BLkdy%2BAwwEalAZ1BW5FEvzHIw3WIXhKDOHV%2FuOd1qHglq6YLalbZ%2B2q%2FYGr8D&busi_data=eyJncm91cENvZGUiOiIxMTMxOTE2NDAwIiwidG9rZW4iOiJJQmZwTUo2UFJoVTB2VmZIQlZPTkdGejZBN0p4V2Era1NqUnUwZS9YcDZqSDIxU0R5d2loRDR6VGRZUGZ0WlJNIiwidWluIjoiMzY2Njk0Njc4OCJ9&data=rwgc3-JwUpDzVH3tL75UWVInr_C9UFuzZ9JDpYCgYh4IZ9yocQ7oMeigp99uf7dVX6FWz6I6fEcw6-1PTQn73A&svctype=4&tempid=h5_group_info",
+    ),
 )
 
 @Composable
@@ -487,11 +491,13 @@ private fun QQGroupBottomSheet(onDismiss: () -> Unit) {
             QQ_GROUPS.forEach { group ->
                 ListItem(
                     onClick = {
-                        if (group.number != null) {
-                            context.writeClipboardText(group.number)
-                            Toast.makeText(context, "群号已复制", Toast.LENGTH_SHORT).show()
-                        } else {
-                            context.joinQQGroup(group.key)
+                        when {
+                            group.link != null -> context.openUrl(group.link)
+                            group.key != null -> context.joinQQGroup(group.key)
+                            group.number != null -> {
+                                context.writeClipboardText(group.number)
+                                Toast.makeText(context, "群号已复制", Toast.LENGTH_SHORT).show()
+                            }
                         }
                         onDismiss()
                     },
