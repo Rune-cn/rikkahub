@@ -112,7 +112,7 @@ class ChatToolFactory(
         // 用户可在「扩展管理 → 工具调用」页自由选择哪些工具参与自动允许；
         // ask_user 默认不参与（本质是"询问用户"，需保留交互流程）。
         val autoAllow = settings.toolAutoAllowSetting
-        if (autoAllow.enabled) {
+        return if (autoAllow.enabled) {
             outputTools.map { tool ->
                 if (tool.name in autoAllow.disabledTools) tool
                 else tool.copy(needsApproval = { false })

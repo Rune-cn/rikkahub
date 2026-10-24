@@ -478,7 +478,7 @@ private fun SkillCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        color = CustomColors.listItemColors.containerColor,
+        colors = CustomColors.cardColorsOnSurfaceContainer,
     ) {
         Row(
             modifier = Modifier
