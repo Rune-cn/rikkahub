@@ -13,6 +13,7 @@ class LocalTools(
     private val ttsManager: TTSManager,
     private val settingsStore: SettingsStore,
     private val subAgentManager: SubAgentManager,
+    private val skillManager: SkillManager,
 ) {
     val javascriptTool by lazy { buildJavascriptTool() }
 
@@ -37,6 +38,8 @@ class LocalTools(
     val subAgentTools by lazy { buildSubAgentTools(subAgentManager) }
 
     val workflowTools by lazy { buildWorkflowTools(settingsStore) }
+
+    val skillCategoryTools by lazy { buildSkillCategoryTools(skillManager) }
 
     fun getTools(options: List<LocalToolOption>): List<Tool> {
         val tools = mutableListOf<Tool>()
@@ -75,6 +78,8 @@ class LocalTools(
         if (options.contains(LocalToolOption.Workflow)) {
             tools.addAll(workflowTools)
         }
+        // Skill 分类管理：AI 可直接查看/设置分类（内置 skill 只读），走工具审批
+        tools.addAll(skillCategoryTools)
         return tools
     }
 }
