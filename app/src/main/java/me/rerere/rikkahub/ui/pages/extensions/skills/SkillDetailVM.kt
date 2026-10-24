@@ -41,6 +41,9 @@ class SkillDetailVM(
     private val _readOnly = MutableStateFlow(false)
     val readOnly = _readOnly.asStateFlow()
 
+    private val _category = MutableStateFlow<String?>(null)
+    val category = _category.asStateFlow()
+
     private var skillName = ""
     private var skill: SkillMetadata? = null
 
@@ -50,11 +53,27 @@ class SkillDetailVM(
         loadFiles()
     }
 
+    /** 修改手动分类（写回 SKILL.md frontmatter 的 category） */
+    fun updateCategory(value: String) {
+        val s = skill ?: return
+        if (s.builtin) return
+        val normalized = value.trim()
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                val file = s.skillFile
+                val content = file.readText()
+                file.writeText(SkillFrontmatterParser.update(content, "category", normalized))
+            }
+            _category.value = normalized
+        }
+    }
+
     fun loadFiles() {
         viewModelScope.launch(Dispatchers.IO) {
             val skill = skillManager.findSkill(skillName) ?: return@launch
             this@SkillDetailVM.skill = skill
             _readOnly.value = skill.builtin
+            _category.value = skill.category
             val files = skill.skillDir.walkTopDown()
                 .filter { it.isFile }
                 .map { SkillFile(it.relativeTo(skill.skillDir).invariantSeparatorsPath, it.length()) }
