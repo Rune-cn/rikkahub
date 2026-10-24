@@ -861,6 +861,7 @@
   <string name="setting_search_results">Results</string>
   <string name="setting_search_no_result">No matching settings</string>
   <string name="setting_search_clear">Clear</string>
+  <string name="setting_search_collapse">Collapse search</string>
   <string name="setting_page_general_settings">General Settings</string>
   <string name="setting_page_interaction_notification_settings">Interaction &amp;amp; Notifications</string>
   <string name="setting_page_mcp">MCP</string>

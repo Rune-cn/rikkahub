@@ -831,6 +831,7 @@
   <string name="setting_search_results">搜索结果</string>
   <string name="setting_search_no_result">没有匹配的设置项</string>
   <string name="setting_search_clear">清除</string>
+  <string name="setting_search_collapse">收起搜索</string>
   <string name="setting_page_general_settings">通用设置</string>
   <string name="setting_page_interaction_notification_settings">互动与通知</string>
   <string name="setting_page_mcp">MCP</string>
