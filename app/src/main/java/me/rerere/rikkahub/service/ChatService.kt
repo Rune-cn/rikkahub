@@ -48,6 +48,8 @@ import me.rerere.rikkahub.data.ai.prompts.buildCompressPrompt
 import me.rerere.rikkahub.data.ai.subagent.SubAgentManager
 import me.rerere.rikkahub.data.ai.tools.ChatToolFactory
 import me.rerere.rikkahub.data.ai.tools.InvalidMcpServerNamesException
+import me.rerere.rikkahub.data.ai.transformers.TemplateTransformer
+import me.rerere.ai.provider.ProviderManager
 import me.rerere.rikkahub.data.ai.tools.shouldUseExternalWebSearch
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.datastore.getCurrentAssistant
@@ -191,7 +193,7 @@ class ChatService(
                                 finished = true,
                             )
                             val latest = sessionManager.get(cid)?.state?.value ?: return@forEach
-                            updateConversation(cid, latest)
+                            sessionManager.get(cid)?.flush()
                         }
                     }
                 }
@@ -247,7 +249,7 @@ class ChatService(
             subAgentMessageNodes[taskName] = newNode.id
             current.copy(messageNodes = current.messageNodes + newNode)
         }
-        session.updateConversation(updated)
+        session.update { updated }
     }
 
     private val _errors = MutableStateFlow<List<ChatError>>(emptyList())

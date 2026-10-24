@@ -121,10 +121,6 @@ class ChatToolFactory(
             outputTools
         }
     }
-        } else {
-            outputTools
-        }
-    }
 
     private fun withOutputTruncation(tool: Tool): Tool {
         if (tool.name in TOOLS_WITHOUT_OUTPUT_TRUNCATION) return tool
@@ -155,7 +151,6 @@ class ChatToolFactory(
                 }
             )
         ) + output.filter { it !is UIMessagePart.Text }
-    }
     }
 
     private suspend fun createWorkspaceToolsIfReady(workspaceId: String?, cwd: String?): List<Tool> {

@@ -189,6 +189,10 @@ class SettingsStore internal constructor(
         // Uses the same DataStore singleton without starting settings flows or requiring Koin.
         internal suspend fun restoreBeforeInitialization(context: Context, settings: Settings, launchCount: Int) {
             require(!settings.init) { "Cannot restore uninitialized settings" }
+            // 启动次数和设置在同一次写入里落盘
+            context.settingsStore.edit { preferences ->
+                preferences[LAUNCH_COUNT] = launchCount
+                preferences.putSettings(settings.normalized())
             }
         }
     }
