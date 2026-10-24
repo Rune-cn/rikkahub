@@ -21,7 +21,7 @@ Built APKs are published automatically to the [Nightly Build release](https://gi
 
 | APK | Description |
 |---|---|
-| `app-arm64-v8a-release.apk` | Phones (arm64) |
+| `app-github-arm64-v8a-release.apk` | Phones (arm64) |
 
 > **Nightly** builds are rebuilt on every push to `master`, or twice a day (UTC 09:00 / 18:00) by GitHub Actions.
 > Nightly version format: `[app version]-[commit]`, e.g. `2.5.7-8a6d9dc7` (pre-release).
