@@ -1,5 +1,7 @@
 package me.rerere.rikkahub.utils
 
+import me.rerere.rikkahub.BuildConfig
+
 import android.app.DownloadManager
 import android.content.Context
 import android.os.Environment
