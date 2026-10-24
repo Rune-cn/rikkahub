@@ -324,12 +324,7 @@ class ChatVM(
         }
     }
 
-    fun saveConversationAsync() {
-        viewModelScope.launch {
-            chatService.saveConversation(_conversationId, conversation.value)
-        }
-    }
-
+    private val _errors = MutableStateFlow<List<ChatError>>(emptyList())
     fun updateTitle(title: String) {
         viewModelScope.launch {
             chatService.updateTitle(_conversationId, title)
