@@ -111,11 +111,7 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
         val newProviders = settings.providers.toMutableList().apply {
             add(to.index, removeAt(from.index))
         }
-<<<<<<< HEAD
         vm.updateSettings { it.copy(providers = newProviders) }
-=======
-        vm.updateSettings { s -> s.copy(providers = newProviders) }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
     }
 
     val filteredProviders = remember(settings.providers, searchQuery) {
@@ -159,7 +155,6 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
                 },
                 actions = {
                     RecommendProviderButton { provider ->
-<<<<<<< HEAD
                         addProvider(provider.copyProvider(Uuid.random()))
                     }
                     ImportProviderButton {
@@ -168,24 +163,6 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
                     AddButton { provider ->
                         addProvider(provider)
                         navController.navigate(Screen.SettingProviderDetail(providerId = provider.id.toString()))
-=======
-                        vm.updateSettings { s -> s.copy(
-                                providers = listOf(provider.copyProvider(Uuid.random())) + settings.providers
-                            )
-                         }
-                    }
-                    ImportProviderButton {
-                        vm.updateSettings { s -> s.copy(
-                                providers = listOf(it.copyProvider(Uuid.random())) + settings.providers
-                            )
-                         }
-                    }
-                    AddButton {
-                        vm.updateSettings { s -> s.copy(
-                                providers = listOf(it) + settings.providers
-                            )
-                         }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                     }
                 },
                 scrollBehavior = scrollBehavior,
@@ -269,11 +246,7 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
         dismissText = stringResource(R.string.cancel),
         onConfirm = {
             deleteTarget?.let { target ->
-<<<<<<< HEAD
                 vm.updateSettings { latest -> latest.copy(providers = latest.providers.filter { it.id != target.id }) }
-=======
-                vm.updateSettings { s -> s.copy(providers = settings.providers.filter { it.id != target.id }) }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
             }
             deleteTarget = null
         },

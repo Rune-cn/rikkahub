@@ -1,6 +1,7 @@
 package me.rerere.rikkahub.data.ai.workflow
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -8,19 +9,24 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.flow
+import kotlin.uuid.Uuid
+import me.rerere.ai.agent.AgentEvent
+import me.rerere.ai.agent.runAgent
 import me.rerere.ai.core.MessageRole
 import me.rerere.ai.ui.UIMessage
 import me.rerere.ai.ui.UIMessagePart
-import me.rerere.rikkahub.data.ai.GenerationChunk
-import me.rerere.rikkahub.data.ai.GenerationLoop
+import me.rerere.rikkahub.data.ai.ChatRequestFactory
+import me.rerere.rikkahub.data.ai.ChatTurnContext
 import me.rerere.rikkahub.data.ai.tools.ChatToolFactory
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.datastore.findModelById
+import me.rerere.rikkahub.data.datastore.findProvider
 import me.rerere.rikkahub.data.datastore.getCurrentAssistant
 import me.rerere.rikkahub.data.datastore.getCurrentChatModel
 import me.rerere.rikkahub.data.model.Assistant
@@ -31,6 +37,8 @@ import me.rerere.rikkahub.data.model.WorkflowRunState
 import me.rerere.rikkahub.data.model.WorkflowStep
 import me.rerere.rikkahub.data.model.WorkflowStepStatus
 import me.rerere.rikkahub.data.model.WorkflowStepType
+import me.rerere.rikkahub.data.repository.MemoryRepository
+import me.rerere.rikkahub.data.repository.memoryId
 import org.koin.java.KoinJavaComponent.getKoin
 
 /**
@@ -53,7 +61,8 @@ class WorkflowRunner(
     private val _runningWorkflowId = MutableStateFlow<String?>(null)
     val runningWorkflowId: StateFlow<String?> = _runningWorkflowId.asStateFlow()
 
-    private val generationLoop: GenerationLoop by lazy { getKoin().get() }
+    private val requestFactory: ChatRequestFactory by lazy { getKoin().get() }
+    private val memoryRepository: MemoryRepository by lazy { getKoin().get() }
     private val chatToolFactory: ChatToolFactory by lazy { getKoin().get() }
 
     /** 运行工作流，逐步发出每一步的状态 */
@@ -267,24 +276,33 @@ class WorkflowRunner(
         }
 
         var text = ""
-        generationLoop.generateText(
+        // 用 ChatTurnContext 走完整的多步生成循环
+        val turn = ChatTurnContext(
             settings = settings,
+            assistant = assistant,
             model = model,
-            messages = listOf(
+            providerSetting = model.findProvider(settings.providers) ?: error("Provider not found"),
+            conversationId = Uuid.random(),
+            conversationSystemPrompt = null,
+            workspaceCwd = null,
+            memories = if (assistant.enableMemory) memoryRepository.getFiles(assistant.memoryId) else emptyList(),
+            tools = tools,
+        )
+        val (request, hooks) = requestFactory.createAgent(
+            turn,
+            listOf(
                 UIMessage(
                     role = MessageRole.USER,
                     parts = listOf(UIMessagePart.Text(prompt)),
                 )
             ),
-            assistant = assistant,
-            tools = tools,
-            maxSteps = MAX_WORKFLOW_STEPS_PER_RUN,
-            processingStatus = MutableStateFlow(null),
-        ).collect { chunk ->
-            if (chunk is GenerationChunk.Messages) {
-                chunk.messages.lastOrNull()
-                    ?.takeIf { it.role == MessageRole.ASSISTANT }
-                    ?.let { text = it.toText() }
+            MutableStateFlow(null),
+        )
+        runAgent(request, hooks).flowOn(Dispatchers.IO).collect { event ->
+            when (event) {
+                is AgentEvent.MessageUpdated -> text = event.message.toText()
+                is AgentEvent.Retrying -> Unit
+                is AgentEvent.Finished -> text = event.message.toText()
             }
         }
         return text

@@ -183,19 +183,11 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
     val context = LocalContext.current
 
     val onEdit = { newProvider: ProviderSetting ->
-<<<<<<< HEAD
         vm.updateSettings { latest ->
             latest.copy(
                 providers = latest.providers.map {
                     if (newProvider.id == it.id) {
                         newProvider.preserveCredential(it)
-=======
-        vm.updateSettings { s ->
-            s.copy(
-                providers = s.providers.map {
-                    if (newProvider.id == it.id) {
-                        newProvider
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                     } else {
                         it
                     }
@@ -204,13 +196,9 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
         }
     }
     val onDelete = {
-<<<<<<< HEAD
         vm.updateSettings { latest ->
             latest.copy(providers = latest.providers.filter { it.id != provider.id })
         }
-=======
-        vm.updateSettings { s -> s.copy(providers = s.providers - provider) }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
         navController.popBackStack()
     }
 

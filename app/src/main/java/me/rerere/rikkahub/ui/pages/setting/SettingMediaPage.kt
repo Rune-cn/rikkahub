@@ -116,18 +116,11 @@ fun SettingMediaPage(vm: SettingVM = koinViewModel()) {
                 actions = {
                     if (MediaTab.entries[pagerState.targetPage] == MediaTab.PROVIDERS) {
                         AddMediaProviderButton {
-<<<<<<< HEAD
                             vm.updateSettings { latest ->
                                 latest.copy(
                                     mediaGenerationProviders = listOf(it) + latest.mediaGenerationProviders
                                 )
                             }
-=======
-                            vm.updateSettings { s -> s.copy(
-                                    mediaGenerationProviders = listOf(it) + settings.mediaGenerationProviders
-                                )
-                             }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                         }
                     }
                 },
@@ -179,7 +172,6 @@ fun SettingMediaPage(vm: SettingVM = koinViewModel()) {
             initial = provider,
             confirmText = stringResource(R.string.chat_page_save),
             onConfirm = { edited ->
-<<<<<<< HEAD
                 vm.updateSettings { latest ->
                     latest.copy(
                         mediaGenerationProviders = latest.mediaGenerationProviders.map {
@@ -187,14 +179,6 @@ fun SettingMediaPage(vm: SettingVM = koinViewModel()) {
                         }
                     )
                 }
-=======
-                vm.updateSettings { s -> s.copy(
-                        mediaGenerationProviders = settings.mediaGenerationProviders.map {
-                            if (it.id == provider.id) edited else it
-                        }
-                    )
-                 }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
             },
             onDismiss = { editingProvider = null }
         )

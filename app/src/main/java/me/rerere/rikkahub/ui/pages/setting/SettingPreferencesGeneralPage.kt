@@ -46,11 +46,7 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
 
     fun updateDisplaySetting(setting: DisplaySetting) {
         displaySetting = setting
-<<<<<<< HEAD
         vm.updateSettings { it.copy(displaySetting = setting) }
-=======
-        vm.updateSettings { s -> s.copy(displaySetting = setting) }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -223,7 +219,6 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                 CardGroup(
                     title = { Text(stringResource(R.string.setting_page_tts_settings)) },
                 ) {
-<<<<<<< HEAD
                     formItem(
                         headlineContent = { Text(stringResource(R.string.setting_tts_page_default_playback_speed)) },
                         supportingContent = { Text(stringResource(R.string.setting_tts_page_default_playback_speed_description)) },
@@ -237,34 +232,6 @@ fun SettingPreferencesGeneralPage(vm: SettingVM = koinViewModel()) {
                             onValueChangeFinished = {
                                 vm.updateSettings {
                                     it.copy(defaultTTSPlaybackSpeed = ttsPlaybackSpeed)
-=======
-                    item(
-                        headlineContent = {
-                            Text(stringResource(R.string.setting_tts_page_default_playback_speed))
-                        },
-                        supportingContent = {
-                            Column {
-                                Text(stringResource(R.string.setting_tts_page_default_playback_speed_description))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    Slider(
-                                        value = ttsPlaybackSpeed,
-                                        onValueChange = {
-                                            ttsPlaybackSpeed = (it * 10).roundToInt() / 10f
-                                        },
-                                        onValueChangeFinished = {
-                                            vm.updateSettings { s -> s.copy(defaultTTSPlaybackSpeed = ttsPlaybackSpeed)
-                                             }
-                                        },
-                                        valueRange = 0.5f..2.0f,
-                                        steps = 14,
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                    Text(text = "x${"%.1f".format(ttsPlaybackSpeed)}")
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                                 }
                             },
                             valueRange = 0.5f..2.0f,

@@ -81,11 +81,7 @@ fun SettingSearchDetailPage(
         options = updated
         val newServices = settings.searchServices.toMutableList()
         newServices[serviceIndex] = updated
-<<<<<<< HEAD
         vm.updateSettings { it.copy(searchServices = newServices) }
-=======
-        vm.updateSettings { s -> s.copy(searchServices = newServices) }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
     }
 
     Scaffold(
@@ -103,11 +99,7 @@ fun SettingSearchDetailPage(
                             onClick = {
                                 val newServices = settings.searchServices.toMutableList()
                                 newServices.removeAt(serviceIndex)
-<<<<<<< HEAD
                                 vm.updateSettings { it.copy(searchServices = newServices) }
-=======
-                                vm.updateSettings { s -> s.copy(searchServices = newServices) }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                                 nav.popBackStack()
                             }
                         ) {

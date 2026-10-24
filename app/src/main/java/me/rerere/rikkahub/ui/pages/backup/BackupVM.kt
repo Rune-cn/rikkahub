@@ -190,18 +190,11 @@ class BackupVM(
 
         Log.i(TAG, "restoreFromCherryStudio: import ${importProviders.size} providers: $importProviders")
 
-<<<<<<< HEAD
         updateSettings {
             it.copy(
                 providers = importProviders + it.providers,
             )
         }
-=======
-        updateSettings { s -> s.copy(
-                providers = importProviders + settings.value.providers,
-            )
-         }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
     }
 
     // S3 Backup methods

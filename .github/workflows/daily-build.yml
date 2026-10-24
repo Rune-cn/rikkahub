@@ -114,7 +114,7 @@ jobs:
           if [ "${{ github.event.inputs.release_type }}" = "stable" ]; then
             EXTRA_ARGS="-PversionWithSha=false"
           fi
-          ./gradlew assembleRelease $EXTRA_ARGS
+          ./gradlew assembleGithubRelease $EXTRA_ARGS
 
       # 计算版本号：应用版本 + 构建 commit 短 SHA（如 2.5.6-a3ea1cd1）
       - name: Compute release version
@@ -164,4 +164,6 @@ jobs:
             - 完整记录见 [CHANGELOG.md](https://github.com/Rune-cn/rikkahub/blob/master/CHANGELOG.md)
 
             ${{ github.event.inputs.release_type == 'stable' && '> ✅ **正式版（Stable）**' || '> ⚠️ **Beta 预览版**，可能不稳定，仅供测试。' }}
-          files: app/build/outputs/apk/release/*.apk
+          files: |
+            app/build/outputs/apk/github/release/*.apk
+            app/build/outputs/mapping/githubRelease/mapping.txt

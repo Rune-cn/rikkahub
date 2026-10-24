@@ -179,18 +179,11 @@ private fun MainPage(vm: DebugVM) {
         }
         Button(
             onClick = {
-<<<<<<< HEAD
                 vm.updateSettings {
                     it.copy(
                         chatModelId = Uuid.random()
                     )
                 }
-=======
-                vm.updateSettings { s -> s.copy(
-                        chatModelId = Uuid.random()
-                    )
-                 }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
             }
         ) {
             Text("重置Chat模型")
@@ -255,13 +248,7 @@ private fun MainPage(vm: DebugVM) {
                 singleLine = true,
             )
             Button(onClick = {
-<<<<<<< HEAD
                 launchCountInput.toIntOrNull()?.let(vm::setLaunchCount)
-=======
-                launchCountInput.toIntOrNull()?.let {
-                    vm.updateSettings { s -> s.copy(launchCount = it) }
-                }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
             }) {
                 Text("Set")
             }
@@ -283,11 +270,7 @@ private fun MainPage(vm: DebugVM) {
             )
             Button(onClick = {
                 dismissedAtInput.toIntOrNull()?.let {
-<<<<<<< HEAD
                     vm.updateSettings { latest -> latest.copy(sponsorAlertDismissedAt = it) }
-=======
-                    vm.updateSettings { s -> s.copy(sponsorAlertDismissedAt = it) }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                 }
             }) {
                 Text("Set")

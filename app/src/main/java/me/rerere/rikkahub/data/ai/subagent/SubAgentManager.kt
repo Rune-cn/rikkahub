@@ -3,30 +3,38 @@ package me.rerere.rikkahub.data.ai.subagent
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.uuid.Uuid
+import me.rerere.ai.agent.AgentEvent
+import me.rerere.ai.agent.runAgent
 import me.rerere.ai.core.MessageRole
 import me.rerere.ai.ui.UIMessage
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.rikkahub.AppScope
 import me.rerere.rikkahub.R
-import me.rerere.rikkahub.data.ai.GenerationChunk
-import me.rerere.rikkahub.data.ai.GenerationLoop
+import me.rerere.rikkahub.data.ai.ChatRequestFactory
+import me.rerere.rikkahub.data.ai.ChatTurnContext
 import me.rerere.rikkahub.data.ai.tools.ChatToolFactory
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.datastore.findModelById
+import me.rerere.rikkahub.data.datastore.findProvider
 import me.rerere.rikkahub.data.datastore.getCurrentAssistant
 import me.rerere.rikkahub.data.datastore.getCurrentChatModel
+import me.rerere.rikkahub.data.model.Conversation
+import me.rerere.rikkahub.data.model.MessageNode
 import me.rerere.rikkahub.data.model.SubAgentStatus
 import me.rerere.rikkahub.data.model.SubAgentTask
+import me.rerere.rikkahub.data.repository.MemoryRepository
+import me.rerere.rikkahub.data.repository.memoryId
 import me.rerere.rikkahub.service.SubAgentForegroundService
 import org.koin.java.KoinJavaComponent.getKoin
 
@@ -34,7 +42,7 @@ import org.koin.java.KoinJavaComponent.getKoin
  * 子 Agent 管理器
  *
  * 主 Agent 通过 `spawn_agent` 工具创建子 Agent：每个子 Agent 在**独立协程**里
- * 跑自己的 `GenerationLoop`（因此拥有完整工具能力，并可指定不同模型），
+ * 跑自己的多步生成循环（因此拥有完整工具能力，并可指定不同模型），
  * 结果回填到 [SubAgentTask.result] 供主 Agent 通过 `wait_agent` 取用。
  */
 class SubAgentManager(
@@ -57,7 +65,8 @@ class SubAgentManager(
 
     // 延迟解析，避免与 LocalTools / ChatToolFactory 形成 Koin 循环依赖
     private val chatToolFactory: ChatToolFactory by lazy { getKoin().get() }
-    private val generationLoop: GenerationLoop by lazy { getKoin().get() }
+    private val requestFactory: ChatRequestFactory by lazy { getKoin().get() }
+    private val memoryRepository: MemoryRepository by lazy { getKoin().get() }
 
     private val _tasks = MutableStateFlow<List<SubAgentTask>>(emptyList())
     val tasks: StateFlow<List<SubAgentTask>> = _tasks.asStateFlow()
@@ -214,25 +223,40 @@ class SubAgentManager(
             }
             var finalText = ""
 
-            generationLoop.generateText(
+            // 用 ChatTurnContext 走完整的多步生成循环（模型覆盖以任务指定为准）
+            val turn = ChatTurnContext(
                 settings = settings,
-                model = model,
-                messages = messages,
                 assistant = assistant,
+                model = model,
+                providerSetting = model.findProvider(settings.providers) ?: error("Provider not found"),
+                conversationId = Uuid.random(),
+                conversationSystemPrompt = null,
+                workspaceCwd = null,
+                memories = if (assistant.enableMemory) memoryRepository.getFiles(assistant.memoryId) else emptyList(),
                 tools = tools,
-                maxSteps = MAX_SUB_AGENT_STEPS,
-                processingStatus = MutableStateFlow(null),
-            ).collect { chunk ->
-                if (chunk is GenerationChunk.Messages) {
-                    messages = chunk.messages
-                    // 实时同步完整对话（供详情查看）
-                    updateTask(task.name) { it.copy(messages = chunk.messages) }
-                    chunk.messages.lastOrNull()
-                        ?.takeIf { it.role == MessageRole.ASSISTANT }
-                        ?.let { finalText = it.toText() }
-                    // 流式输出：推送最新文本（ChatService 会写入主对话）
-                    if (finalText.isNotBlank()) {
-                        _outputs.value = _outputs.value + (task.name to finalText)
+            )
+            val (request, hooks) = requestFactory.createAgent(turn, messages, MutableStateFlow(null))
+            runAgent(request, hooks).flowOn(Dispatchers.IO).collect { event ->
+                when (event) {
+                    is AgentEvent.MessageUpdated -> {
+                        messages = messages.let { current ->
+                            val last = current.lastOrNull()
+                            if (last?.role == MessageRole.ASSISTANT) current.dropLast(1) + event.message
+                            else current + event.message
+                        }
+                        // 实时同步完整对话（供详情查看）
+                        updateTask(task.name) { it.copy(messages = messages) }
+                        event.message.toText().takeIf { it.isNotBlank() }?.let { text ->
+                            finalText = text
+                            // 流式输出：推送最新文本（ChatService 会写入主对话）
+                            _outputs.value = _outputs.value + (task.name to text)
+                        }
+                    }
+
+                    is AgentEvent.Retrying -> Unit
+
+                    is AgentEvent.Finished -> {
+                        event.message.toText().takeIf { it.isNotBlank() }?.let { finalText = it }
                     }
                 }
             }

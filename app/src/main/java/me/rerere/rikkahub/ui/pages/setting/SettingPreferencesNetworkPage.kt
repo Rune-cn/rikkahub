@@ -95,7 +95,6 @@ fun SettingPreferencesNetworkPage(vm: SettingVM = koinViewModel()) {
 
     fun updateUserAgent(value: String) {
         userAgent = value
-<<<<<<< HEAD
         vm.updateSettings {
             it.copy(
                 networkSetting = it.networkSetting.copy(userAgent = value),
@@ -107,27 +106,12 @@ fun SettingPreferencesNetworkPage(vm: SettingVM = koinViewModel()) {
         vm.updateSettings {
             it.copy(
                 networkSetting = it.networkSetting.copy(
-=======
-        vm.updateSettings { s -> s.copy(
-                networkSetting = settings.networkSetting.copy(userAgent = value),
-            )
-         }
-    }
-
-    fun saveProxy() {
-        vm.updateSettings { s -> s.copy(
-                networkSetting = settings.networkSetting.copy(
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                     proxyUrl = proxyUrlDraft,
                     proxyUsername = proxyUsernameDraft,
                     proxyPassword = proxyPasswordDraft,
                 ),
             )
-<<<<<<< HEAD
         }
-=======
-         }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
     }
 
     fun resetProxy() {
@@ -308,23 +292,8 @@ fun SettingPreferencesNetworkPage(vm: SettingVM = koinViewModel()) {
                         supportingContent = {
                             Text(stringResource(R.string.setting_page_preferences_network_auto_retry_desc))
                         },
-<<<<<<< HEAD
                         headlineContent = {
                             Text(stringResource(R.string.setting_page_preferences_network_auto_retry))
-=======
-                        trailingContent = {
-                            Switch(
-                                checked = settings.networkSetting.enableAutoRetry,
-                                onCheckedChange = { enabled ->
-                                    vm.updateSettings { s -> s.copy(
-                                            networkSetting = settings.networkSetting.copy(
-                                                enableAutoRetry = enabled,
-                                            ),
-                                        )
-                                     }
-                                },
-                            )
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                         },
                     )
                 }

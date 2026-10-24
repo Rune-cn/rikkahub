@@ -64,16 +64,7 @@ fun SettingPreferencesThemePage(vm: SettingVM = koinViewModel()) {
                         checked = settings.dynamicColor,
                         onCheckedChange = { vm.updateSettings { latest -> latest.copy(dynamicColor = it) } },
                         supportingContent = { Text(stringResource(R.string.setting_page_dynamic_color_desc)) },
-<<<<<<< HEAD
                         headlineContent = { Text(stringResource(R.string.setting_page_dynamic_color)) },
-=======
-                        trailingContent = {
-                            Switch(
-                                checked = settings.dynamicColor,
-                                onCheckedChange = { vm.updateSettings { s -> s.copy(dynamicColor = it) } },
-                            )
-                        },
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingTheme) },

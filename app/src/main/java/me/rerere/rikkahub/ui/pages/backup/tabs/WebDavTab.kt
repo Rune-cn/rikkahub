@@ -49,11 +49,7 @@ fun WebDavTab(
     var isBackingUp by remember { mutableStateOf(false) }
 
     fun updateWebDavConfig(newConfig: WebDavConfig) {
-<<<<<<< HEAD
         vm.updateSettings { it.copy(webDavConfig = newConfig) }
-=======
-        vm.updateSettings { s -> s.copy(webDavConfig = newConfig) }
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
     }
 
     RemoteBackupLayout(

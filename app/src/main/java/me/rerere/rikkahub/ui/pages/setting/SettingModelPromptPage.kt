@@ -60,7 +60,6 @@ internal fun PromptSettingsPage(settings: Settings, vm: SettingVM, contentPaddin
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
-<<<<<<< HEAD
             val containerColor = MaterialTheme.colorScheme.primaryContainer
             val contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             // 只有翻译能单独设思考强度，所以自成一组
@@ -99,122 +98,6 @@ internal fun PromptSettingsPage(settings: Settings, vm: SettingVM, contentPaddin
                             onClick = { editing = it },
                         )
                     }
-=======
-            PromptSettingItem(
-                title = stringResource(R.string.setting_model_page_prompt_translation),
-                promptDescription = stringResource(R.string.setting_model_page_translate_prompt_vars),
-                promptValue = settings.translatePrompt,
-                onPromptChange = { vm.updateSettings { s -> s.copy(translatePrompt = it) } },
-                onResetPrompt = { vm.updateSettings { s -> s.copy(translatePrompt = DEFAULT_TRANSLATION_PROMPT) } },
-                reasoningLevel = ReasoningLevel.fromBudgetTokens(settings.translateThinkingBudget),
-                onUpdateReasoningLevel = { vm.updateSettings { s -> s.copy(translateThinkingBudget = it.budgetTokens) } },
-            )
-        }
-        item {
-            PromptSettingItem(
-                title = stringResource(R.string.setting_model_page_prompt_title),
-                promptDescription = stringResource(R.string.setting_model_page_suggestion_prompt_vars),
-                promptValue = settings.titlePrompt,
-                onPromptChange = { vm.updateSettings { s -> s.copy(titlePrompt = it) } },
-                onResetPrompt = { vm.updateSettings { s -> s.copy(titlePrompt = DEFAULT_TITLE_PROMPT) } },
-            )
-        }
-        item {
-            PromptSettingItem(
-                title = stringResource(R.string.setting_model_page_prompt_suggestion),
-                promptDescription = stringResource(R.string.setting_model_page_suggestion_prompt_vars),
-                promptValue = settings.suggestionPrompt,
-                onPromptChange = { vm.updateSettings { s -> s.copy(suggestionPrompt = it) } },
-                onResetPrompt = { vm.updateSettings { s -> s.copy(suggestionPrompt = DEFAULT_SUGGESTION_PROMPT) } },
-            )
-        }
-        item {
-            PromptSettingItem(
-                title = stringResource(R.string.setting_model_page_prompt_ocr),
-                promptDescription = stringResource(R.string.setting_model_page_ocr_prompt_vars),
-                promptValue = settings.ocrPrompt,
-                onPromptChange = { vm.updateSettings { s -> s.copy(ocrPrompt = it) } },
-                onResetPrompt = { vm.updateSettings { s -> s.copy(ocrPrompt = DEFAULT_OCR_PROMPT) } },
-            )
-        }
-        item {
-            PromptSettingItem(
-                title = stringResource(R.string.setting_model_page_prompt_compress),
-                promptDescription = stringResource(R.string.setting_model_page_compress_prompt_vars),
-                promptValue = settings.compressPrompt,
-                onPromptChange = { vm.updateSettings { s -> s.copy(compressPrompt = it) } },
-                onResetPrompt = { vm.updateSettings { s -> s.copy(compressPrompt = DEFAULT_COMPRESS_PROMPT) } },
-            )
-        }
-    }
-}
-
-@Composable
-private fun PromptSettingItem(
-    title: String,
-    promptDescription: String,
-    promptValue: String,
-    onPromptChange: (String) -> Unit,
-    onResetPrompt: () -> Unit,
-    reasoningLevel: ReasoningLevel? = null,
-    onUpdateReasoningLevel: ((ReasoningLevel) -> Unit)? = null,
-) {
-    var showEditor by remember { mutableStateOf(false) }
-
-    CardGroup(title = { Text(title) }) {
-        item(
-            onClick = { showEditor = true },
-            headlineContent = { Text(stringResource(R.string.setting_model_page_prompt)) },
-            trailingContent = {
-                Icon(
-                    HugeIcons.ArrowRight01,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                )
-            },
-        )
-        if (reasoningLevel != null && onUpdateReasoningLevel != null) {
-            item(
-                headlineContent = { Text(stringResource(R.string.assistant_page_thinking_budget)) },
-                trailingContent = {
-                    ReasoningButton(
-                        reasoningLevel = reasoningLevel,
-                        onUpdateReasoningLevel = onUpdateReasoningLevel,
-                    )
-                },
-            )
-        }
-    }
-
-    if (showEditor) {
-        ModalBottomSheet(
-            onDismissRequest = { showEditor = false },
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 16.dp)
-                    .imePadding(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    text = promptDescription,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                OutlinedTextField(
-                    value = promptValue,
-                    onValueChange = onPromptChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    maxLines = 15,
-                )
-                TextButton(onClick = onResetPrompt) {
-                    Text(stringResource(R.string.setting_model_page_reset_to_default))
->>>>>>> f224aeb5 (fix: 彻底修复「自动允许」等设置被旧快照覆盖的问题)
                 }
             }
         }
