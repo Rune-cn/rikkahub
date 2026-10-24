@@ -204,7 +204,6 @@ fun SettingAboutPage() {
                     val contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                     CardGroup {
                         item(
-                        item(
                             onClick = { context.openUrl("https://github.com/Rune-cn/rikkahub") },
                             leadingContent = { CardGroupIcon(HugeIcons.Github, containerColor = containerColor, contentColor = contentColor) },
                             supportingContent = { Text("https://github.com/Rune-cn/rikkahub") },
@@ -214,8 +213,6 @@ fun SettingAboutPage() {
                             onClick = { context.openUrl("https://github.com/Rune-cn/rikkahub/blob/master/LICENSE") },
                             leadingContent = { CardGroupIcon(HugeIcons.File02, containerColor = containerColor, contentColor = contentColor) },
                             supportingContent = { Text("https://github.com/Rune-cn/rikkahub/blob/master/LICENSE") },
-                            headlineContent = { Text(stringResource(R.string.about_page_license)) },
-                        )
                             headlineContent = { Text(stringResource(R.string.about_page_license)) },
                         )
                     }
