@@ -2,15 +2,9 @@ package me.rerere.rikkahub.ui.pages.setting
 
 import android.content.Context
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,23 +13,17 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -47,10 +35,14 @@ import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.ArrowDown01
 import me.rerere.hugeicons.stroke.ArrowRight01
 import me.rerere.hugeicons.stroke.Cancel01
+import me.rerere.hugeicons.stroke.LeftToRightListBullet
+import me.rerere.hugeicons.stroke.PencilEdit01
 import me.rerere.hugeicons.stroke.Search01
+import me.rerere.hugeicons.stroke.SlidersHorizontal
+import me.rerere.hugeicons.stroke.Zap
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
-import me.rerere.rikkahub.ui.components.ui.CardGroup
+import me.rerere.rikkahub.ui.components.ui.CardGroupIcon
 
 /** 设置项类型（决定图标，也便于后续做"定位+高亮"） */
 enum class SettingItemType {
@@ -206,111 +198,69 @@ fun searchSettingItems(context: Context, query: String): List<SettingSearchItem>
     }
 }
 
-/** 设置搜索框：默认收起为圆角胶囊入口，点击展开为圆角输入框。
+/**
+ * 设置搜索输入框（圆角胶囊样式），供顶栏搜索态使用。
  *
- * - 收起态：一条圆角胶囊（放大镜 + 「搜索设置」），不占用观感
- * - 展开态：自动聚焦弹键盘，输入即搜；点向下箭头或键盘「搜索」收起
+ * 顶栏收起后完全恢复原样（不占观感）；展开时自动聚焦弹键盘，输入即搜；
+ * 点向下箭头或键盘「搜索」由 [onCollapse] 收起（同时清空关键词与结果区）。
  */
 @Composable
-fun SettingSearchBar(
+fun SettingSearchField(
     query: String,
     onQueryChange: (String) -> Unit,
+    onCollapse: () -> Unit,
     modifier: Modifier = Modifier,
+    focusRequester: FocusRequester? = null,
 ) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
-    val focusRequester = remember { FocusRequester() }
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    LaunchedEffect(expanded) {
-        if (expanded) {
-            focusRequester.requestFocus()
-        }
-    }
-
-    fun collapse() {
-        // 收起即结束本次搜索：清空关键词让结果区一并消失，避免残留占位
-        if (query.isNotBlank()) onQueryChange("")
-        expanded = false
-        keyboardController?.hide()
-    }
-
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-        AnimatedVisibility(visible = expanded) {
-            TextField(
-                value = query,
-                onValueChange = onQueryChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester),
-                shape = RoundedCornerShape(percent = 50),
-                placeholder = { Text(stringResource(R.string.setting_search_placeholder)) },
-                leadingIcon = { Icon(HugeIcons.Search01, contentDescription = null) },
-                trailingIcon = {
-                    if (query.isNotBlank()) {
-                        IconButton(onClick = { onQueryChange("") }) {
-                            Icon(
-                                imageVector = HugeIcons.Cancel01,
-                                contentDescription = stringResource(R.string.setting_search_clear),
-                            )
-                        }
-                    } else {
-                        IconButton(onClick = { collapse() }) {
-                            Icon(
-                                imageVector = HugeIcons.ArrowDown01,
-                                contentDescription = stringResource(R.string.setting_search_collapse),
-                            )
-                        }
-                    }
-                },
-                singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                    disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                ),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { collapse() }),
-            )
-        }
-        if (!expanded) {
-            // 收起态：圆角胶囊入口，点击展开
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                    .clickable { expanded = true }
-                    .height(48.dp)
-                    .padding(horizontal = 16.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+    TextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (focusRequester != null) {
+                    Modifier.focusRequester(focusRequester)
+                } else {
+                    Modifier
+                }
+            ),
+        shape = RoundedCornerShape(percent = 50),
+        placeholder = { Text(stringResource(R.string.setting_search_placeholder)) },
+        leadingIcon = { Icon(HugeIcons.Search01, contentDescription = null) },
+        trailingIcon = {
+            if (query.isNotBlank()) {
+                IconButton(onClick = { onQueryChange("") }) {
                     Icon(
-                        HugeIcons.Search01,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        imageVector = HugeIcons.Cancel01,
+                        contentDescription = stringResource(R.string.setting_search_clear),
                     )
-                    Spacer(modifier = Modifier.size(10.dp))
-                    Text(
-                        text = stringResource(R.string.setting_search_placeholder),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                }
+            } else {
+                IconButton(onClick = onCollapse) {
+                    Icon(
+                        imageVector = HugeIcons.ArrowDown01,
+                        contentDescription = stringResource(R.string.setting_search_collapse),
                     )
                 }
             }
-        }
-    }
+        },
+        singleLine = true,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+            unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+            disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+        ),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { onCollapse() }),
+    )
 }
 
 /**
- * 设置搜索结果：按「页面」分组展示，命中词高亮
+ * 设置搜索结果：每个命中项渲染为一张完整圆角卡片。
  *
- * 每组一个分组标题（页面名），组内每项显示：
- * 类型图标 + 高亮后的设置项标题。
+ * 卡片内容：圆底类型图标 + 高亮标题 + 所属设置页名 + 进入箭头，点击直达对应页面。
  */
 @Composable
 fun SettingSearchResults(
@@ -329,42 +279,68 @@ fun SettingSearchResults(
         )
         return
     }
-    // 按页面分组（保留索引顺序）
-    val grouped = LinkedHashMap<Int, MutableList<SettingSearchItem>>()
-    results.forEach { item -> grouped.getOrPut(item.pageRes) { mutableListOf() }.add(item) }
 
-    grouped.forEach { (pageRes, items) ->
-        CardGroup(
-            modifier = modifier.padding(horizontal = 8.dp),
-            title = { Text(stringResource(pageRes)) },
-        ) {
-            items.forEach { item ->
-                item(
-                    onClick = { onNavigate(item.screen) },
-                    leadingContent = {
-                        Icon(
-                            imageVector = when (item.type) {
-                                SettingItemType.SWITCH -> HugeIcons.ArrowRight01
-                                SettingItemType.SELECT -> HugeIcons.ArrowRight01
-                                SettingItemType.INPUT -> HugeIcons.ArrowRight01
-                                SettingItemType.NAV -> HugeIcons.ArrowRight01
-                                SettingItemType.ACTION -> HugeIcons.ArrowRight01
-                            },
-                            contentDescription = null,
-                        )
-                    },
-                    headlineContent = {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+    ) {
+        results.forEach { item ->
+            Surface(
+                onClick = { onNavigate(item.screen) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CardGroupIcon(
+                        icon = settingItemIcon(item.type),
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 14.dp),
+                        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(2.dp),
+                    ) {
                         Text(
                             text = highlightKeyword(
                                 text = context.getString(item.titleRes),
                                 query = query,
-                            )
+                            ),
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 2,
                         )
-                    },
-                )
+                        Text(
+                            text = context.getString(item.pageRes),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Icon(
+                        imageVector = HugeIcons.ArrowRight01,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
             }
         }
     }
+}
+
+/** 设置项类型 → 图标（结果卡片圆底用） */
+private fun settingItemIcon(type: SettingItemType): androidx.compose.ui.graphics.vector.ImageVector = when (type) {
+    SettingItemType.SWITCH -> HugeIcons.SlidersHorizontal
+    SettingItemType.SELECT -> HugeIcons.LeftToRightListBullet
+    SettingItemType.INPUT -> HugeIcons.PencilEdit01
+    SettingItemType.NAV -> HugeIcons.ArrowRight01
+    SettingItemType.ACTION -> HugeIcons.Zap
 }
 
 /** 关键词高亮：命中词加粗 + 主题色 */

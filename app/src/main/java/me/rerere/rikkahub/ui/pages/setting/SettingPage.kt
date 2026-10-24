@@ -4,16 +4,19 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,22 +34,29 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.AiMagic
 import me.rerere.hugeicons.stroke.Alert01
+import me.rerere.hugeicons.stroke.ArrowDown01
 import me.rerere.hugeicons.stroke.Book01
 import me.rerere.hugeicons.stroke.Book03
 import me.rerere.hugeicons.stroke.Bookshelf01
@@ -66,6 +76,7 @@ import me.rerere.hugeicons.stroke.ServerStack01
 import me.rerere.hugeicons.stroke.Settings03
 import me.rerere.hugeicons.stroke.Share04
 import me.rerere.hugeicons.stroke.SmartPhone01
+import me.rerere.hugeicons.stroke.Search01
 import me.rerere.hugeicons.stroke.Sun01
 import me.rerere.hugeicons.stroke.Tiktok
 import me.rerere.hugeicons.stroke.WavingHand01
@@ -97,8 +108,23 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val launchCount by vm.launchCount.collectAsStateWithLifecycle()
     val filesManager: FilesManager = koinInject()
-    // 设置搜索
+    // 设置搜索（入口藏在顶栏「设置」标题里，点击展开；收起后无任何痕迹）
     var searchQuery by remember { mutableStateOf("") }
+    var searchExpanded by rememberSaveable { mutableStateOf(false) }
+    val searchFocusRequester = remember { FocusRequester() }
+    val searchKeyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(searchExpanded) {
+        if (searchExpanded) {
+            searchFocusRequester.requestFocus()
+        }
+    }
+
+    fun collapseSearch() {
+        if (searchQuery.isNotBlank()) searchQuery = ""
+        searchExpanded = false
+        searchKeyboardController?.hide()
+    }
 
     if (!settings.init && launchCount > 100 && (launchCount - settings.sponsorAlertDismissedAt) >= 50) {
         AlertDialog(
@@ -128,16 +154,55 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
 
     Scaffold(
         topBar = {
-            LargeFlexibleTopAppBar(
-                title = {
-                    Text(text = stringResource(R.string.settings))
-                },
-                navigationIcon = {
-                    BackButton()
-                },
-                scrollBehavior = scrollBehavior,
-                colors = CustomColors.topBarColors
-            )
+            if (searchExpanded) {
+                // 搜索态：顶栏整条变成圆角搜索输入框
+                LargeFlexibleTopAppBar(
+                    title = {
+                        SettingSearchField(
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
+                            onCollapse = { collapseSearch() },
+                            focusRequester = searchFocusRequester,
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { collapseSearch() }) {
+                            Icon(
+                                imageVector = HugeIcons.ArrowDown01,
+                                contentDescription = stringResource(R.string.setting_search_collapse),
+                            )
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
+                    colors = CustomColors.topBarColors,
+                )
+            } else {
+                LargeFlexibleTopAppBar(
+                    title = {
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(percent = 50))
+                                .clickable { searchExpanded = true }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(text = stringResource(R.string.settings))
+                            Spacer(modifier = Modifier.size(6.dp))
+                            Icon(
+                                imageVector = HugeIcons.Search01,
+                                contentDescription = stringResource(R.string.setting_search_placeholder),
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        BackButton()
+                    },
+                    scrollBehavior = scrollBehavior,
+                    colors = CustomColors.topBarColors,
+                )
+            }
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = CustomColors.topBarColors.containerColor
@@ -155,13 +220,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                 }
             }
 
-            // 设置搜索（放在最上方，方便快速定位功能）
-            item("settingSearch") {
-                SettingSearchBar(
-                    query = searchQuery,
-                    onQueryChange = { searchQuery = it },
-                )
-            }
+            // 设置搜索：结果区（顶栏展开搜索后输入即搜，整卡展示）
             if (searchQuery.isNotBlank()) {
                 item("settingSearchResults") {
                     SettingSearchResults(
