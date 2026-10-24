@@ -44,7 +44,7 @@ class UpdateChecker(
     private fun checkUpdate(): Flow<UiState<UpdateInfo>> = flow<UiState<UpdateInfo>> {
         emit(UiState.Loading)
         val request = Request.Builder()
-            .url("https://api.github.com/repos/Rune-cn/rikkahub/releases/tags/nightly")
+            .url("https://api.github.com/repos/Rune-cn/rikkahub/releases/latest")
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "RikkaHub")
             .build()
@@ -54,15 +54,10 @@ class UpdateChecker(
             return@flow
         }
         val release = json.decodeFromString<GitHubRelease>(response.body?.string().orEmpty())
-        val publishedAt = runCatching { Instant.parse(release.publishedAt) }.getOrNull()
-        val installedAt = runCatching {
-            @Suppress("DEPRECATION")
-            context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime
-        }.getOrNull()
-        // 仅当 Release 比本地安装版本更新时才提示（否则静默）
-        if (publishedAt == null || installedAt == null ||
-            publishedAt.toEpochMilliseconds() <= installedAt
-        ) {
+        // 检查正式版（releases/latest）：仅当远端版本号高于本地版本才提示
+        val remoteVersion = release.name.trim().substringBefore('-')
+        val localVersion = BuildConfig.VERSION_NAME.substringBefore('-')
+        if (remoteVersion.isBlank() || Version(remoteVersion) <= Version(localVersion)) {
             emit(UiState.Idle)
             return@flow
         }
