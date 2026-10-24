@@ -263,7 +263,6 @@ class SkillManager(
             builtin = builtin,
         )
     }
-    }
 }
 
 /** 用户技能目录下无法识别为技能的目录 */

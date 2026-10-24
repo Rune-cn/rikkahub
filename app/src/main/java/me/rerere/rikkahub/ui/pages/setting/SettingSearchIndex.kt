@@ -125,7 +125,6 @@ val SETTING_SEARCH_ITEMS: List<SettingSearchItem> = listOf(
     // ── 模型 ──
     SettingSearchItem(PAGE_MODEL, R.string.setting_model_page_chat_model, SettingItemType.SELECT, "对话模型 chat 主模型 默认", Screen.SettingModels),
     SettingSearchItem(PAGE_MODEL, R.string.setting_model_page_fast_model, SettingItemType.SELECT, "快速模型 fast 轻量 快", Screen.SettingModels),
-    SettingSearchItem(PAGE_MODEL, R.string.setting_model_page_compress_model, SettingItemType.SELECT, "压缩模型 compress 总结", Screen.SettingModels),
     SettingSearchItem(PAGE_MODEL, R.string.setting_model_page_translate_model, SettingItemType.SELECT, "翻译模型 translate 翻译", Screen.SettingModels),
     SettingSearchItem(PAGE_MODEL, R.string.setting_model_page_ocr_model, SettingItemType.SELECT, "ocr 模型 图片识别", Screen.SettingModels),
 

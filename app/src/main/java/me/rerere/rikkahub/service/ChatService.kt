@@ -1374,8 +1374,8 @@ class ChatService(
                 conversationId = conversationId,
                 keepAliveInBackground = true,
             ) {
-                finishInterruptedPendingTools(conversationId)
-                handleMessageComplete(conversationId)
+                finishInterruptedPendingTools(session)
+                runTurn(session)
             }
             // 必须通过 setJob 注册并启动（LAZY 协程不会自动执行）
             session.setJob(job)

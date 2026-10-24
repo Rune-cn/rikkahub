@@ -291,7 +291,8 @@ class ChatVM(
         regenerateAssistantMsg: Boolean = true
     ) {
         analytics?.logEvent("ai_regenerate_at_message", null)
-        chatService.regenerateAtMessage(_conversationId, message, regenerateAssistantMsg)
+        // 新版本 ChatService 按消息 id 重生成，并自动区分用户消息（截断重跑）与助手消息（新开分支）
+        chatService.regenerateAtMessage(_conversationId, message.id)
     }
 
     fun handleToolApproval(

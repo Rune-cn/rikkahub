@@ -13,6 +13,7 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.files.FileUtils
 import me.rerere.rikkahub.data.skills.InvalidSkillDir
 import me.rerere.rikkahub.data.skills.SkillManager
+import me.rerere.rikkahub.data.skills.SkillFrontmatterParser
 import me.rerere.rikkahub.data.skills.SkillMetadata
 import me.rerere.rikkahub.data.skills.SkillValidationException
 import me.rerere.rikkahub.data.skills.SkillValidator
