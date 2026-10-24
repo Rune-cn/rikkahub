@@ -23,8 +23,10 @@ Built APKs are published automatically to the [Nightly Build release](https://gi
 |---|---|
 | `app-arm64-v8a-release.apk` | Phones (arm64) |
 
-> APKs are rebuilt on every push to `master`, or twice a day (UTC 09:00 / 18:00) by GitHub Actions.
-> Nightly version format: `[app version]-[commit]`, e.g. `2.5.6-a3ea1cd1`.
+> **Nightly** builds are rebuilt on every push to `master`, or twice a day (UTC 09:00 / 18:00) by GitHub Actions.
+> Nightly version format: `[app version]-[commit]`, e.g. `2.5.7-8a6d9dc7` (pre-release).
+>
+> **Stable** releases use a plain version number (e.g. `2.5.7`) and are published on demand.
 
 ## ✨ Features
 
@@ -53,7 +55,14 @@ Built APKs are published automatically to the [Nightly Build release](https://gi
 - [x] ▶️ Continue generation: after AI is stopped or interrupted, resume from the half-finished reply (including unfinished conversations from history)
 - [x] 🔥 Firebase optional: builds and runs without `google-services.json`
 - [x] 📋 Task plan: the AI keeps a step-by-step checklist, shown as a card in chat plus a progress bar above the input box (Assistant settings → Local Tools)
-- [x] 🤖 GitHub Actions builds and signs APKs automatically (Nightly release)
+- [x] 🤖 GitHub Actions builds and signs APKs automatically (Nightly + on-demand Stable releases)
+- [x] 🤝 Multi-Agent: the main agent can spawn sub-agents (full toolset, streaming output) and manage them with dedicated tools (Extensions → Other)
+- [x] 🧭 AI Workflows: reusable multi-step pipelines (Prompt / Agent / conditional / parallel nodes) with an **infinite canvas editor** (drag nodes, zoom, grid, edit & add nodes) and import/export (JSON)
+- [x] 🔍 Settings search: 64 indexed entries, keyword highlighted, grouped by page
+- [x] 💾 Chat draft auto-save: closing the app keeps your unsent input per conversation
+- [x] 🏷️ Skill categories: manual categorization with named presets + descriptions, or custom labels; the AI can also manage them via tools
+- [x] 🔁 Retry rules: configurable retryable status codes / keywords / stop-keywords, fixed / exponential / jitter intervals
+- [x] 📋 Task plan: step-by-step checklist card + progress bar above the input box
 
 ## 💻 Development
 
