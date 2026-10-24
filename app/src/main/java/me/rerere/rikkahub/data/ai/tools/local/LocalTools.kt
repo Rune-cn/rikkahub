@@ -3,6 +3,7 @@ package me.rerere.rikkahub.data.ai.tools.local
 import android.content.Context
 import me.rerere.ai.core.Tool
 import me.rerere.rikkahub.data.ai.subagent.SubAgentManager
+import me.rerere.rikkahub.data.files.SkillManager
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.event.AppEventBus
 import me.rerere.tts.provider.TTSManager
