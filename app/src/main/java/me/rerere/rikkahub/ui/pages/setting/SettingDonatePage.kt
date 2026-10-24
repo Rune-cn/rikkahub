@@ -116,7 +116,18 @@ private fun DonateMethodsCardGroup() {
                 )
             },
             supportingContent = { Text(stringResource(R.string.donate_page_afdian_desc)) },
-            headlineContent = { Text("爱发电") },
+            headlineContent = { Text("爱发电 · 原作") },
+        )
+        item(
+            onClick = { context.openUrl("https://afdian.com/a/CNRune") },
+            leadingContent = {
+                Icon(
+                    painter = painterResource(R.drawable.afdian),
+                    contentDescription = null,
+                )
+            },
+            supportingContent = { Text(stringResource(R.string.donate_page_afdian_mine_desc)) },
+            headlineContent = { Text("爱发电 · Rune") },
         )
     }
 }

@@ -304,6 +304,7 @@
   <string name="deep_thinking_seconds">思考了 %1$.1f 秒</string>
   <string name="delete">刪除</string>
   <string name="donate_page_afdian_desc">適用於🇨🇳用戶</string>
+  <string name="donate_page_afdian_mine_desc">支持 Rune 的 fork 持續開發</string>
   <string name="donate_page_donation_methods">贊助方式</string>
   <string name="donate_page_kofi_desc">供全球用戶使用</string>
   <string name="donate_page_sponsor_list">贊助用戶列表</string>

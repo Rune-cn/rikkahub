@@ -86,7 +86,6 @@ import me.rerere.rikkahub.utils.joinQQGroup
 import me.rerere.rikkahub.utils.openUrl
 import me.rerere.rikkahub.utils.plus
 import me.rerere.rikkahub.utils.writeClipboardText
-import me.rerere.ui.icons.DiscordIcon
 import me.rerere.ui.icons.TencentQQIcon
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -352,17 +351,6 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                                         onDismiss = { showQQGroupSheet = false }
                                     )
                                 }
-                                IconButton(
-                                    onClick = {
-                                        context.openUrl("https://discord.gg/9weBqxe5c4")
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = DiscordIcon,
-                                        contentDescription = "Discord",
-                                        tint = MaterialTheme.colorScheme.secondary
-                                    )
-                                }
                             }
                         },
                         headlineContent = { Text(stringResource(R.string.setting_page_about)) },
@@ -481,10 +469,9 @@ private data class QQGroup(
 )
 
 private val QQ_GROUPS = listOf(
-    QQGroup("RikkaHub 一群", "4POE46u9e_zoy1TkNfWdCvueR9CKFJdk"),
-    QQGroup("RikkaHub 二群", "Qsm0whzbPsm1UyNpR683ulLyMZ2Pqrw0"),
-    QQGroup("RikkaHub 三群", "Qc9oP-9tXioZeQEvEvI2_owWtBAIx3lS"),
-    QQGroup("抖音一群", number = "569655479852", icon = HugeIcons.Tiktok),
+    // 一键跳转加群需要群主在 https://qun.qq.com/join.html 为对应群生成的专属 key；
+    // 未提供 key 前暂用复制群号（number），拿到 key 后改填 key 即可一键跳转
+    QQGroup("Rune 交流群", number = "1131916400"),
 )
 
 @Composable
