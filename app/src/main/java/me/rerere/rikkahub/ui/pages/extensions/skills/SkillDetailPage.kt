@@ -7,6 +7,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -186,7 +187,9 @@ fun SkillDetailPage(skillName: String) {
             Triple(R.string.skill_preset_media, R.string.skill_preset_media_desc, R.string.skill_category_media),
             Triple(R.string.skill_preset_tools, R.string.skill_preset_tools_desc, R.string.skill_category_tools),
             Triple(R.string.skill_preset_general, R.string.skill_preset_general_desc, R.string.skill_category_general),
-        )
+        ).map { (nameRes, descRes, valueRes) ->
+            Triple(stringResource(nameRes), stringResource(descRes), stringResource(valueRes))
+        }
         AlertDialog(
             onDismissRequest = { showCategoryDialog = false },
             title = { Text(stringResource(R.string.skill_detail_category)) },
