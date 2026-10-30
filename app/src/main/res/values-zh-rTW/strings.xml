@@ -1786,7 +1786,7 @@
   <string name="run_log_page_title">運行日誌</string>
   <string name="run_log_refresh">刷新</string>
   <string name="run_log_clear">清空</string>
-  <string name="run_log_empty">尚無日誌。應用啟動、搜索操作和異常會記錄在這裡。</string>
+  <string name="run_log_empty">尚無日誌。關鍵操作和異常會記錄在這裡。</string>
   <string name="run_log_copied">已複製</string>
   <string name="setting_page_run_logs">運行日誌</string>
   <string name="setting_page_run_logs_desc">查看應用運行日誌，排查問題</string>

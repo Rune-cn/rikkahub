@@ -1965,7 +1965,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="run_log_page_title">运行日志</string>
   <string name="run_log_refresh">刷新</string>
   <string name="run_log_clear">清空</string>
-  <string name="run_log_empty">暂无日志。应用启动、搜索操作和异常会记录在这里。</string>
+  <string name="run_log_empty">暂无日志。关键操作和异常会记录在这里。</string>
   <string name="run_log_copied">已复制</string>
   <string name="setting_page_run_logs">运行日志</string>
   <string name="setting_page_run_logs_desc">查看应用运行日志，排查问题</string>
