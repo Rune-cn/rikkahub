@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -213,19 +214,11 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
         containerColor = CustomColors.topBarColors.containerColor
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().imePadding(),
             contentPadding = innerPadding + PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            if (settings.isNotConfigured()) {
-                item {
-                    ProviderConfigWarningCard(
-                        onClick = { navController.navigate(Screen.SettingProvider) }
-                    )
-                }
-            }
-
-            // 设置搜索：结果区（顶栏展开搜索后输入即搜，整卡展示）
+            // 设置搜索：输入关键词时整页只显示搜索结果（不和其他设置项混排，避免滚动位置/键盘遮挡）
             if (searchQuery.isNotBlank()) {
                 item("settingSearchResults") {
                     SettingSearchResults(
@@ -234,8 +227,16 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     )
                 }
             }
+            if (searchQuery.isBlank()) {
+                if (settings.isNotConfigured()) {
+                    item {
+                        ProviderConfigWarningCard(
+                            onClick = { navController.navigate(Screen.SettingProvider) }
+                        )
+                    }
+                }
 
-            item("generalSettings") {
+                item("generalSettings") {
                 var colorMode by rememberColorMode()
                 val containerColor = MaterialTheme.colorScheme.primaryContainer
                 val contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -462,6 +463,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                         headlineContent = { Text(stringResource(R.string.setting_page_share)) },
                     )
                 }
+            }
             }
         }
     }
