@@ -1790,4 +1790,6 @@
   <string name="run_log_copied">已複製</string>
   <string name="setting_page_run_logs">運行日誌</string>
   <string name="setting_page_run_logs_desc">查看應用運行日誌，排查問題</string>
+  <string name="run_log_copy_all">複製全部</string>
+  <string name="run_log_copy_all_done">已複製全部日誌</string>
 </resources>

@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Copy01
 import me.rerere.hugeicons.stroke.Delete01
 import me.rerere.hugeicons.stroke.Refresh01
 import me.rerere.rikkahub.R
@@ -55,6 +56,20 @@ fun RunLogPage() {
                 title = { Text(stringResource(R.string.run_log_page_title)) },
                 navigationIcon = { BackButton() },
                 actions = {
+                    IconButton(
+                        onClick = {
+                            val all = entries.joinToString("\n") {
+                                "${it.time} [${it.level}] ${it.tag}: ${it.message}"
+                            }
+                            context.writeClipboardText(all)
+                            Toast.makeText(context, R.string.run_log_copy_all_done, Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        Icon(
+                            HugeIcons.Copy01,
+                            contentDescription = stringResource(R.string.run_log_copy_all),
+                        )
+                    }
                     IconButton(
                         onClick = { entries = RunLog.entriesList() }
                     ) {

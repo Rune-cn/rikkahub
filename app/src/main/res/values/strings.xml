@@ -1967,4 +1967,6 @@
   <string name="run_log_copied">Copied to clipboard</string>
   <string name="setting_page_run_logs">Run Logs</string>
   <string name="setting_page_run_logs_desc">View in-app runtime logs for troubleshooting</string>
+  <string name="run_log_copy_all">Copy all</string>
+  <string name="run_log_copy_all_done">All logs copied</string>
 </resources>
