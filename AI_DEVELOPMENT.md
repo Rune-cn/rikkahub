@@ -57,6 +57,7 @@
 5. 要发版/改版本号 → 先读 `05`（版本号规则、workflow 产物路径）。
 6. 要同步上游 → 先读 `06`（rebase 流程与踩坑）。
 7. **改完任何东西 → 同步更新本文档与对应逻辑文件**，保持文档与代码一致。
+8. **交付约定（用户要求）**：每次开发/修复完成后，回复里必须附上最新 APK 下载链接：`https://github.com/Rune-cn/rikkahub/releases/download/nightly/app-github-arm64-v8a-release.apk`（nightly 由 Actions 自动更新，次日/构建完成后即最新）。
 
 ## 五、禁止事项
 
