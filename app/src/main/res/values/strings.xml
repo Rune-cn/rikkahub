@@ -1973,4 +1973,5 @@
   <string name="link_action_open_browser">Open in Browser</string>
   <string name="link_action_open_in_app">Open In-App</string>
   <string name="link_action_share_link">Share Link</string>
+  <string name="link_action_copy_link">Copy Link</string>
 </resources>

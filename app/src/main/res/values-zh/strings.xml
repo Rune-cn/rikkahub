@@ -1975,4 +1975,5 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="link_action_open_browser">浏览器打开</string>
   <string name="link_action_open_in_app">内嵌打开</string>
   <string name="link_action_share_link">分享链接</string>
+  <string name="link_action_copy_link">复制链接</string>
 </resources>

@@ -1796,4 +1796,5 @@
   <string name="link_action_open_browser">瀏覽器開啟</string>
   <string name="link_action_open_in_app">內嵌開啟</string>
   <string name="link_action_share_link">分享連結</string>
+  <string name="link_action_copy_link">複製連結</string>
 </resources>

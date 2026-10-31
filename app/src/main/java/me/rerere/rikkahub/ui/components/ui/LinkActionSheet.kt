@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Copy01
 import me.rerere.hugeicons.stroke.Earth
 import me.rerere.hugeicons.stroke.Share03
 import me.rerere.hugeicons.stroke.WebDesign01
@@ -29,6 +30,7 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.utils.openUrl
+import me.rerere.rikkahub.utils.writeClipboardText
 
 /**
  * 链接操作面板：在浏览器打开 / 内嵌打开 / 分享
@@ -78,6 +80,14 @@ fun LinkActionSheet(
                     stringResource(R.string.link_action_open_in_app),
                     {
                         navController.navigate(Screen.WebView(url = url))
+                        onDismiss()
+                    },
+                ),
+                Triple(
+                    HugeIcons.Copy01,
+                    stringResource(R.string.link_action_copy_link),
+                    {
+                        context.writeClipboardText(url)
                         onDismiss()
                     },
                 ),

@@ -228,7 +228,10 @@ fun WorkflowPage() {
                             )
                             Text(
                                 text = workflow.description.ifBlank {
-                                    stringResource(R.string.workflow_steps_count, workflow.steps.size)
+                                    stringResource(
+                                        R.string.workflow_steps_count,
+                                        if (workflow.nodes.isNotEmpty()) workflow.nodes.size else workflow.steps.size
+                                    )
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
