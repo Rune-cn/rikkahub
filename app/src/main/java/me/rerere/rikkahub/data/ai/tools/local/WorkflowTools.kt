@@ -49,6 +49,16 @@ private val NODES_DESCRIPTION = """
     child nodes (or null). For parallel: children is a list of nodes to run concurrently.
 """.trimIndent().replace("\n", " ")
 
+/**
+ * 子节点引用 schema：真正的递归 schema 会导致无限递归栈溢出（工具 requests 每次都会
+ * 构建 schema，create/update 一被包含就崩溃，表现为「AI 不回复」）。
+ * 因此分支/并行子节点不再展开结构，只给描述性引用。
+ */
+private fun nodeRefSchema(): JsonObject = buildJsonObject {
+    put("type", "object")
+    put("description", "A workflow node with the same structure as a node in nodes (name/type/prompt/model/condition/true_branch/false_branch/children).")
+}
+
 private fun nodeSchema(): JsonObject = buildJsonObject {
     put("type", "object")
     put("properties", buildJsonObject {
@@ -78,12 +88,12 @@ private fun nodeSchema(): JsonObject = buildJsonObject {
             put("type", "string")
             put("description", "Only for if_else: expression like {{prev}} contains \"keyword\" (case-insensitive; also supports {{input}} and {{node.<id>}}).")
         })
-        put("true_branch", nodeSchema())
-        put("false_branch", nodeSchema())
+        put("true_branch", nodeRefSchema())
+        put("false_branch", nodeRefSchema())
         put("children", buildJsonObject {
             put("type", "array")
             put("description", "Only for parallel: list of nodes to run concurrently.")
-            put("items", nodeSchema())
+            put("items", nodeRefSchema())
         })
     })
     put("required", buildJsonArray { add("type") })
