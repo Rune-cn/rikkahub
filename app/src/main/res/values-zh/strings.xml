@@ -1217,10 +1217,12 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="extensions_page_workspace_desc">管理可由Agent访问的本地工作目录</string>
   <string name="extensions_page_other_category">其他</string>
   <string name="extensions_page_other_desc">更多未分类功能</string>
-  <string name="extensions_page_multi_agent_enable">多 Agent 工作</string>
+  <string name="extensions_page_multi_agent_enable">子 Agent</string>
   <string name="extensions_page_multi_agent_enable_desc">让主 Agent 派生子 Agent 并行处理任务；子 Agent 的输出会流式显示在对话中</string>
   <string name="extensions_page_retry_section">重试</string>
   <string name="extensions_page_retry_entry_desc">自动重试失败的请求</string>
+  <string name="extensions_page_retry_enable">自动重试</string>
+  <string name="extensions_page_retry_enable_desc">网络错误或命中下方规则时自动重试失败的模型请求</string>
   <string name="tool_call_page_title">工具调用</string>
   <string name="tool_call_entry_desc">自动允许工具调用，并可自由选择工具</string>
   <string name="tool_call_auto_allow">自动允许</string>
@@ -1335,8 +1337,6 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="setting_page_preferences_network_proxy">代理</string>
   <string name="setting_page_preferences_network_proxy_desc">支持 HTTP 和 SOCKS5 代理 URL。留空以使用系统设置。</string>
   <string name="setting_page_preferences_network_proxy_invalid">请输入包含主机和端口的有效代理 URL。</string>
-  <string name="setting_page_preferences_network_auto_retry">自动重试</string>
-  <string name="setting_page_preferences_network_auto_retry_desc">发生网络错误时自动重试模型请求，最多重试 3 次。</string>
   <string name="setting_provider_page_test_non_streaming">非流式</string>
   <string name="setting_provider_page_test_streaming">流式</string>
   <string name="setting_provider_page_test_tool_call">工具调用</string>
@@ -1457,7 +1457,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="assistant_page_local_tools_sub_agent_title">子 Agent 协同</string>
   <string name="assistant_page_local_tools_sub_agent_desc">让 AI 把任务分派给子 Agent 并行处理，子 Agent 拥有自己的工具与模型</string>
   <string name="chat_sub_agent_running">%1$d 个子 Agent 运行中</string>
-  <string name="multi_agent_page_title">多 Agent 工作</string>
+  <string name="multi_agent_page_title">子 Agent</string>
   <string name="multi_agent_entry_desc">直接与子 Agent 对话；主 Agent 也可向它们分派任务</string>
   <string name="multi_agent_settings">设置</string>
   <string name="multi_agent_list_title">子 Agent</string>

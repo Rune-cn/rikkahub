@@ -29,6 +29,7 @@
   - **修复回复节点定位**：`runTurn` 中只有「过滤子 Agent 展示消息后的最后一条」是主 Agent 助手消息才复用其节点；用户再发新消息（末尾是 USER）必须新建节点，否则新回复会写进上一轮回复节点里（表现为"每次对话都在旧回复基础上继续改"），见 04-3.5。
   - **重试间隔策略运行时生效**：设置里的「固定 / 指数退避 / 随机抖动」不再只是摆设——`ai/.../agent/Retry.kt` 新增 `RetryBackoff` 枚举（FIXED / EXPONENTIAL_BACKOFF / JITTER），`ChatRequestFactory.retryPolicy()` 把 `NetworkSetting.rateLimitRetryMode` 映射进 `RetryPolicy.backoff`，三种策略都在运行时生效（JITTER 为 Full Jitter），并补了单元测试（见 02-4 与 04-2）。
   - **重试设置独立成页**：扩展管理新增「重试」入口（位于"其他"上方，`Screen.RetrySettings` → `RetrySettingsPage.kt`），原「其他」页里的重试设置全部搬入；**移除「自动重试」总开关**（`enableRateLimitRetry` 默认 true，规则始终生效）；重试状态只显示"重试中…"（不再显示"网络连接已断开"等具体原因）。相关字符串三语同步（含补齐 zh-rTW 的重试相关翻译），见 02-4 与 04-2。
+  - **重试页总开关**：「重试」页顶部新增「自动重试」`Switch`（绑 `enableAutoRetry`）；上游「设置 → 网络」页的同字段「自动重试」开关已移除（该键字符串从 en/zh/zh-rTW 删除）。**UI 文案「多 Agent」统一改为「子 Agent」**（扩展管理开关、搜索关键词、相关注释；`multi_agent_page_title` 残留字符串值同步更新），见 02-2、02-4、04-2。
 - **会话交接**：每次会话结束时更新根目录 `NEXT_SESSION.md`（一次性交接单，可直接发给下个会话；本文件是知识库）。
 - **已知待办/注意事项**：
   - 设置页 QQ 群使用 universal-share 加群链接，**`authKey` 有时效**，过期需换新链接（`SettingPage.kt` 的 `QQ_GROUPS.link`）。

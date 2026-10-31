@@ -72,7 +72,7 @@ class LocalTools(
         if (options.contains(LocalToolOption.UpdatePlan)) {
             tools.add(updatePlanTool)
         }
-        // 多 Agent 工作（设置开关控制；关闭时 AI 无法派生子 Agent）
+        // 子 Agent 工作（设置开关控制；关闭时 AI 无法派生子 Agent）
         if (settingsStore.settingsFlow.value.enableSubAgent) {
             tools.addAll(subAgentTools)
         }

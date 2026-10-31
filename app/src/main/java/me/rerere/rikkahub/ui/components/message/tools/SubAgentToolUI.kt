@@ -220,7 +220,7 @@ object SendMessageToolUI : ToolUIRenderer {
     }
 }
 
-/** 输入框上方的子 Agent 运行进度（有子 Agent 运行时显示，可点击进入多 Agent 工作页） */
+/** 输入框上方的子 Agent 运行进度（有子 Agent 运行时显示，可点击进入子 Agent 工作页） */
 @Composable
 internal fun SubAgentRunningBanner(
     count: Int,

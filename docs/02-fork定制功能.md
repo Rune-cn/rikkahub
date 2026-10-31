@@ -9,7 +9,8 @@
 - 逻辑：`data/ai/tools/ChatToolFactory.kt` 的 `createTools()` 末尾：开启后把非 disabled 工具的 `needsApproval` 置为 false；**ask_user 默认不参与**（disabledTools 默认含它）。
 - 旧机制 `WORKSPACE_ALLOW_ALL_APPROVAL_KEY`（工作区维度全部允许）已废弃移除，勿再引入。
 
-## 2. 多 Agent（子 Agent）
+## 2. 子 Agent（多 Agent 协同）
+> UI 文案统一为「子 Agent」（2026-10-31：原「多 Agent」字样全部改为「子 Agent」，含扩展管理开关与搜索关键词；英文 `Sub-agents`）。功能本质不变：主 Agent 派生子 Agent 并行执行任务。
 - 文件：
   - `data/ai/subagent/SubAgentManager.kt`：任务调度、主上下文同步、前台服务保活。
   - `data/ai/tools/local/SubAgentTools.kt`：spawn_agent / wait_agent / list_agents / close_agent 工具。
@@ -39,7 +40,8 @@
 ## 4. 可配置重试（限流 tpm/rpm + 关键字）
 - 设置字段（`NetworkSetting`，`Settings.kt`）：`enableAutoRetry`、`enableRateLimitRetry`、`rateLimitRetryCount`、`retryableStatusCodes`、`retryKeywords`、`stopRetryKeywords`。
 - UI：**独立「重试」页**（`ui/pages/extensions/RetrySettingsPage.kt`，扩展管理 → 重试，位于"其他"上方；原"其他"页里的重试设置已全部搬入，入口图标 `HugeIcons.Refresh`）。
-  - **没有「自动重试」总开关**：`enableRateLimitRetry` 字段保留（默认 true），重试规则始终生效；`extensions_page_auto_retry` 相关字符串已删除。
+  - **总开关在重试页顶部**：`Switch(enableAutoRetry)`（「自动重试」，`extensions_page_retry_enable`）；上游「设置 → 网络」页里同字段的「自动重试」开关已移除（`setting_page_preferences_network_auto_retry` 字符串删除，其他方言 locale 的该键为未引用残留，不处理）。
+  - `enableRateLimitRetry` 字段保留（默认 true），与规则开关合并为总开关逻辑：`enableAutoRetry=false` → 不重试；否则按下方规则。
   - 设置搜索索引指向 `Screen.RetrySettings`（`SettingSearchIndex.kt`）。
 - 运行时：`ChatRequestFactory.retryPolicy()` 读取上述字段映射到 `me.rerere.ai.agent.RetryPolicy`（maxRetries + retryOn 谓词；停止关键字优先）。
 - 状态提示：重试时只显示"重试中…"（`ChatService.retryStatus()` → `chat_generation_retrying_only`），不再拼接"网络连接已断开"等具体错误原因（`chat_generation_network_*` 字符串不再被引用，保留为上游资源）。

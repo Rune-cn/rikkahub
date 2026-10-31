@@ -22,6 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -78,6 +79,28 @@ fun RetrySettingsPage() {
                     modifier = Modifier.padding(horizontal = 8.dp),
                     title = { Text(stringResource(R.string.extensions_page_retry_section)) },
                 ) {
+                    item(
+                        headlineContent = { Text(stringResource(R.string.extensions_page_retry_enable)) },
+                        supportingContent = {
+                            Text(stringResource(R.string.extensions_page_retry_enable_desc))
+                        },
+                        trailingContent = {
+                            Switch(
+                                checked = settings.networkSetting.enableAutoRetry,
+                                onCheckedChange = { enabled ->
+                                    coroutineScope.launch {
+                                        settingsStore.update {
+                                            it.copy(
+                                                networkSetting = it.networkSetting.copy(
+                                                    enableAutoRetry = enabled,
+                                                )
+                                            )
+                                        }
+                                    }
+                                },
+                            )
+                        },
+                    )
                     item(
                         headlineContent = { Text(stringResource(R.string.extensions_page_retry_interval)) },
                         supportingContent = {

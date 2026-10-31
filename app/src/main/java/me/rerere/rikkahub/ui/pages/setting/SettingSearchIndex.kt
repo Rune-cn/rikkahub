@@ -175,9 +175,9 @@ val SETTING_SEARCH_ITEMS: List<SettingSearchItem> = listOf(
     SettingSearchItem(PAGE_GENERAL, R.string.setting_page_preferences, SettingItemType.NAV, "偏好设置 界面 外观 preferences", Screen.SettingPreferences),
     // ── 扩展管理入口（设置搜索可直接直达功能页） ──
     SettingSearchItem(PAGE_EXTENSIONS, R.string.workflow_page_title, SettingItemType.NAV, "工作流 workflow 流水线 步骤 自动化 pipeline", Screen.Workflows),
-    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_sub_agent_section, SettingItemType.NAV, "子 agent 多 agent 协同 并行 分派 sub-agent delegation spawn", Screen.OtherSettings),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_sub_agent_section, SettingItemType.NAV, "子 agent 协同 并行 分派 sub-agent delegation spawn", Screen.OtherSettings),
     SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_sub_agent_model, SettingItemType.SELECT, "子 agent 模型 默认模型 sub-agent model", Screen.OtherSettings),
-    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_retry_section, SettingItemType.NAV, "重试 间隔 指数退避 固定 抖动 状态码 关键字 限流 网络错误 retry rate limit tpm rpm", Screen.RetrySettings),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_retry_section, SettingItemType.NAV, "重试 自动重试 间隔 指数退避 固定 抖动 状态码 关键字 限流 网络错误 retry rate limit tpm rpm", Screen.RetrySettings),
     SettingSearchItem(PAGE_EXTENSIONS, R.string.assistant_page_quick_messages, SettingItemType.NAV, "快捷消息 快捷指令 quick messages 一键发送", Screen.QuickMessages),
     SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_prompts, SettingItemType.NAV, "提示词 预设 模板 prompt templates", Screen.Prompts),
     SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_agent_skills, SettingItemType.NAV, "技能 能力 skill agent skills", Screen.Skills),
