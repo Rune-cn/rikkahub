@@ -811,8 +811,6 @@
   <string name="setting_page_preferences_network_proxy">Proxy</string>
   <string name="setting_page_preferences_network_proxy_desc">Unterstützt HTTP- und SOCKS5-Proxy-URLs. Leer lassen, um die Systemeinstellungen zu verwenden.</string>
   <string name="setting_page_preferences_network_proxy_invalid">Gib eine gültige Proxy-URL mit Host und Port ein.</string>
-  <string name="setting_page_preferences_network_auto_retry">Automatische Wiederholung</string>
-  <string name="setting_page_preferences_network_auto_retry_desc">Modellanfragen bei Netzwerkfehlern bis zu 3-mal wiederholen.</string>
   <string name="setting_page_documentation">Dokumentation</string>
   <string name="setting_page_documentation_desc">Anweisungen zur App-Nutzung und Hilfedokumentation anzeigen</string>
   <string name="setting_page_donate">Spenden</string>

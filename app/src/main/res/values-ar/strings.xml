@@ -955,8 +955,6 @@
   <string name="setting_page_preferences_general">عام</string>
   <string name="setting_page_preferences_general_desc">سلوك التفاعل، التمرير، إعدادات الإدخال</string>
   <string name="setting_page_preferences_network">الشبكة</string>
-  <string name="setting_page_preferences_network_auto_retry">إعادة المحاولة التلقائية</string>
-  <string name="setting_page_preferences_network_auto_retry_desc">إعادة محاولة طلبات النموذج حتى 3 مرات عند حدوث أخطاء الشبكة.</string>
   <string name="setting_page_preferences_network_desc">إعدادات User-Agent وطلبات الشبكة</string>
   <string name="setting_page_preferences_network_proxy">الوكيل</string>
   <string name="setting_page_preferences_network_proxy_desc">يدعم عناوين URL لوكيل HTTP و SOCKS5. اتركه فارغًا لاستخدام إعدادات النظام.</string>
