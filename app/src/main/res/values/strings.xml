@@ -1156,6 +1156,7 @@
   <string name="update_card_prerelease">Beta</string>
   <string name="update_card_new_version_found">New version found %s</string>
   <string name="update_card_unknown_error">Unknown error</string>
+  <string name="update_check_fallback_changelog">%1$s has been released.\n\nView the full changelog and downloads on the release page:\n%2$s</string>
   <string name="upload_file">Upload File</string>
   <string name="use_web_search">Web Search</string>
   <string name="user_default_name">User</string>

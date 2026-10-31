@@ -82,6 +82,7 @@
 - nightly 由 workflow 标记为 prerelease=true，`releases/latest` 不会误当正式版。
 - **手动检查**：设置 → 关于 →「检查更新」（`SettingAboutPage.kt` 的 `about_page_check_update` 条目，图标 `HugeIcons.Refresh`）：点按即 `UpdateChecker.checkNowOnce()` 完整跑一次检查并弹窗显示版本/更新内容/下载按钮；已最新或失败走 Toast。不受聊天页抽屉卡片的「暂停更新提醒」与 `settings.init` 门槛影响，适合排查"卡片不显示"。
 - **运行日志埋点**：更新检查全链路写入运行日志（标签 `UpdateCheck`，见「设置 → 关于 → 运行日志」）：开始/API 结果（含 HTTP 码）/302 兜底/Location tag/版本比较结论/下载直链探测/最终结果；聊天抽屉卡片启用门槛变化也记录（init 与暂停至时间）。排查"不显示更新"时先让用户看 `UpdateCheck` 行。
+- **302 兜底也有更新内容**：404→302 路径拿不到真实 changelog 时，用 `update_check_fallback_changelog`（三语）填充"X 已发布 + 发布页链接"，保证卡片/弹窗的"更新内容"区域不为空（2026-10-31 实测：用户设备 API 403 触发兜底，卡片曾显示空内容的根因）。
 
 ## 10. 子 Agent 消息视觉区分
 - `ui/components/message/ChatMessage.kt`：`isSubAgent`（modelId == "sub-agent"）时使用不同的背景/边框/标签（Material3 tonal 色阶，**无 emoji**）。

@@ -178,6 +178,12 @@ class UpdateChecker(
             return UiState.Idle
         }
         RunLog.log("UpdateCheck", "302 版本比较: remote=$tag > local=$localVersion -> 提示更新")
+        // 302 兜底拿不到真实更新日志，给一个带版本+发布页链接的默认内容，避免"没有更新内容"
+        val fallbackChangelog = context.getString(
+            R.string.update_check_fallback_changelog,
+            tag,
+            "https://github.com/Rune-cn/rikkahub/releases/tag/$tag",
+        )
         val apkUrl = "https://github.com/Rune-cn/rikkahub/releases/download/$tag/app-github-arm64-v8a-release.apk"
         val (name, url) = if (headReachable(apkUrl)) {
             RunLog.log("UpdateCheck", "直链探测可用: $apkUrl")
@@ -191,7 +197,7 @@ class UpdateChecker(
             UpdateInfo(
                 version = tag,
                 publishedAt = "",
-                changelog = "",
+                changelog = fallbackChangelog,
                 prerelease = false,
                 downloads = listOf(UpdateDownload(name, url, "")),
             )

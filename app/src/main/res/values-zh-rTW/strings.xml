@@ -1063,6 +1063,7 @@
   <string name="update_card_downloading">正在下載，請查看狀態列以瞭解進度</string>
   <string name="update_card_new_version_found">發現新版本 %s</string>
   <string name="update_card_unknown_error">未知錯誤</string>
+  <string name="update_check_fallback_changelog">%1$s 已發布。\n\n完整更新日誌與安裝包請在發布頁查看：\n%2$s</string>
   <string name="upload_file">上傳檔案</string>
   <string name="use_web_search">網路搜尋</string>
   <string name="user_default_name">用戶</string>
