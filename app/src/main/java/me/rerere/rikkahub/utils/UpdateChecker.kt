@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -37,6 +38,12 @@ class UpdateChecker(
         started = SharingStarted.Lazily,
         initialValue = UiState.Loading,
     )
+
+    /**
+     * 手动触发一次更新检查并返回最终结果（供「关于页 → 检查更新」使用；
+     * 返回前会完整跑完检查流程，不依赖 updateState 的共享缓存）。
+     */
+    suspend fun checkNowOnce(): UiState<UpdateInfo> = checkUpdate().last()
 
     /**
      * 检查本仓库（fork）的最新**正式版**（stable）Release 是否有更新。

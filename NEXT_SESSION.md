@@ -67,6 +67,8 @@ RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天�
 2. **更新检测**（`utils/UpdateChecker.kt`，2026-10-31 命令行实测）：
    - 实测结论：`api.github.com/.../releases/latest` 匿名会 **403 限流**（60 次/h）；网页 `github.com/Rune-cn/rikkahub/releases/latest` 返回 **302**，`Location: .../releases/tag/<tag>` 无配额限制；资产命名旧（2.5.7=`app-arm64-v8a-release.apk`）新（nightly=`app-github-arm64-v8a-release.apk`）不一致，不能只靠猜。
    - 落地：API 优先（资产/日志/时间齐全）→ 失败降级 302 兜底（仅 tag 版本，资产按新版命名拼直链+HEAD 校验，不通退发布页）。nightly 是 prerelease=true，`releases/latest` 不会误判。
+3. **关于页「检查更新」手动入口**（用户反馈"没显示更新内容"后添加）：`SettingAboutPage` 版本行下新增条目（`HugeIcons.Refresh` + `about_page_check_update`），点击调 `updateChecker.checkNowOnce()` 完整跑一次检查；Success 弹 `AlertDialog`（版本/更新内容/下载按钮），Idle/Error 走 Toast。聊天抽屉更新卡片的显示还受「暂停更新提醒」（`updateCheckDisabledUntilEpochMillis`）与 `settings.init` 门槛影响——手动入口不受影响，专门用于验证检测链路。
+   - 2026-10-31 测试用：向仓库发布了占位正式版 **`3.1.0`**（tag/name=3.1.0，prerelease=false，附当前 nightly APK）验证检测可触发；验证后可在 Releases 页删除。
 
 ## 四、已知待办 / 注意事项（下个会话请留意）
 

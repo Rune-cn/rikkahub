@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -26,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +49,7 @@ import me.rerere.hugeicons.stroke.Code
 import me.rerere.hugeicons.stroke.Earth
 import me.rerere.hugeicons.stroke.File02
 import me.rerere.hugeicons.stroke.Github
+import me.rerere.hugeicons.stroke.Refresh
 import me.rerere.hugeicons.stroke.SmartPhone01
 import me.rerere.rikkahub.BuildConfig
 import me.rerere.rikkahub.R
@@ -57,11 +61,18 @@ import me.rerere.rikkahub.ui.components.ui.drawAppLogo
 import me.rerere.rikkahub.ui.components.ui.logoMorphShape
 import me.rerere.rikkahub.ui.components.ui.rememberAppLogoLayers
 import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.SoundEffectPlayer
+import me.rerere.rikkahub.utils.UiState
+import me.rerere.rikkahub.utils.UpdateChecker
+import me.rerere.rikkahub.utils.UpdateInfo
 import me.rerere.rikkahub.utils.openUrl
 import me.rerere.rikkahub.utils.plus
 import me.rerere.ui.easteregg.EmojiBurstHost
+import me.rerere.ui.toast.ToastType
+import org.koin.compose.koinInject
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingAboutPage() {
@@ -70,6 +81,11 @@ fun SettingAboutPage() {
     val navController = LocalNavController.current
     val soundOptions = remember { listOf(R.raw.bingbingbing, R.raw.gangguan) }
     val soundEffectPlayer = remember(context) { SoundEffectPlayer(context) }
+    val updateChecker = koinInject<UpdateChecker>()
+    val scope = rememberCoroutineScope()
+    val toaster = LocalToaster.current
+    // 手动「检查更新」的结果（Success 时弹窗；Idle/Error 走 Toast 后置空）
+    var manualUpdate by remember { mutableStateOf<UiState<UpdateInfo>?>(null) }
     DisposableEffect(soundEffectPlayer) {
         soundEffectPlayer.preload(*soundOptions.toIntArray())
         onDispose {
@@ -190,6 +206,32 @@ fun SettingAboutPage() {
                             headlineContent = { Text(stringResource(R.string.about_page_version)) },
                         )
                         item(
+                            onClick = {
+                                scope.launch {
+                                    manualUpdate = UiState.Loading
+                                    val result = updateChecker.checkNowOnce()
+                                    manualUpdate = when (result) {
+                                        is UiState.Success -> result
+                                        is UiState.Error -> {
+                                            toaster.show(
+                                                result.error.message ?: context.getString(R.string.update_card_check_failed),
+                                                type = ToastType.Error,
+                                            )
+                                            null
+                                        }
+                                        is UiState.Idle -> {
+                                            toaster.show(context.getString(R.string.about_page_up_to_date), type = ToastType.Info)
+                                            null
+                                        }
+                                        UiState.Loading -> null
+                                    }
+                                }
+                            },
+                            leadingContent = { CardGroupIcon(HugeIcons.Refresh, containerColor = containerColor, contentColor = contentColor) },
+                            supportingContent = { Text(stringResource(R.string.about_page_check_update_desc)) },
+                            headlineContent = { Text(stringResource(R.string.about_page_check_update)) },
+                        )
+                        item(
                             leadingContent = { CardGroupIcon(HugeIcons.SmartPhone01, containerColor = containerColor, contentColor = contentColor) },
                             supportingContent = {
                                 Text("${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} / Android ${android.os.Build.VERSION.RELEASE} / SDK ${android.os.Build.VERSION.SDK_INT}")
@@ -219,6 +261,51 @@ fun SettingAboutPage() {
                 }
             }
         }
+    }
+
+    // 手动「检查更新」的结果弹窗（Success 时展示版本+更新内容+下载按钮）
+    val updateInfo = (manualUpdate as? UiState.Success)?.data
+    if (updateInfo != null) {
+        AlertDialog(
+            onDismissRequest = { manualUpdate = null },
+            title = { Text(stringResource(R.string.update_card_new_version_found, updateInfo.version)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (updateInfo.changelog.isNotBlank()) {
+                        Text(updateInfo.changelog, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    if (updateInfo.downloads.isEmpty()) {
+                        Text(stringResource(R.string.about_page_check_update_no_asset))
+                    } else {
+                        updateInfo.downloads.forEach { download ->
+                            Text(
+                                download.name,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                if (updateInfo.downloads.isNotEmpty()) {
+                    TextButton(
+                        onClick = {
+                            updateChecker.downloadUpdate(context, updateInfo.downloads.first())
+                            manualUpdate = null
+                            toaster.show(context.getString(R.string.update_card_downloading), type = ToastType.Info)
+                        }
+                    ) {
+                        Text(stringResource(R.string.about_page_download))
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { manualUpdate = null }) {
+                    Text(stringResource(R.string.update_card_close))
+                }
+            },
+        )
     }
 }
 

@@ -5,6 +5,11 @@
   <string name="about_page_system">系統</string>
   <string name="about_page_title">關於</string>
   <string name="about_page_version">版本</string>
+  <string name="about_page_check_update">檢查更新</string>
+  <string name="about_page_check_update_desc">檢查 GitHub 上的最新正式版</string>
+  <string name="about_page_up_to_date">已是最新版本</string>
+  <string name="about_page_download">下載</string>
+  <string name="about_page_check_update_no_asset">此版本未附帶安裝包</string>
   <string name="about_page_website">官網</string>
   <string name="add">添加</string>
   <string name="app_name">RikkaHub</string>

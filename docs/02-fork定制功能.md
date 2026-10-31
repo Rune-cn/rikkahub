@@ -80,6 +80,7 @@
   1. GitHub API `releases/latest`（数据全：版本名/时间/日志/资产直链）；匿名限流 60 次/小时，设备共用 IP 易踩 403。
   2. 网页 `https://github.com/Rune-cn/rikkahub/releases/latest` 的 **302 重定向**做兜底（无 API 配额）：从 `Location` 头取最新 tag，资产名按当前规范拼 `releases/download/<tag>/app-github-arm64-v8a-release.apk`，HEAD 探测不通（旧版命名如 2.5.7 的 `app-arm64-v8a-release.apk`）则退到发布页链接。
 - nightly 由 workflow 标记为 prerelease=true，`releases/latest` 不会误当正式版。
+- **手动检查**：设置 → 关于 →「检查更新」（`SettingAboutPage.kt` 的 `about_page_check_update` 条目，图标 `HugeIcons.Refresh`）：点按即 `UpdateChecker.checkNowOnce()` 完整跑一次检查并弹窗显示版本/更新内容/下载按钮；已最新或失败走 Toast。不受聊天页抽屉卡片的「暂停更新提醒」与 `settings.init` 门槛影响，适合排查"卡片不显示"。
 
 ## 10. 子 Agent 消息视觉区分
 - `ui/components/message/ChatMessage.kt`：`isSubAgent`（modelId == "sub-agent"）时使用不同的背景/边框/标签（Material3 tonal 色阶，**无 emoji**）。
