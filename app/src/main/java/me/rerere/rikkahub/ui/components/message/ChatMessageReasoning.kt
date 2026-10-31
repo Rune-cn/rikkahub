@@ -128,6 +128,7 @@ private fun ReasoningContent(
     scrollState: ScrollState,
     fadeHeight: Float,
     loading: Boolean,
+    onLinkClick: ((String) -> Unit)? = null,
 ) {
     val isPreview = expandState == ReasoningCardState.Preview
     val fontSizeRatio = LocalSettings.current.displaySetting.fontSizeRatio
@@ -255,6 +256,7 @@ fun ChainOfThoughtScope.ChatMessageReasoningStep(
                 scrollState = state.scrollState,
                 fadeHeight = fadeHeight,
                 loading = loading,
+                onLinkClick = onLinkClick,
             )
         },
     )
