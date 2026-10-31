@@ -43,6 +43,7 @@ import me.rerere.rikkahub.data.model.MessageNode
 import me.rerere.rikkahub.data.model.NodeFavoriteTarget
 import me.rerere.rikkahub.data.model.getAssistantOf
 import me.rerere.rikkahub.data.model.getChatModelOf
+import me.rerere.rikkahub.utils.RunLog
 import me.rerere.rikkahub.data.repository.FavoriteRepository
 import me.rerere.rikkahub.service.ChatError
 import me.rerere.rikkahub.service.ChatService
@@ -221,12 +222,23 @@ class ChatVM(
         }
     }
 
-    // Update checker
+    // Update checker（抽屉更新卡片启用门槛，开关变化写入运行日志便于排查）
+    private var lastUpdateCardEnabled: Boolean? = null
+
     val updateState = settingsStore.settingsFlow
         .map { settings ->
-            !BuildConfig.IS_PLAY_STORE &&
+            val enabled = !BuildConfig.IS_PLAY_STORE &&
                 !settings.init &&
                 settings.displaySetting.updateCheckDisabledUntilEpochMillis <= System.currentTimeMillis()
+            if (enabled != lastUpdateCardEnabled) {
+                lastUpdateCardEnabled = enabled
+                RunLog.log(
+                    "UpdateCheck",
+                    "抽屉更新卡片: ${if (enabled) "启用" else "停用（init=${settings.init}, 暂停至=${settings.displaySetting.updateCheckDisabledUntilEpochMillis}ms）"}",
+                    'D',
+                )
+            }
+            enabled
         }
         .distinctUntilChanged()
         .flatMapLatest { enabled ->

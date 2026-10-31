@@ -59,6 +59,7 @@ class UpdateChecker(
     @OptIn(ExperimentalTime::class)
     private fun checkUpdate(): Flow<UiState<UpdateInfo>> = flow<UiState<UpdateInfo>> {
         emit(UiState.Loading)
+        RunLog.log("UpdateCheck", "开始检查正式版更新（local=${BuildConfig.VERSION_NAME}）")
         // 方案一：GitHub API releases/latest
         val apiRelease = runCatching { fetchLatestReleaseViaApi() }.getOrNull()
         if (apiRelease != null) {
@@ -77,15 +78,18 @@ class UpdateChecker(
             ))
             return@flow
         }
+        RunLog.log("UpdateCheck", "API 方案不可用，降级到网页 302 重定向", 'W')
         // 方案二：GitHub 网页 302 重定向（无 API 配额限制），只拿最新 tag 版本
         val tag = runCatching { fetchLatestTagViaRedirect() }.getOrNull()
         if (tag != null) {
             emit(buildUpdateStateFromTag(tag))
             return@flow
         }
+        RunLog.log("UpdateCheck", "两个方案都失败，本次不提示", 'W')
         emit(UiState.Idle)
     }.catch {
         // 网络异常时静默，避免打扰用户
+        RunLog.log("UpdateCheck", "检查更新异常: ${it.message}", 'E')
         emit(UiState.Idle)
     }.flowOn(Dispatchers.IO)
 
@@ -96,9 +100,21 @@ class UpdateChecker(
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "RikkaHub")
             .build()
-        val response = client.newCall(request).await()
-        if (!response.isSuccessful) return null
-        return runCatching { json.decodeFromString<GitHubRelease>(response.body?.string().orEmpty()) }.getOrNull()
+        return try {
+            val response = client.newCall(request).await()
+            if (!response.isSuccessful) {
+                RunLog.log("UpdateCheck", "API releases/latest 不可用: HTTP ${response.code}", 'W')
+                null
+            } else {
+                json.decodeFromString<GitHubRelease>(response.body?.string().orEmpty())
+                    .also { release ->
+                        RunLog.log("UpdateCheck", "API 成功: ${release.name} (prerelease=${release.prerelease}, assets=${release.assets.size})")
+                    }
+            }
+        } catch (e: Exception) {
+            RunLog.log("UpdateCheck", "API 请求异常: ${e.message}", 'W')
+            null
+        }
     }
 
     /** 通过 releases/latest 的 302 重定向拿最新正式版 tag（如 2.5.7），免 API 配额 */
@@ -107,13 +123,23 @@ class UpdateChecker(
             .url("https://github.com/Rune-cn/rikkahub/releases/latest")
             .header("User-Agent", "RikkaHub")
             .build()
-        val response = client.newBuilder().followRedirects(false).build().newCall(request).await()
-        // 302/301 都是重定向（3xx 不算 isSuccessful），关键在 Location 头
-        val location = response.header("Location").orEmpty()
-        if (location.isBlank()) return null
-        // Location 示例：https://github.com/Rune-cn/rikkahub/releases/tag/2.5.7
-        return location.substringAfterLast('/').trim().takeIf {
-            it.isNotBlank() && it.all { c -> c.isLetterOrDigit() || c == '.' || c == '-' || c == '_' }
+        return try {
+            val response = client.newBuilder().followRedirects(false).build().newCall(request).await()
+            // 302/301 都是重定向（3xx 不算 isSuccessful），关键在 Location 头
+            val location = response.header("Location").orEmpty()
+            if (location.isBlank()) {
+                RunLog.log("UpdateCheck", "302 响应无 Location 头（HTTP ${response.code}）", 'W')
+                return null
+            }
+            // Location 示例：https://github.com/Rune-cn/rikkahub/releases/tag/2.5.7
+            val tag = location.substringAfterLast('/').trim().takeIf {
+                it.isNotBlank() && it.all { c -> c.isLetterOrDigit() || c == '.' || c == '-' || c == '_' }
+            }
+            RunLog.log("UpdateCheck", "302 重定向: $location -> tag=$tag")
+            tag
+        } catch (e: Exception) {
+            RunLog.log("UpdateCheck", "302 重定向请求异常: ${e.message}", 'W')
+            null
         }
     }
 
@@ -128,8 +154,10 @@ class UpdateChecker(
         val remoteVersion = remoteName.trim().substringBefore('-')
         val localVersion = BuildConfig.VERSION_NAME.substringBefore('-')
         if (remoteVersion.isBlank() || Version(remoteVersion) <= Version(localVersion)) {
+            RunLog.log("UpdateCheck", "API 版本比较: remote=$remoteVersion vs local=$localVersion -> 不提示")
             return UiState.Idle
         }
+        RunLog.log("UpdateCheck", "API 版本比较: remote=$remoteVersion > local=$localVersion -> 提示更新")
         return UiState.Success(
             UpdateInfo(
                 // 版本号格式：应用版本-构建 commit（如 2.5.6-a3ea1cd1）
@@ -146,13 +174,17 @@ class UpdateChecker(
     private suspend fun buildUpdateStateFromTag(tag: String): UiState<UpdateInfo> {
         val localVersion = BuildConfig.VERSION_NAME.substringBefore('-')
         if (tag.isBlank() || Version(tag) <= Version(localVersion)) {
+            RunLog.log("UpdateCheck", "302 版本比较: remote=$tag vs local=$localVersion -> 不提示")
             return UiState.Idle
         }
+        RunLog.log("UpdateCheck", "302 版本比较: remote=$tag > local=$localVersion -> 提示更新")
         val apkUrl = "https://github.com/Rune-cn/rikkahub/releases/download/$tag/app-github-arm64-v8a-release.apk"
         val (name, url) = if (headReachable(apkUrl)) {
+            RunLog.log("UpdateCheck", "直链探测可用: $apkUrl")
             "app-github-arm64-v8a-release.apk" to apkUrl
         } else {
             // 旧版命名（如 app-arm64-v8a-release.apk）没有该直链，退到发布页让用户自行选择
+            RunLog.log("UpdateCheck", "直链探测不可用，退到发布页: $apkUrl", 'W')
             "Release $tag" to "https://github.com/Rune-cn/rikkahub/releases/tag/$tag"
         }
         return UiState.Success(

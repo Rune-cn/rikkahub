@@ -64,6 +64,7 @@ import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.SoundEffectPlayer
+import me.rerere.rikkahub.utils.RunLog
 import me.rerere.rikkahub.utils.UiState
 import me.rerere.rikkahub.utils.UpdateChecker
 import me.rerere.rikkahub.utils.UpdateInfo
@@ -209,7 +210,17 @@ fun SettingAboutPage() {
                             onClick = {
                                 scope.launch {
                                     manualUpdate = UiState.Loading
+                                    RunLog.log("UpdateCheck", "手动检查更新: 开始")
                                     val result = updateChecker.checkNowOnce()
+                                    RunLog.log(
+                                        "UpdateCheck",
+                                        "手动检查更新结果: " + when (result) {
+                                            is UiState.Success -> "发现新版本 ${result.data.version}（${result.data.downloads.size} 个资产）"
+                                            is UiState.Idle -> "已最新/不提示"
+                                            is UiState.Error -> "失败: ${result.error.message}"
+                                            UiState.Loading -> "Loading"
+                                        },
+                                    )
                                     manualUpdate = when (result) {
                                         is UiState.Success -> result
                                         is UiState.Error -> {

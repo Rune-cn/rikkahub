@@ -33,6 +33,7 @@
   - **扩展管理「其他」入口改名「子 Agent」**（`extensions_page_other_category` 值改为 `Sub-agents`/`子 Agent`，页面标题随入口同串变更，zh-rTW 补齐）；**移除子 Agent「共享对话上下文」**（`defaultInheritContext`/`inherit_context`/`SubAgentManager.updateMainContext` 全删，改名 `updateActiveConversation` 只记主会话 id）；**重试页新增「恢复默认」+ 优化输入体验**（全宽输入框、占位提示、自动滚入视野、`imePadding`），见 02-2、02-4、03、07。
   - **子 Agent 入口图标 `HugeIcons.AiBrain01`、副标题「主 Agent 可派生子 Agent 并行处理任务」**；**更新检查改为"API releases/latest 优先 + 网页 302 重定向兜底"双方案**（实测：匿名 API 会 403 限流，302 方案无配额，asset 直链按新版命名拼装、HEAD 不通退发布页），见 02-2、02-9。
   - **关于页新增「检查更新」手动入口**：点击完整跑一次检测并弹窗展示版本/更新内容/下载（`UpdateChecker.checkNowOnce()`），绕开聊天抽屉卡片的「暂停更新提醒」门槛，便于直接验证检测链路，见 02-9。
+  - **更新检查链路运行日志埋点**：`UpdateCheck` 标签记录检查全程（方案选择/HTTP 状态/Location/版本比较/直链探测/最终结果），ChatVM 抽屉卡片门槛变化也记录；配套「设置 → 关于 → 运行日志」排查，见 02-9。
 - **会话交接**：每次会话结束时更新根目录 `NEXT_SESSION.md`（一次性交接单，可直接发给下个会话；本文件是知识库）。
 - **已知待办/注意事项**：
   - 设置页 QQ 群使用 universal-share 加群链接，**`authKey` 有时效**，过期需换新链接（`SettingPage.kt` 的 `QQ_GROUPS.link`）。
