@@ -142,25 +142,43 @@ jobs:
           name: ${{ steps.version.outputs.version }}
           prerelease: ${{ github.event.inputs.release_type != 'stable' }}
           body: |
-            ## 📦 更新日志（commit `${{ github.sha }}`）
+            ## 📦 RikkaHub ${{ steps.version.outputs.version }}
 
             **版本**：`${{ steps.version.outputs.version }}`
 
+            相对上一正式版（2.5.7）的更新内容：
+
             ### ✨ 新增功能
-            - 🔧 工具调用：扩展管理新增「工具调用」页，可开启「自动允许」并自由勾选参与自动允许的工具（ask_user 默认保留审批）
-            - ▶️ 继续生成：AI 被停止/中断后，可从半截回复继续生成（历史中段对话也能继续）
-            - 🔁 限流自动重试（tpm/rpm）：固定间隔 / 指数退避 / 随机抖动，可配置最大重试次数
-            - 🔄 更新检查：指向本仓库 Release，有新版本时提示并可直接下载
-            - 🔥 Firebase 可选：无 google-services.json 也能构建运行
+            - **子 Agent（多 Agent 协同）**：主 Agent 可派生子 Agent 并行执行任务；子 Agent 支持不同模型、完整工具集，输出流式写回主对话
+            - **AI 工作流 + 无限画布**：条件分支 / 并行节点编排，AI 可调用工作流工具
+            - **工具自动允许**：扩展管理「工具调用」页全局开关 + 按工具勾选（ask_user 保留审批）
+            - **可配置重试**：限流 tpm/rpm 自动重试，固定 / 指数退避 / 随机抖动三种间隔运行时生效 + 状态码/关键字规则 + 总开关 + 一键恢复默认
+            - **继续生成**：生成被打断后可从半截回复继续
+            - **设置搜索**：点击顶栏「设置」即搜，直达各设置项
+            - **输入框草稿自动保存**：没发出去的话重开不丢
+            - **Skill 手动分类** + AI 分类工具
+            - **对话内链接操作面板**：浏览器 / 内嵌打开 / 分享
+            - **独立运行日志页**：App 启动 / 搜索 / 崩溃自动记录
+            - **任务计划（update_plan）**：AI 维护分步待办清单
+            - **更新检查**：指向本仓库正式版（GitHub API + 302 双通道），关于页可手动「检查更新」并直接下载
+            - **同步上游 3.x 架构**：全新 Agent 生成循环、github/play 双渠道构建、Material 3 Expressive、后台悬浮窗
+            - **Firebase 可选**：无 google-services.json 也能构建运行
 
             ### 🎨 界面改动
-            - 扩展管理页新增「工具调用」入口；「其他」副标题为「更多未分类功能」
-            - 「其他」页重试设置新增「重试」分区标题
-            - 工作区详情页移除旧「全部允许」（已移至「工具调用」页）
-            - 关于页去掉官网入口，GitHub / 许可证链接指向本仓库
+            - 扩展管理重组：快捷消息 / 提示词 / 技能 / 工作区 / 工具调用 / AI 工作流 / 重试 / 子 Agent
+            - 「多 Agent」统一更名为「子 Agent」；重试状态只显示「重试中…」
+            - 子 Agent 消息视觉区分（背景 / 边框 / 标签）
+            - 关于页：检查更新入口、GitHub / 许可证 / 捐赠直达
+            - 设置页：QQ 群入口
+
+            ### 🔧 修复
+            - 子 Agent 消息上下文隔离，不再污染主对话上下文；回复节点定位修复
+            - Markdown 公式 `<` 误当 HTML 标签等渲染修复
+            - 网络异常重试、导入导出、悬浮窗、限流提示等多项稳定性修复
 
             ### 📦 其他
-            - 包名 `app.ai.rune`；版本号：预览版 `版本-commit`，正式版 `版本`
+            - 包名 `app.ai.rune`；版本号规范：预览版 `版本-commit`，正式版纯 `版本`
+            - GitHub Actions 每日自动构建 + 签名发布（nightly / stable）
             - 完整记录见 [CHANGELOG.md](https://github.com/Rune-cn/rikkahub/blob/master/CHANGELOG.md)
 
             ${{ github.event.inputs.release_type == 'stable' && '> ✅ **正式版（Stable）**' || '> ⚠️ **Beta 预览版**，可能不稳定，仅供测试。' }}
