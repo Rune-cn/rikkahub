@@ -45,6 +45,13 @@ RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天�
   - `ChatRequestFactory.retryPolicy()` 把 `NetworkSetting.rateLimitRetryMode` 映射进 `RetryPolicy.backoff`（新增 `RetryBackoff` / `RetryMode` import）。
   - 测试：`RetryTest.kt` 新增 `fixed backoff keeps the same delay` / `jitter backoff waits within the exponential cap`。
 
+### E. 重试设置独立成页 + 移除自动重试开关 + 状态文案简化（用户要求）
+- 扩展管理新增「重试」入口（`HugeIcons.Refresh` 图标，位于"其他"上方）：`Screen.RetrySettings`（RouteActivity）+ 新页面 `ui/pages/extensions/RetrySettingsPage.kt`（从 OtherSettingsPage 搬入：重试间隔 / 最大次数 / 可重试状态码 / 重试关键字 / 停止重试关键字 + `RetryChipListEditor`）。
+- **移除「自动重试」总开关**：`extensions_page_auto_retry` 开关项及字符串已删（三语）；`enableRateLimitRetry` 字段保留（默认 true），规则始终生效。`OtherSettingsPage.kt` 只保留「多 Agent」区（瘦身 279 行，import 已清理）。
+- 重试状态文案：`ChatService.retryStatus()` 只返回「重试中…」（新字符串 `chat_generation_retrying_only`，三语），不再拼接「网络连接已断开 / 连接超时」等具体原因（移除 4 个网络异常 import）。
+- 设置搜索：索引项改为 `extensions_page_retry_section` → `Screen.RetrySettings`；「其他」项去掉「自动重试」关键词。
+- zh-rTW 补齐重试相关翻译（此前整块回退英文）。
+
 ## 四、已知待办 / 注意事项（下个会话请留意）
 
 1. **QQ 群加群链接的 `authKey` 有时效**：`SettingPage.kt` 的 `QQ_GROUPS.link` 过期后需换新链接（用户提供）。

@@ -38,8 +38,11 @@
 
 ## 4. 可配置重试（限流 tpm/rpm + 关键字）
 - 设置字段（`NetworkSetting`，`Settings.kt`）：`enableAutoRetry`、`enableRateLimitRetry`、`rateLimitRetryCount`、`retryableStatusCodes`、`retryKeywords`、`stopRetryKeywords`。
-- UI：扩展管理 → 其他（`OtherSettingsPage.kt`，归类为"重试"区）。
+- UI：**独立「重试」页**（`ui/pages/extensions/RetrySettingsPage.kt`，扩展管理 → 重试，位于"其他"上方；原"其他"页里的重试设置已全部搬入，入口图标 `HugeIcons.Refresh`）。
+  - **没有「自动重试」总开关**：`enableRateLimitRetry` 字段保留（默认 true），重试规则始终生效；`extensions_page_auto_retry` 相关字符串已删除。
+  - 设置搜索索引指向 `Screen.RetrySettings`（`SettingSearchIndex.kt`）。
 - 运行时：`ChatRequestFactory.retryPolicy()` 读取上述字段映射到 `me.rerere.ai.agent.RetryPolicy`（maxRetries + retryOn 谓词；停止关键字优先）。
+- 状态提示：重试时只显示"重试中…"（`ChatService.retryStatus()` → `chat_generation_retrying_only`），不再拼接"网络连接已断开"等具体错误原因（`chat_generation_network_*` 字符串不再被引用，保留为上游资源）。
 - 间隔策略（固定/指数退避/随机抖动）：`rateLimitRetryMode` 在 `retryPolicy()` 映射为 `RetryPolicy.backoff`（`ai/.../agent/Retry.kt` 的 `RetryBackoff` 枚举），运行时生效：
   - `FIXED`：每次都等待 `initialDelay`（固定间隔）；
   - `EXPONENTIAL_BACKOFF`：1s、2s、4s…（默认，等价上游原始行为）；

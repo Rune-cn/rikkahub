@@ -91,10 +91,6 @@ import me.rerere.rikkahub.data.repository.ConversationRepository
 import me.rerere.rikkahub.data.repository.FolderRepository
 import me.rerere.rikkahub.web.BadRequestException
 import me.rerere.rikkahub.web.NotFoundException
-import java.net.ConnectException
-import java.net.NoRouteToHostException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 import java.util.Locale
 import kotlin.uuid.Uuid
 
@@ -766,7 +762,7 @@ class ChatService(
 
                         is AgentEvent.Retrying -> {
                             logRetry(event.attempt)
-                            session.processingStatus.value = retryStatus(event.attempt)
+                            session.processingStatus.value = retryStatus()
                         }
 
                         is AgentEvent.Finished -> {
@@ -845,20 +841,7 @@ class ChatService(
         )
     }
 
-    private fun retryStatus(attempt: RetryAttempt): String {
-        val reason = when (attempt.cause) {
-            is UnknownHostException -> R.string.chat_generation_network_unknown_host
-            is SocketTimeoutException -> R.string.chat_generation_network_timeout
-            is ConnectException, is NoRouteToHostException -> R.string.chat_generation_network_unreachable
-            else -> R.string.chat_generation_network_disconnected
-        }
-        return context.getString(
-            R.string.chat_generation_network_retrying,
-            context.getString(reason),
-            attempt.retry,
-            attempt.maxRetries,
-        )
-    }
+    private fun retryStatus(): String = context.getString(R.string.chat_generation_retrying_only)
 
     private suspend fun finishInterruptedPendingTools(session: ConversationSession) {
         session.tryUpdate { it.cancelInterruptedTools() }

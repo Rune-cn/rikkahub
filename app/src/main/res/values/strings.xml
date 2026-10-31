@@ -1244,12 +1244,11 @@
   <string name="extensions_page_multi_agent_enable">Multi-agent</string>
   <string name="extensions_page_multi_agent_enable_desc">Let the main agent spawn sub-agents to run tasks in parallel; sub-agent output streams into this chat</string>
   <string name="extensions_page_retry_section">Retry</string>
+  <string name="extensions_page_retry_entry_desc">Automatically retry failed requests</string>
   <string name="tool_call_page_title">Tool Calls</string>
   <string name="tool_call_entry_desc">Auto-allow tool calls and choose which tools</string>
   <string name="tool_call_auto_allow">Auto Allow</string>
   <string name="tool_call_auto_allow_desc">Allow AI tool calls without confirmation. Pick the tools below.</string>
-  <string name="extensions_page_auto_retry">Auto Retry</string>
-  <string name="extensions_page_auto_retry_desc">Automatically retry failed requests that match the rules below</string>
   <string name="extensions_page_retry_add_tag">Add</string>
   <string name="extensions_page_sub_agent_section">Sub-agent</string>
   <string name="extensions_page_sub_agent_inherit_context">Share conversation context</string>
@@ -1354,6 +1353,7 @@
   <string name="setting_provider_page_test_tool_called">Called: %1$s  Args: %2$s</string>
   <string name="setting_provider_page_test_tool_not_called">Tool not called, response: %s</string>
   <string name="chat_generation_retrying">Retrying (%1$d/%2$d)…</string>
+  <string name="chat_generation_retrying_only">Retrying…</string>
   <string name="chat_generation_network_retrying">%1$s. Retrying (%2$d/%3$d)…</string>
   <string name="chat_generation_rate_limit_error">Rate limit exceeded</string>
   <string name="chat_generation_rate_limit_retrying">%1$s, retrying (%2$d/%3$d)…</string>

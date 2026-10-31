@@ -98,6 +98,12 @@ fun ExtensionsPage() {
                         supportingContent = { Text(stringResource(R.string.workflow_entry_desc)) },
                     )
                     item(
+                        onClick = { navController.navigate(Screen.RetrySettings) },
+                        leadingContent = { CardGroupIcon(HugeIcons.Refresh, containerColor = containerColor, contentColor = contentColor) },
+                        headlineContent = { Text(stringResource(R.string.extensions_page_retry_section)) },
+                        supportingContent = { Text(stringResource(R.string.extensions_page_retry_entry_desc)) },
+                    )
+                    item(
                         onClick = { navController.navigate(Screen.OtherSettings) },
                         leadingContent = { CardGroupIcon(HugeIcons.Settings03, containerColor = containerColor, contentColor = contentColor) },
                         headlineContent = { Text(stringResource(R.string.extensions_page_other_category)) },

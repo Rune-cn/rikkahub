@@ -1220,12 +1220,11 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="extensions_page_multi_agent_enable">多 Agent 工作</string>
   <string name="extensions_page_multi_agent_enable_desc">让主 Agent 派生子 Agent 并行处理任务；子 Agent 的输出会流式显示在对话中</string>
   <string name="extensions_page_retry_section">重试</string>
+  <string name="extensions_page_retry_entry_desc">自动重试失败的请求</string>
   <string name="tool_call_page_title">工具调用</string>
   <string name="tool_call_entry_desc">自动允许工具调用，并可自由选择工具</string>
   <string name="tool_call_auto_allow">自动允许</string>
   <string name="tool_call_auto_allow_desc">允许 AI 调用工具时无需确认，可在下方自由选择工具</string>
-  <string name="extensions_page_auto_retry">自动重试</string>
-  <string name="extensions_page_auto_retry_desc">根据下方规则自动重试失败的请求</string>
   <string name="extensions_page_retry_add_tag">添加</string>
   <string name="extensions_page_sub_agent_section">子 Agent</string>
   <string name="extensions_page_sub_agent_inherit_context">共享对话上下文</string>
@@ -1347,6 +1346,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workspace_terminal_close_confirm_message">关闭此标签页将终止其中仍在运行的任何进程。</string>
   <string name="workspace_terminal_close">关闭</string>
   <string name="chat_generation_retrying">正在重试（%1$d/%2$d）…</string>
+  <string name="chat_generation_retrying_only">重试中…</string>
   <string name="chat_generation_network_retrying">%1$s，正在重试（%2$d/%3$d）…</string>
   <string name="chat_generation_rate_limit_error">触发限流</string>
   <string name="chat_generation_rate_limit_retrying">%1$s，正在重试（%2$d/%3$d）…</string>

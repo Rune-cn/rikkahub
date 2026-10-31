@@ -94,6 +94,7 @@ import me.rerere.rikkahub.ui.pages.chat.ChatPage
 import me.rerere.rikkahub.ui.pages.debug.DebugPage
 import me.rerere.rikkahub.ui.pages.extensions.ExtensionsPage
 import me.rerere.rikkahub.ui.pages.extensions.OtherSettingsPage
+import me.rerere.rikkahub.ui.pages.extensions.RetrySettingsPage
 import me.rerere.rikkahub.ui.pages.workflow.WorkflowCanvasRoute
 import me.rerere.rikkahub.ui.pages.workflow.WorkflowPage
 import me.rerere.rikkahub.ui.pages.extensions.ToolCallPage
@@ -552,6 +553,10 @@ class RouteActivity : ComponentActivity() {
                                 ExtensionsPage()
                             }
 
+                            entry<Screen.RetrySettings> {
+                                RetrySettingsPage()
+                            }
+
                             entry<Screen.OtherSettings> {
                                 OtherSettingsPage()
                             }
@@ -814,6 +819,9 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object ToolCalls : Screen
+
+    @Serializable
+    data object RetrySettings : Screen
 
     @Serializable
     data object OtherSettings : Screen
