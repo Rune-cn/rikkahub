@@ -709,6 +709,7 @@ class ChatService(
             }
             // 子 Agent 消息只是给用户看的展示节点，其输出已通过 wait_agent 工具结果返回给主 Agent，
             // 不再混入主 Agent 的模型上下文（否则模型会以为子 Agent 的话是自己说的，导致上下文混乱）
+            // 注意：过滤后的 history 与 nodes 索引不再一一对应，定位回复节点必须在全量 allHistory 里按 id 找
             val history = allHistory.filterNot { it.isSubAgentDisplayMessage() }
 
             // 同步主对话上下文，供 spawn_agent 的 inherit_context 使用（同样过滤子 Agent 展示消息）
@@ -716,19 +717,21 @@ class ChatService(
                 conversation.currentMessages.filterNot { it.isSubAgentDisplayMessage() },
                 conversationId,
             )
-            // 回复写入最后一个「主 Agent」助手消息节点；跳过子 Agent 节点，避免主回复写进子 Agent 消息里
-            val lastMainAssistantIndex = allHistory.indexOfLast {
-                it.role == MessageRole.ASSISTANT && it.modelSnapshot?.modelId != "sub-agent"
-            }
+            // 只有「过滤子 Agent 展示消息后的最后一条」是主 Agent 的助手消息时，才接着写它所在的节点；
+            // 即用户再发消息后（最后一条是 USER）必须新建节点，不能把新回复写进上一轮回复里（修复：每次对话都在旧回复节点上继续改）
+            val lastMainAssistantMessage = history.lastOrNull()
+                ?.takeIf { it.role == MessageRole.ASSISTANT }
             val replyNodeId = when {
-                lastMainAssistantIndex != -1 -> nodes[lastMainAssistantIndex].id
+                lastMainAssistantMessage != null -> {
+                    val originalIndex = allHistory.indexOfFirst { it.id == lastMainAssistantMessage.id }
+                    if (originalIndex != -1) nodes[originalIndex].id else Uuid.random()
+                }
                 regenerateNodeId != null -> regenerateNodeId
                 else -> Uuid.random()
             }
             // 接着上一条助手消息写时就是它，否则等第一次输出。要在 createContext 之前换掉，
             // 它会挂起也可能失败，期间或失败后不能还指着上一轮的回复
-            session.replyMessageId.value =
-                allHistory.getOrNull(lastMainAssistantIndex)?.takeIf { it.role == MessageRole.ASSISTANT }?.id
+            session.replyMessageId.value = lastMainAssistantMessage?.id
 
             val turn = requestFactory.createContext(settings, conversation)
             senderName = if (turn.assistant.useAssistantAvatar) {
