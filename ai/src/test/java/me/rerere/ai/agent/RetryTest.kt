@@ -62,6 +62,49 @@ class RetryTest {
         assertEquals(1, calls)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `fixed backoff keeps the same delay`() = runTest {
+        var calls = 0
+        val attempts = mutableListOf<RetryAttempt>()
+
+        val result = withRetry(
+            RetryPolicy(maxRetries = 3, initialDelay = 2.seconds, backoff = RetryBackoff.FIXED),
+            onRetry = { attempts += it },
+        ) {
+            calls++
+            if (calls < 3) throw IOException("timeout")
+            "ok"
+        }
+
+        assertEquals("ok", result)
+        assertEquals(listOf(2.seconds, 2.seconds), attempts.map { it.delay })
+        assertEquals(4_000L, currentTime)
+    }
+
+    @Test
+    fun `jitter backoff waits within the exponential cap`() = runTest {
+        var calls = 0
+        val attempts = mutableListOf<RetryAttempt>()
+
+        withRetry(
+            RetryPolicy(maxRetries = 2, initialDelay = 1.seconds, backoff = RetryBackoff.JITTER),
+            onRetry = { attempts += it },
+        ) {
+            calls++
+            if (calls < 3) throw IOException("timeout")
+            "ok"
+        }
+
+        // 第 1 次重试：Full Jitter，在 [1ms, 1s] 内随机；第 2 次：在 [1ms, 2s] 内随机
+        assertEquals(2, attempts.size)
+        val first = attempts[0].delay
+        assertTrue(first > Duration.ZERO && first <= 1.seconds)
+        val second = attempts[1].delay
+        assertTrue(second > Duration.ZERO && second <= 2.seconds)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `io failure caused by cancellation is not retried`() = runTest {
         var calls = 0

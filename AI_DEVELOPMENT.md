@@ -27,10 +27,10 @@
   - 对话内链接点击弹操作面板（浏览器打开 / 内嵌打开 / 分享），见 02-11 与 07-7。
   - 修复子 Agent 消息上下文污染与回复写错节点（`Conversation.mainMessages` 过滤展示消息），见 02-2 与 04-3.5。
   - **修复回复节点定位**：`runTurn` 中只有「过滤子 Agent 展示消息后的最后一条」是主 Agent 助手消息才复用其节点；用户再发新消息（末尾是 USER）必须新建节点，否则新回复会写进上一轮回复节点里（表现为"每次对话都在旧回复基础上继续改"），见 04-3.5。
+  - **重试间隔策略运行时生效**：设置里的「固定 / 指数退避 / 随机抖动」不再只是摆设——`ai/.../agent/Retry.kt` 新增 `RetryBackoff` 枚举（FIXED / EXPONENTIAL_BACKOFF / JITTER），`ChatRequestFactory.retryPolicy()` 把 `NetworkSetting.rateLimitRetryMode` 映射进 `RetryPolicy.backoff`，三种策略都在运行时生效（JITTER 为 Full Jitter），并补了单元测试（见 02-4 与 04-2）。
 - **会话交接**：每次会话结束时更新根目录 `NEXT_SESSION.md`（一次性交接单，可直接发给下个会话；本文件是知识库）。
 - **已知待办/注意事项**：
   - 设置页 QQ 群使用 universal-share 加群链接，**`authKey` 有时效**，过期需换新链接（`SettingPage.kt` 的 `QQ_GROUPS.link`）。
-  - 可配置重试的"间隔策略"（固定/抖动）在运行时仍走上游内建指数退避，仅 UI/设置保留（见 04）。
   - 设置搜索交互经历过多次修正，最终形态见 [07-UI交互与代码约定.md](docs/07-UI交互与代码约定.md) 的"设置搜索"一节。
   - 构建产物因上游 3.x 引入 github/play flavor，APK 命名与路径已变（见 05）。
   - 子 Agent 展示消息被多个消费方读取（生成/压缩/标题/UI），新增消费方一律用 `mainMessages` / `isSubAgentDisplayMessage()`，不要直接遍历 `currentMessages` 发模型（见 04-3.5）。

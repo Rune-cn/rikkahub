@@ -5,6 +5,7 @@ import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.rerere.ai.agent.AgentHooks
 import me.rerere.ai.agent.AgentRequest
+import me.rerere.ai.agent.RetryBackoff
 import me.rerere.ai.agent.RetryPolicy
 import me.rerere.ai.agent.StepRequest
 import me.rerere.ai.agent.withRetry
@@ -35,6 +36,7 @@ import me.rerere.rikkahub.data.ai.transformers.onGenerationFinish
 import me.rerere.rikkahub.data.ai.transformers.transformThinkTags
 import me.rerere.rikkahub.data.ai.transformers.transforms
 import me.rerere.rikkahub.data.ai.transformers.visualTransforms
+import me.rerere.rikkahub.data.datastore.RetryMode
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.datastore.findProvider
 import me.rerere.rikkahub.data.model.Assistant
@@ -303,9 +305,14 @@ internal fun Settings.retryPolicy(): RetryPolicy {
     val net = networkSetting
     if (!net.enableAutoRetry) return RetryPolicy.NONE
     // fork：重试次数、限流开关、可重试状态码与关键字都按「扩展管理 → 其他」页的设置生效；
-    // 停止重试关键字优先级最高。间隔策略沿用上游内建的指数退避（1s、2s、4s…）。
+    // 停止重试关键字优先级最高。间隔策略（固定/指数退避/随机抖动）映射到 RetryPolicy.backoff 运行时生效。
     return RetryPolicy(
         maxRetries = net.rateLimitRetryCount,
+        backoff = when (net.rateLimitRetryMode) {
+            RetryMode.FIXED -> RetryBackoff.FIXED
+            RetryMode.EXPONENTIAL_BACKOFF -> RetryBackoff.EXPONENTIAL_BACKOFF
+            RetryMode.JITTER -> RetryBackoff.JITTER
+        },
         retryOn = { error ->
             val msg = error.message?.lowercase().orEmpty()
             val stopped = net.stopRetryKeywords.any { it.isNotBlank() && it.lowercase() in msg }

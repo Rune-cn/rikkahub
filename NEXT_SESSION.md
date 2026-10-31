@@ -38,15 +38,21 @@ RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天�
   - `data/ai/ConversationMetaGenerator.kt`：标题/建议改用 `mainMessages`。
   - `ui/components/message/ChatMessageAvatar.kt`：子 Agent 消息直接 return（顶部已有标签，不显示主 Agent 头像）。
 
+### D. 重试间隔策略运行时生效（新功能，完成待办2）
+- 之前：设置里的「固定 / 指数退避 / 随机抖动」只在 UI/设置里保留，运行时一律上游指数退避。
+- 现在：
+  - `ai/.../agent/Retry.kt` 新增 `RetryBackoff` 枚举（FIXED / EXPONENTIAL_BACKOFF / JITTER），`RetryPolicy` 增加 `backoff` 字段（默认 EXPONENTIAL_BACKOFF，行为不变）；`withRetry` 按策略计算等待时间，JITTER 为 Full Jitter（`[1ms, 指数退避值]` 内随机）。
+  - `ChatRequestFactory.retryPolicy()` 把 `NetworkSetting.rateLimitRetryMode` 映射进 `RetryPolicy.backoff`（新增 `RetryBackoff` / `RetryMode` import）。
+  - 测试：`RetryTest.kt` 新增 `fixed backoff keeps the same delay` / `jitter backoff waits within the exponential cap`。
+
 ## 四、已知待办 / 注意事项（下个会话请留意）
 
 1. **QQ 群加群链接的 `authKey` 有时效**：`SettingPage.kt` 的 `QQ_GROUPS.link` 过期后需换新链接（用户提供）。
-2. **重试间隔策略**（固定/抖动）只在设置里保留，运行时走上游指数退避；要完全支持需改 `ai/.../agent/Retry.kt`。
-3. **子 Agent 展示消息隔离**：生成/压缩/标题/建议一律用 `Conversation.mainMessages` 或 `isSubAgentDisplayMessage()` 过滤，**不要再拿 `currentMessages` 直接发模型**（见 docs/04-3.5）。
-4. **链接交互约定**：对话内链接必须走 `LinkActionSheet`，新增渲染入口时给 `MarkdownBlock` 透传 `onLinkClick`，不要自己调 `context.openUrl`（见 docs/07-7）；非对话内链接（设置/关于/捐赠页）保持原行为。
-5. 「运行日志」记录一切 `RunLog.log(...)`：**关键操作与异常**（应用启动、搜索、崩溃、以及任何新埋点），不限于特定几类；排查类功能优先留运行日志。
-6. 版本号规则：没用户要求不升版；versionCode 必须单调递增（现在 193）。
-7. 构建产物路径：`assembleGithubRelease` → `app/build/outputs/apk/github/release/`；README 下载名 `app-github-arm64-v8a-release.apk`。
+2. **子 Agent 展示消息隔离**：生成/压缩/标题/建议一律用 `Conversation.mainMessages` 或 `isSubAgentDisplayMessage()` 过滤，**不要再拿 `currentMessages` 直接发模型**（见 docs/04-3.5）。
+3. **链接交互约定**：对话内链接必须走 `LinkActionSheet`，新增渲染入口时给 `MarkdownBlock` 透传 `onLinkClick`，不要自己调 `context.openUrl`（见 docs/07-7）；非对话内链接（设置/关于/捐赠页）保持原行为。
+4. 「运行日志」记录一切 `RunLog.log(...)`：**关键操作与异常**（应用启动、搜索、崩溃、以及任何新埋点），不限于特定几类；排查类功能优先留运行日志。
+5. 版本号规则：没用户要求不升版；versionCode 必须单调递增（现在 193）。
+6. 构建产物路径：`assembleGithubRelease` → `app/build/outputs/apk/github/release/`；README 下载名 `app-github-arm64-v8a-release.apk`。
 
 ## 五、给下个会话的开工步骤
 

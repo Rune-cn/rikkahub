@@ -40,7 +40,11 @@
 - 设置字段（`NetworkSetting`，`Settings.kt`）：`enableAutoRetry`、`enableRateLimitRetry`、`rateLimitRetryCount`、`retryableStatusCodes`、`retryKeywords`、`stopRetryKeywords`。
 - UI：扩展管理 → 其他（`OtherSettingsPage.kt`，归类为"重试"区）。
 - 运行时：`ChatRequestFactory.retryPolicy()` 读取上述字段映射到 `me.rerere.ai.agent.RetryPolicy`（maxRetries + retryOn 谓词；停止关键字优先）。
-- 已知差异：间隔策略（固定/抖动）字段保留在设置里，但运行时沿上游 `Retry.kt` 内建指数退避（1s/2s/4s…）。要彻底支持固定/抖动需改 `ai/.../agent/Retry.kt` 的 `withRetry`。
+- 间隔策略（固定/指数退避/随机抖动）：`rateLimitRetryMode` 在 `retryPolicy()` 映射为 `RetryPolicy.backoff`（`ai/.../agent/Retry.kt` 的 `RetryBackoff` 枚举），运行时生效：
+  - `FIXED`：每次都等待 `initialDelay`（固定间隔）；
+  - `EXPONENTIAL_BACKOFF`：1s、2s、4s…（默认，等价上游原始行为）；
+  - `JITTER`：Full Jitter，在 `[1ms, 指数退避值]` 内随机，避免大量请求同时重试造成"重试风暴"。
+  - 测试：`ai/src/test/java/me/rerere/ai/agent/RetryTest.kt`（fixed / jitter 各一条）。
 
 ## 5. 设置搜索（64 项索引）
 - 文件：`ui/pages/setting/SettingSearchIndex.kt`（索引 + 搜索函数 + 输入组件）与 `SettingPage.kt`（顶栏入口）。

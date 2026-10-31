@@ -2,6 +2,18 @@
 
 本分支（`Rune-cn/rikkahub`）所有版本记录。格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [Unreleased]
+
+### ✨ 新增功能
+
+- **重试间隔策略运行时生效**：「扩展管理 → 其他 → 重试」里的三种间隔策略（固定间隔 / 指数退避 / 随机抖动）此前只有指数退避在运行时生效，现在全部生效：
+  - `ai` 模块新增 `RetryBackoff` 枚举（FIXED / EXPONENTIAL_BACKOFF / JITTER），`RetryPolicy` 增加 `backoff` 字段（默认指数退避，行为与之前一致）；
+  - `ChatRequestFactory.retryPolicy()` 将 `NetworkSetting.rateLimitRetryMode` 映射进 `RetryPolicy.backoff`；
+  - JITTER 采用 Full Jitter（在 `[1ms, 指数退避值]` 内随机），避免限流时大批请求同时重试造成"重试风暴"；
+  - 新增单元测试覆盖固定间隔与抖动两种策略（`ai/src/test/.../RetryTest.kt`）。
+
+---
+
 ## [2.5.6-1] - 2026-10-07（首个发布版）
 
 ### ✨ 新增功能
