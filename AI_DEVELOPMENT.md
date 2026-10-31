@@ -21,11 +21,12 @@
 
 - **版本**：`3.0.0`（versionCode `193`）。nightly 发布命名 `3.0.0-<commit>`，正式版（stable）为纯 `3.0.0`。
 - **上游同步**：已 rebase 上游 3.0.0/3.1.0 全量（128 提交）并对齐后续 2 个小提交；基线 merge `39ff6c43`（合并 `eb530b0f`，HEAD 与 upstream/master 完全一致）。fork 在上游之上共 100+ 提交。
-- **构建状态**：✅ nightly 每天自动构建成功（GitHub Actions `daily-build.yml`），产物发布到固定 tag `nightly`。最近一次手动验证 `b41b17f4`（链接面板+子 Agent 修复）构建成功。
+- **构建状态**：✅ nightly 每天自动构建成功（GitHub Actions `daily-build.yml`），产物发布到固定 tag `nightly`。最近一次手动验证 `1eef58f9`（链接面板 + 子 Agent 修复 + 回复节点定位修复）构建成功。
 - **定制功能**：11 项全部保留并在 3.x 架构上重新适配（详见 [02-fork定制功能.md](docs/02-fork定制功能.md)）。
 - **本轮新增（2026-10-31 晚）**：
   - 对话内链接点击弹操作面板（浏览器打开 / 内嵌打开 / 分享），见 02-11 与 07-7。
   - 修复子 Agent 消息上下文污染与回复写错节点（`Conversation.mainMessages` 过滤展示消息），见 02-2 与 04-3.5。
+  - **修复回复节点定位**：`runTurn` 中只有「过滤子 Agent 展示消息后的最后一条」是主 Agent 助手消息才复用其节点；用户再发新消息（末尾是 USER）必须新建节点，否则新回复会写进上一轮回复节点里（表现为"每次对话都在旧回复基础上继续改"），见 04-3.5。
 - **会话交接**：每次会话结束时更新根目录 `NEXT_SESSION.md`（一次性交接单，可直接发给下个会话；本文件是知识库）。
 - **已知待办/注意事项**：
   - 设置页 QQ 群使用 universal-share 加群链接，**`authKey` 有时效**，过期需换新链接（`SettingPage.kt` 的 `QQ_GROUPS.link`）。
