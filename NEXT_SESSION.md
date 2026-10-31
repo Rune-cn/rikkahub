@@ -62,6 +62,12 @@ RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天�
 3. **扩展管理「其他」改名「子 Agent」**：`extensions_page_other_category` = `Sub-agents`/`子 Agent`（en/zh 改值，tw 补齐）+ 搜索关键词更新；页面标题随入口同串。
 4. **删除子 Agent「共享对话上下文」**：`SubAgentSetting.defaultInheritContext`、`SubAgentTask.inheritContext`、spawn_agent 的 `inherit_context` 参数、`SubAgentManager.mainContext` 与 `updateMainContext`（改名 `updateActiveConversation(conversationId)`，只记主会话 id）全部移除；`extensions_page_sub_agent_inherit_context` 字符串删除；子 Agent 提示词固定说明"不继承主对话上下文"。
 
+### H. 子 Agent 图标副标题 + 正式版更新检测双方案（用户要求）
+1. **图标/副标题**：扩展管理「子 Agent」入口图标 `HugeIcons.Settings03` → `HugeIcons.AiBrain01`；副标题 `extensions_page_other_desc` → 「主 Agent 可派生子 Agent 并行处理任务」（en/zh/tw 同步）。
+2. **更新检测**（`utils/UpdateChecker.kt`，2026-10-31 命令行实测）：
+   - 实测结论：`api.github.com/.../releases/latest` 匿名会 **403 限流**（60 次/h）；网页 `github.com/Rune-cn/rikkahub/releases/latest` 返回 **302**，`Location: .../releases/tag/<tag>` 无配额限制；资产命名旧（2.5.7=`app-arm64-v8a-release.apk`）新（nightly=`app-github-arm64-v8a-release.apk`）不一致，不能只靠猜。
+   - 落地：API 优先（资产/日志/时间齐全）→ 失败降级 302 兜底（仅 tag 版本，资产按新版命名拼直链+HEAD 校验，不通退发布页）。nightly 是 prerelease=true，`releases/latest` 不会误判。
+
 ## 四、已知待办 / 注意事项（下个会话请留意）
 
 1. **QQ 群加群链接的 `authKey` 有时效**：`SettingPage.kt` 的 `QQ_GROUPS.link` 过期后需换新链接（用户提供）。

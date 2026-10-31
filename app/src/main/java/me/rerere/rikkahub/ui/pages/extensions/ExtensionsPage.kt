@@ -18,12 +18,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.rikkahub.R
+import me.rerere.hugeicons.stroke.AiBrain01
 import me.rerere.hugeicons.stroke.AiMagic
 import me.rerere.hugeicons.stroke.Book03
 import me.rerere.hugeicons.stroke.Folder01
 import me.rerere.hugeicons.stroke.Puzzle
 import me.rerere.hugeicons.stroke.Refresh
-import me.rerere.hugeicons.stroke.Settings03
 import me.rerere.hugeicons.stroke.Tools
 import me.rerere.hugeicons.stroke.Zap
 import me.rerere.rikkahub.Screen
@@ -106,7 +106,7 @@ fun ExtensionsPage() {
                     )
                     item(
                         onClick = { navController.navigate(Screen.OtherSettings) },
-                        leadingContent = { CardGroupIcon(HugeIcons.Settings03, containerColor = containerColor, contentColor = contentColor) },
+                        leadingContent = { CardGroupIcon(HugeIcons.AiBrain01, containerColor = containerColor, contentColor = contentColor) },
                         headlineContent = { Text(stringResource(R.string.extensions_page_other_category)) },
                         supportingContent = { Text(stringResource(R.string.extensions_page_other_desc)) },
                     )

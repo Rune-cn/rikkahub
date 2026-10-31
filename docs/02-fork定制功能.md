@@ -16,7 +16,7 @@
   - `data/ai/subagent/SubAgentManager.kt`：任务调度、前台服务保活。
   - `data/ai/tools/local/SubAgentTools.kt`：spawn_agent / wait_agent / list_agents / close_agent 工具。
   - `data/ai/tools/local/LocalTools.kt`：注册（`SUB_AGENT_TOOL_NAMES` 在此）。
-  - `ui/pages/extensions/OtherSettingsPage.kt`：子 Agent 总开关 / 默认模型（`Settings.subAgentSetting` + `enableSubAgent`）。入口显示为「子 Agent」（`extensions_page_other_category`，原"其他"页，2026-10-31 改名）。
+  - `ui/pages/extensions/OtherSettingsPage.kt`：子 Agent 总开关 / 默认模型（`Settings.subAgentSetting` + `enableSubAgent`）。入口显示为「子 Agent」（`extensions_page_other_category`，原"其他"页，2026-10-31 改名；入口图标 `HugeIcons.AiBrain01`，副标题「主 Agent 可派生子 Agent 并行处理任务」）。
   - `service/ChatService.kt`：子 Agent 输出流式写入主对话（`upsertSubAgentMessage` + `subAgentManager.updateActiveConversation`）。
 - 关键点：
   - 生成循环已适配新 API（ChatTurnContext + ChatRequestFactory.createAgent + runAgent，见 04）。
@@ -75,8 +75,11 @@
 - 上游曾做自动分类，本 fork 用**手动分类**（带名称+描述）替代。
 
 ## 9. 更新检查指向本 fork 正式版
-- `utils/UpdateChecker.kt`：请求 `https://api.github.com/repos/Rune-cn/rikkahub/releases/latest`，`Version` 比较（remote > local 才提示），下载指向本仓库。
-- 不依赖上游 updates.rikka-ai.com。
+- `utils/UpdateChecker.kt`：检查**最新正式版（stable）**，`Version` 比较（remote > local 才提示），下载指向本仓库。不依赖上游 updates.rikka-ai.com。
+- **双方案（2026-10-31 实测落地）**：
+  1. GitHub API `releases/latest`（数据全：版本名/时间/日志/资产直链）；匿名限流 60 次/小时，设备共用 IP 易踩 403。
+  2. 网页 `https://github.com/Rune-cn/rikkahub/releases/latest` 的 **302 重定向**做兜底（无 API 配额）：从 `Location` 头取最新 tag，资产名按当前规范拼 `releases/download/<tag>/app-github-arm64-v8a-release.apk`，HEAD 探测不通（旧版命名如 2.5.7 的 `app-arm64-v8a-release.apk`）则退到发布页链接。
+- nightly 由 workflow 标记为 prerelease=true，`releases/latest` 不会误当正式版。
 
 ## 10. 子 Agent 消息视觉区分
 - `ui/components/message/ChatMessage.kt`：`isSubAgent`（modelId == "sub-agent"）时使用不同的背景/边框/标签（Material3 tonal 色阶，**无 emoji**）。

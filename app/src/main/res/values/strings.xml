@@ -1238,7 +1238,7 @@
   <string name="extensions_page_workspace">Workspace</string>
   <string name="extensions_page_workspace_desc">Manage local working directories accessible by Agent</string>
   <string name="extensions_page_other_category">Sub-agents</string>
-  <string name="extensions_page_other_desc">Sub-agent settings</string>
+  <string name="extensions_page_other_desc">Let the main agent spawn sub-agents to run tasks in parallel</string>
   <string name="extensions_page_multi_agent_enable">Sub-agents</string>
   <string name="extensions_page_multi_agent_enable_desc">Let the main agent spawn sub-agents to run tasks in parallel; sub-agent output streams into this chat</string>
   <string name="extensions_page_retry_section">Retry</string>

@@ -39,52 +39,133 @@ class UpdateChecker(
     )
 
     /**
-     * 检查本仓库（fork）的 Nightly Release 是否有更新。
-     * 不再依赖上游 updates.rikka-ai.com 服务；比较依据为 Release 发布时间 vs 本地安装时间。
+     * 检查本仓库（fork）的最新**正式版**（stable）Release 是否有更新。
+     * 不再依赖上游 updates.rikka-ai.com 服务；对比依据为版本号（remote > local 才提示）。
+     *
+     * 两套方案（2026-10-31 实测）：
+     * 1. GitHub API `releases/latest`：数据最全（版本名/发布时间/更新日志/资产直链）；
+     *    但匿名调用受 60 次/小时配额限制（设备共用 IP 容易踩到 403）。
+     * 2. GitHub 网页 `releases/latest` 的 302 重定向：无 API 配额限制，
+     *    从 Location 头拿最新正式版 tag；资产名按当前命名规范拼直链，HEAD 不通则退到发布页。
+     * API 失败（限流/网络异常）时自动降级到方案 2。
      */
     @OptIn(ExperimentalTime::class)
     private fun checkUpdate(): Flow<UiState<UpdateInfo>> = flow<UiState<UpdateInfo>> {
         emit(UiState.Loading)
+        // 方案一：GitHub API releases/latest
+        val apiRelease = runCatching { fetchLatestReleaseViaApi() }.getOrNull()
+        if (apiRelease != null) {
+            emit(buildUpdateState(
+                remoteName = apiRelease.name,
+                publishedAt = apiRelease.publishedAt,
+                changelog = apiRelease.body,
+                prerelease = apiRelease.prerelease,
+                downloads = apiRelease.assets.map { asset ->
+                    UpdateDownload(
+                        name = asset.name,
+                        url = asset.browserDownloadUrl,
+                        size = formatSize(asset.size),
+                    )
+                },
+            ))
+            return@flow
+        }
+        // 方案二：GitHub 网页 302 重定向（无 API 配额限制），只拿最新 tag 版本
+        val tag = runCatching { fetchLatestTagViaRedirect() }.getOrNull()
+        if (tag != null) {
+            emit(buildUpdateStateFromTag(tag))
+            return@flow
+        }
+        emit(UiState.Idle)
+    }.catch {
+        // 网络异常时静默，避免打扰用户
+        emit(UiState.Idle)
+    }.flowOn(Dispatchers.IO)
+
+    /** 拉取 releases/latest（失败返回 null，由调用方降级） */
+    private suspend fun fetchLatestReleaseViaApi(): GitHubRelease? {
         val request = Request.Builder()
             .url("https://api.github.com/repos/Rune-cn/rikkahub/releases/latest")
             .header("Accept", "application/vnd.github+json")
             .header("User-Agent", "RikkaHub")
             .build()
         val response = client.newCall(request).await()
-        if (!response.isSuccessful) {
-            emit(UiState.Idle)
-            return@flow
+        if (!response.isSuccessful) return null
+        return runCatching { json.decodeFromString<GitHubRelease>(response.body?.string().orEmpty()) }.getOrNull()
+    }
+
+    /** 通过 releases/latest 的 302 重定向拿最新正式版 tag（如 2.5.7），免 API 配额 */
+    private suspend fun fetchLatestTagViaRedirect(): String? {
+        val request = Request.Builder()
+            .url("https://github.com/Rune-cn/rikkahub/releases/latest")
+            .header("User-Agent", "RikkaHub")
+            .build()
+        val response = client.newBuilder().followRedirects(false).build().newCall(request).await()
+        // 302/301 都是重定向（3xx 不算 isSuccessful），关键在 Location 头
+        val location = response.header("Location").orEmpty()
+        if (location.isBlank()) return null
+        // Location 示例：https://github.com/Rune-cn/rikkahub/releases/tag/2.5.7
+        return location.substringAfterLast('/').trim().takeIf {
+            it.isNotBlank() && it.all { c -> c.isLetterOrDigit() || c == '.' || c == '-' || c == '_' }
         }
-        val release = json.decodeFromString<GitHubRelease>(response.body?.string().orEmpty())
-        // 检查正式版（releases/latest）：仅当远端版本号高于本地版本才提示
-        val remoteVersion = release.name.trim().substringBefore('-')
+    }
+
+    private fun buildUpdateState(
+        remoteName: String,
+        publishedAt: String,
+        changelog: String,
+        prerelease: Boolean,
+        downloads: List<UpdateDownload>,
+    ): UiState<UpdateInfo> {
+        // 检查正式版：仅当远端版本号高于本地版本才提示
+        val remoteVersion = remoteName.trim().substringBefore('-')
         val localVersion = BuildConfig.VERSION_NAME.substringBefore('-')
         if (remoteVersion.isBlank() || Version(remoteVersion) <= Version(localVersion)) {
-            emit(UiState.Idle)
-            return@flow
+            return UiState.Idle
         }
-        emit(
-            UiState.Success(
-                UpdateInfo(
-                    // 版本号格式：应用版本-构建 commit（如 2.5.6-a3ea1cd1）
-                    version = release.name.ifBlank { release.publishedAt.take(10).replace("-", ".") },
-                    publishedAt = release.publishedAt,
-                    changelog = release.body,
-                    prerelease = release.prerelease,
-                    downloads = release.assets.map { asset ->
-                        UpdateDownload(
-                            name = asset.name,
-                            url = asset.browserDownloadUrl,
-                            size = formatSize(asset.size),
-                        )
-                    },
-                )
+        return UiState.Success(
+            UpdateInfo(
+                // 版本号格式：应用版本-构建 commit（如 2.5.6-a3ea1cd1）
+                version = remoteName.ifBlank { publishedAt.take(10).replace("-", ".") },
+                publishedAt = publishedAt,
+                changelog = changelog,
+                prerelease = prerelease,
+                downloads = downloads,
             )
         )
-    }.catch {
-        // 网络异常时静默，避免打扰用户
-        emit(UiState.Idle)
-    }.flowOn(Dispatchers.IO)
+    }
+
+    /** 302 兜底：只有 tag，资产名按当前命名规范拼接直链；HEAD 不通则退到发布页 */
+    private suspend fun buildUpdateStateFromTag(tag: String): UiState<UpdateInfo> {
+        val localVersion = BuildConfig.VERSION_NAME.substringBefore('-')
+        if (tag.isBlank() || Version(tag) <= Version(localVersion)) {
+            return UiState.Idle
+        }
+        val apkUrl = "https://github.com/Rune-cn/rikkahub/releases/download/$tag/app-github-arm64-v8a-release.apk"
+        val (name, url) = if (headReachable(apkUrl)) {
+            "app-github-arm64-v8a-release.apk" to apkUrl
+        } else {
+            // 旧版命名（如 app-arm64-v8a-release.apk）没有该直链，退到发布页让用户自行选择
+            "Release $tag" to "https://github.com/Rune-cn/rikkahub/releases/tag/$tag"
+        }
+        return UiState.Success(
+            UpdateInfo(
+                version = tag,
+                publishedAt = "",
+                changelog = "",
+                prerelease = false,
+                downloads = listOf(UpdateDownload(name, url, "")),
+            )
+        )
+    }
+
+    /** 探测直链是否可下载（跟随重定向后应为 200） */
+    private suspend fun headReachable(url: String): Boolean = runCatching {
+        val response = client.newCall(
+            Request.Builder().url(url).method("HEAD", null).header("User-Agent", "RikkaHub").build()
+        ).await()
+        response.isSuccessful
+    }.getOrDefault(false)
 
     private fun formatSize(bytes: Long): String = when {
         bytes >= 1024 * 1024 -> "%.1f MB".format(bytes / 1024.0 / 1024.0)
