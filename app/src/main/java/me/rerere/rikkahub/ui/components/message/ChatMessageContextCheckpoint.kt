@@ -46,6 +46,7 @@ fun ChatMessageContextCheckpoint(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
+    onLinkClick: ((String) -> Unit)? = null,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
 
@@ -102,7 +103,10 @@ fun ChatMessageContextCheckpoint(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    MarkdownBlock(content = message.toText())
+                    MarkdownBlock(
+                        content = message.toText(),
+                        onLinkClick = onLinkClick,
+                    )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End,

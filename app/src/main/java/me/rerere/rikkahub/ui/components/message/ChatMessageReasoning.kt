@@ -180,6 +180,7 @@ private fun ReasoningContent(
                 ),
                 style = reasoningTextStyle,
                 modifier = Modifier.fillMaxSize(),
+                onLinkClick = onLinkClick,
             )
         }
         // 流式生成期间不启用 SelectionContainer，避免 selectable 列表并发修改导致的
@@ -201,6 +202,7 @@ fun ChainOfThoughtScope.ChatMessageReasoningStep(
     assistant: Assistant?,
     fadeHeight: Float = 64f,
     collapsedAdaptiveWidth: Boolean = false,
+    onLinkClick: ((String) -> Unit)? = null,
 ) {
     val (state, loading) = rememberReasoningState(reasoning)
     val thinkingTitle = reasoning.reasoning.extractThinkingTitle()

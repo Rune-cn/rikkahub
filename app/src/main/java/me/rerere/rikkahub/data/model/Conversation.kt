@@ -53,6 +53,15 @@ data class Conversation(
             return messageNodes.map { node -> node.messages[node.selectIndex] }
         }
 
+    /**
+     * 发给模型的消息上下文：过滤掉「子 Agent 展示消息」。
+     *
+     * 子 Agent 的消息节点写进主对话只是给用户看的，它的输出已经通过 wait_agent 工具结果
+     * 返回给主 Agent；如果原样发给模型，模型会以为子 Agent 的话是自己说的（上下文污染）。
+     */
+    val mainMessages: List<UIMessage>
+        get() = currentMessages.filterNot { it.isSubAgentDisplayMessage() }
+
     fun getMessageNodeByMessageId(messageId: Uuid): MessageNode? {
         return messageNodes.firstOrNull { node -> node.messages.any { it.id == messageId } }
     }
@@ -258,3 +267,10 @@ internal fun UIMessagePart.mapLocalFileUrls(transform: (String) -> String): UIMe
         else -> this
     }
 }
+
+/**
+ * 子 Agent 展示消息：写入主对话只是给用户看的，其输出已通过 wait_agent 工具结果返回给主 Agent。
+ * 组装主 Agent 模型上下文时必须过滤，否则模型会把子 Agent 的话当成自己说的（上下文污染）。
+ */
+internal fun UIMessage.isSubAgentDisplayMessage(): Boolean =
+    modelSnapshot?.modelId == "sub-agent"

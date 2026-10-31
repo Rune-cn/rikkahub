@@ -62,6 +62,9 @@ fun ChatMessageAssistantAvatar(
     val settings = LocalSettings.current
     val showIcon = settings.displaySetting.showModelIcon
     val useAssistantAvatar = assistant?.useAssistantAvatar == true
+    // 子 Agent 消息顶部已有自己的标签（AiBrain01 + 名称），这里不要再显示主 Agent 的头像/名字，
+    // 否则看起来像是主 Agent 自己发的消息
+    if (message.modelSnapshot?.modelId == "sub-agent") return
     if (message.role == MessageRole.ASSISTANT && (model != null || useAssistantAvatar)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),

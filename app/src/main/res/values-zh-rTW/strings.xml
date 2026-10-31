@@ -1792,4 +1792,8 @@
   <string name="setting_page_run_logs_desc">查看應用運行日誌，排查問題</string>
   <string name="run_log_copy_all">複製全部</string>
   <string name="run_log_copy_all_done">已複製全部日誌</string>
+  <string name="link_action_title">開啟連結</string>
+  <string name="link_action_open_browser">瀏覽器開啟</string>
+  <string name="link_action_open_in_app">內嵌開啟</string>
+  <string name="link_action_share_link">分享連結</string>
 </resources>

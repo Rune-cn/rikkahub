@@ -24,14 +24,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -77,11 +79,11 @@ import me.rerere.rikkahub.data.repository.memoryId
 import me.rerere.rikkahub.ui.components.richtext.MarkdownBlock
 import me.rerere.rikkahub.ui.components.ui.Favicon
 import me.rerere.rikkahub.ui.components.ui.FaviconRow
+import me.rerere.rikkahub.ui.components.ui.LinkActionSheet
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.modifier.shimmer
 import me.rerere.rikkahub.utils.JsonInstantPretty
 import me.rerere.rikkahub.utils.jsonPrimitiveOrNull
-import me.rerere.rikkahub.utils.openUrl
 import me.rerere.rikkahub.utils.toLocalString
 import org.koin.compose.koinInject
 import java.time.LocalDate
@@ -731,7 +733,7 @@ private fun SearchWebPreview(
     arguments: JsonElement,
     content: JsonElement,
 ) {
-    val context = LocalContext.current
+    var pendingLinkUrl by remember { mutableStateOf<String?>(null) }
     val items = content.jsonObject["items"]?.jsonArray ?: emptyList()
     val answer = content.getStringContent("answer")
     val query = arguments.getStringContent("query") ?: ""
@@ -813,7 +815,7 @@ private fun SearchWebPreview(
                                 .height(120.dp)
                                 .width(160.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .clickable { context.openUrl(imageUrl) },
+                                .clickable { pendingLinkUrl = imageUrl },
                         )
                     }
                 }
@@ -837,7 +839,7 @@ private fun SearchWebPreview(
                 }
 
                 Card(
-                    onClick = { context.openUrl(url) },
+                    onClick = { pendingLinkUrl = url },
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     )
@@ -889,6 +891,15 @@ private fun SearchWebPreview(
                 )
             }
         }
+    }
+
+    pendingLinkUrl?.let { url ->
+        LinkActionSheet(
+            url = url,
+            onDismiss = {
+                pendingLinkUrl = null
+            },
+        )
     }
 }
 

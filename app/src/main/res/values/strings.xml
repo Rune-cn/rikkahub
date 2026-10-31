@@ -1969,4 +1969,8 @@
   <string name="setting_page_run_logs_desc">View in-app runtime logs for troubleshooting</string>
   <string name="run_log_copy_all">Copy all</string>
   <string name="run_log_copy_all_done">All logs copied</string>
+  <string name="link_action_title">Open Link</string>
+  <string name="link_action_open_browser">Open in Browser</string>
+  <string name="link_action_open_in_app">Open In-App</string>
+  <string name="link_action_share_link">Share Link</string>
 </resources>

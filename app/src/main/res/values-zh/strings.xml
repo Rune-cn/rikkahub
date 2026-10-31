@@ -1971,4 +1971,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="setting_page_run_logs_desc">查看应用运行日志，排查问题</string>
   <string name="run_log_copy_all">复制全部</string>
   <string name="run_log_copy_all_done">已复制全部日志</string>
+  <string name="link_action_title">打开链接</string>
+  <string name="link_action_open_browser">浏览器打开</string>
+  <string name="link_action_open_in_app">内嵌打开</string>
+  <string name="link_action_share_link">分享链接</string>
 </resources>

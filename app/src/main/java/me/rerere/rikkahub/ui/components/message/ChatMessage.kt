@@ -90,6 +90,7 @@ import me.rerere.rikkahub.ui.components.richtext.buildMarkdownPreviewHtml
 import me.rerere.rikkahub.ui.components.ui.ChainOfThought
 import me.rerere.rikkahub.ui.components.ui.Favicon
 import me.rerere.rikkahub.ui.components.ui.FaviconRow
+import me.rerere.rikkahub.ui.components.ui.LinkActionSheet
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.modifier.shimmer
 import me.rerere.rikkahub.ui.context.LocalSettings
@@ -97,7 +98,6 @@ import me.rerere.rikkahub.ui.context.LocalWorkspaceId
 import me.rerere.rikkahub.ui.theme.LocalChatFontFamily
 import me.rerere.rikkahub.ui.theme.rememberChatFontFamily
 import me.rerere.rikkahub.utils.JsonInstant
-import me.rerere.rikkahub.utils.openUrl
 import me.rerere.rikkahub.utils.urlDecode
 import me.rerere.rikkahub.ui.components.message.tools.parseTaskPlan
 import me.rerere.ui.charts.ChartCard
@@ -128,12 +128,14 @@ fun ChatMessage(
     onToolAnswer: ((toolCallId: String, answer: String) -> Unit)? = null,
 ) {
     val message = node.messages[node.selectIndex]
+    var pendingLinkUrl by remember { mutableStateOf<String?>(null) }
     if (message.isContextCheckpoint) {
         ChatMessageContextCheckpoint(
             message = message,
             onEdit = onEdit,
             onDelete = onDelete,
             modifier = modifier,
+            onLinkClick = { pendingLinkUrl = it },
         )
         return
     }
@@ -227,12 +229,14 @@ fun ChatMessage(
                 onToolApproval = onToolApproval,
                 onToolAnswer = onToolAnswer,
                 onUserMessageClick = if (message.role == MessageRole.USER) onEdit else null,
+                onLinkClick = { pendingLinkUrl = it },
             )
 
             message.translation?.let { translation ->
                 CollapsibleTranslationText(
                     content = translation,
-                    onClickCitation = {}
+                    onClickCitation = {},
+                    onLinkClick = { pendingLinkUrl = it },
                 )
             }
         }
@@ -320,6 +324,15 @@ fun ChatMessage(
             }
         )
     }
+
+    pendingLinkUrl?.let { url ->
+        LinkActionSheet(
+            url = url,
+            onDismiss = {
+                pendingLinkUrl = null
+            },
+        )
+    }
 }
 
 @OptIn(FlowPreview::class)
@@ -334,6 +347,7 @@ private fun MessagePartsBlock(
     onToolApproval: ((toolCallId: String, approved: Boolean, reason: String) -> Unit)? = null,
     onToolAnswer: ((toolCallId: String, answer: String) -> Unit)? = null,
     onUserMessageClick: (() -> Unit)? = null,
+    onLinkClick: ((String) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     // 消息输出HapticFeedback
@@ -353,7 +367,7 @@ private fun MessagePartsBlock(
                         val id = item.jsonObject["id"]?.jsonPrimitive?.content ?: return@forEach
                         val url = item.jsonObject["url"]?.jsonPrimitive?.content ?: return@forEach
                         if (citationId == id) {
-                            context.openUrl(url)
+                            onLinkClick?.invoke(url)
                             return@handler
                         }
                     }
@@ -394,6 +408,7 @@ private fun MessagePartsBlock(
                                         model = model,
                                         assistant = assistant,
                                         collapsedAdaptiveWidth = isReasoningOnlyBlock,
+                                        onLinkClick = onLinkClick,
                                     )
                                 }
                             }
@@ -450,7 +465,8 @@ private fun MessagePartsBlock(
                                             scope = AssistantAffectScope.USER,
                                             visual = true,
                                         ),
-                                        onClickCitation = handleClickCitation
+                                        onClickCitation = handleClickCitation,
+                                        onLinkClick = onLinkClick,
                                     )
                                 }
                             } else {
@@ -467,6 +483,7 @@ private fun MessagePartsBlock(
                                                 visual = true,
                                             ),
                                             onClickCitation = handleClickCitation,
+                                            onLinkClick = onLinkClick,
                                         )
                                     }
                                 } else {
@@ -477,6 +494,7 @@ private fun MessagePartsBlock(
                                             visual = true,
                                         ),
                                         onClickCitation = handleClickCitation,
+                                        onLinkClick = onLinkClick,
                                         modifier = Modifier
                                             .animateContentSize()
                                     )
@@ -577,7 +595,10 @@ private fun MessagePartsBlock(
 
     // Annotations (always rendered at the end)
     if (annotations.isNotEmpty()) {
-        ChatMessageCitations(annotations = annotations)
+        ChatMessageCitations(
+            annotations = annotations,
+            onLinkClick = onLinkClick ?: {},
+        )
     }
 }
 
@@ -637,7 +658,10 @@ private fun Modifier.clipDrawing(shape: Shape): Modifier = drawWithCache {
 }
 
 @Composable
-private fun ChatMessageCitations(annotations: List<UIMessageAnnotation>) {
+private fun ChatMessageCitations(
+    annotations: List<UIMessageAnnotation>,
+    onLinkClick: (String) -> Unit,
+) {
     var expand by remember { mutableStateOf(false) }
     val urls = remember(annotations) {
         annotations.map { annotation ->
@@ -680,7 +704,14 @@ private fun ChatMessageCitations(annotations: List<UIMessageAnnotation>) {
                                         Text(
                                             text = buildAnnotatedString {
                                                 append("${index + 1}. ")
-                                                withLink(LinkAnnotation.Url(annotation.url)) {
+                                                withLink(
+                                                    LinkAnnotation.Clickable(
+                                                        tag = annotation.url,
+                                                        linkInteractionListener = {
+                                                            onLinkClick(annotation.url)
+                                                        },
+                                                    )
+                                                ) {
                                                     append(annotation.title.urlDecode())
                                                 }
                                             }

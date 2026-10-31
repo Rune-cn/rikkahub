@@ -135,7 +135,8 @@ fun MarkdownBlock(
     content: String,
     modifier: Modifier = Modifier,
     style: TextStyle = LocalTextStyle.current,
-    onClickCitation: (String) -> Unit = {}
+    onClickCitation: (String) -> Unit = {},
+    onLinkClick: ((String) -> Unit)? = null,
 ) {
     val enableLatexRendering = LocalSettings.current.displaySetting.enableLatexRendering
     val enableQuoteHighlight = LocalSettings.current.displaySetting.enableQuoteHighlight
@@ -200,6 +201,7 @@ fun MarkdownBlock(
         style = style,
         theme = theme,
         components = components,
+        onLinkClick = onLinkClick,
     )
 }
 
