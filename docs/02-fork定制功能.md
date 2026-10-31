@@ -1,4 +1,4 @@
-# 02 · Fork 定制功能（10 项，全部保留并适配 3.x）
+# 02 · Fork 定制功能（11 项，全部保留并适配 3.x）
 
 > 同步/排查前先读这份清单：每一项都有"文件 + 逻辑要点"。
 > 改功能时只动这些文件，别改上游同名功能的行为（如请求日志不属于本清单）。
@@ -20,6 +20,10 @@
   - 生成循环已适配新 API（ChatTurnContext + ChatRequestFactory.createAgent + runAgent，见 04）。
   - `ChatToolFactory.createTools(..., excludeSubAgentTools = true)` 防止子 Agent 递归生成子 Agent。
   - 子 Agent 消息通过 `modelSnapshot.modelId = "sub-agent"` 标记，UI 据此做视觉区分（见第 10 项）。
+  - **上下文隔离（重要）**：子 Agent 写入主对话的只是"展示消息"，其输出已通过 wait_agent 工具结果返回给主 Agent。组装主 Agent 模型上下文时必须过滤，否则模型会把子 Agent 的话当成自己说的（上下文污染）。
+    - `Conversation.mainMessages` = `currentMessages` 过滤掉 `isSubAgentDisplayMessage()`（`data/model/Conversation.kt`），生成/压缩/标题建议统一用它。
+    - `ChatService.runTurn()`：`history` 用过滤后的消息；`replyNodeId` 跳过子 Agent 节点（避免主 Agent 回复写进子 Agent 消息里）；`updateMainContext` 同样过滤（子 Agent 继承主上下文时不掺入其他子 Agent 输出）。
+    - `ChatMessageAssistantAvatar` 对子 Agent 消息直接 return（顶部已有子 Agent 标签行，避免误显示主 Agent 头像/名字，`useAssistantAvatar=true` 时曾踩过）。
 
 ## 3. AI 工作流 + 无限画布
 - 文件：
@@ -63,6 +67,18 @@
 
 ## 10. 子 Agent 消息视觉区分
 - `ui/components/message/ChatMessage.kt`：`isSubAgent`（modelId == "sub-agent"）时使用不同的背景/边框/标签（Material3 tonal 色阶，**无 emoji**）。
+
+## 11. 对话内链接操作面板（浏览器 / 内嵌 / 分享）
+- 组件：`ui/components/ui/LinkActionSheet.kt`（ModalBottomSheet），三个动作：
+  - 浏览器打开：`utils/ContextUtil.kt` 的 `openUrl`（CustomTabs）
+  - 内嵌打开：`navController.navigate(Screen.WebView(url))`（应用内 WebView 页）
+  - 分享：`Intent.ACTION_SEND` 系统分享面板
+- 接入点（对话内所有链接一律弹面板，不再直接跳浏览器）：
+  - `ChatMessage.kt`：`pendingLinkUrl` 状态挂载面板；正文 markdown 链接（`MarkdownBlock.onLinkClick`）、引用角标（`handleClickCitation`）、引用列表（`ChatMessageCitations.onLinkClick`）。
+  - `ChatMessageReasoning.kt` / `ChatMessageTranslation.kt` / `ChatMessageContextCheckpoint.kt`：各自的 `MarkdownBlock` 透传 `onLinkClick`。
+  - `BuiltinToolUIs.kt`（`SearchWebPreview`）：搜索结果卡片/图片点击改弹面板（图片、URL 卡片）。
+- 配套：`ui/components/richtext/Markdown.kt` 的 `MarkdownBlock` 增加 `onLinkClick: ((String) -> Unit)? = null` 参数透传给底层 `Markdown`（为 null 时维持上游默认：系统 UriHandler 打开浏览器）。
+- 字符串：`link_action_*` 四个（en/zh/zh-rTW 三语已同步）。
 
 ## 其他 fork 改动（非功能）
 - 关于页：GitHub/License 指向本仓库，无官网/群（群入口在设置页关于卡片，上游 Discord 已移除，替换为 QQ 群）。

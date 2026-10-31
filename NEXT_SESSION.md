@@ -10,28 +10,43 @@ RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天�
 
 ## 二、当前状态（截至 2026-10-31）
 
-- **上游**：已同步至 `eb530b0f`（3.0.0/3.1.0 全量 128 提交已 rebase + 后续 2 个 cherry-pick）。fork 在上游之上有 100+ 提交。
-- **构建**：✅ nightly 自动构建成功（GitHub Actions），APK 发布到 tag `nightly`：
+- **上游**：已同步至 `39ff6c43`（merge 上游 `eb530b0f`，HEAD 与 upstream/master 完全一致，`HEAD..upstream/master` = 0）。fork 在上游之上有 100+ 提交。
+- **构建**：✅ nightly 自动构建成功（GitHub Actions `daily-build.yml`），APK 发布到 tag `nightly`：
   https://github.com/Rune-cn/rikkahub/releases/download/nightly/app-github-arm64-v8a-release.apk
-- **定制功能**（10 项，均在 3.x 架构上适配完成）：多 Agent、AI 工作流+无限画布、工具自动允许、可配置重试、设置搜索、输入框草稿、生成中节流落库、Skill 手动分类、更新检查指向本 fork、子 Agent 消息视觉区分。另：QQ 群入口（1131916400，universal-share 链接）、捐赠页新增「爱发电·Rune」(afdian.com/a/CNRune)、独立「运行日志」页。
+  最近一次手动验证 `b41b17f4` 构建成功。
+- **定制功能**（11 项，均在 3.x 架构上适配完成）：多 Agent、AI 工作流+无限画布、工具自动允许、可配置重试、设置搜索、输入框草稿、生成中节流落库、Skill 手动分类、更新检查指向本 fork、子 Agent 消息视觉区分、**对话内链接操作面板（浏览器/内嵌/分享）**。另：QQ 群入口（1131916400，universal-share 链接）、捐赠页新增「爱发电·Rune」(afdian.com/a/CNRune)、独立「运行日志」页。
 
-## 三、上一次会话做了什么（本文件创建时）
+## 三、上一次会话做了什么（本轮进展）
 
-1. 同步上游 128 提交大 rebase + 冲突解决 + 构建修复至通过。
-2. 版本号升 3.0.0(193)；设置页 QQ 群替换 + 移除 Discord；捐赠页挂自己的爱发电；README 下载名适配 github flavor。
-3. 设置搜索大改：顶栏「设置」标题点击展开/收起（动画），搜索时**整页只显示结果**（修复"搜不出"问题），键盘「搜索」键只收键盘不收起，收起走右侧 ↓。
-4. 新增「运行日志」页（`utils/RunLog.kt` + `ui/pages/log/RunLogPage.kt`）：自动记录关键操作与异常（含崩溃堆栈），支持刷新/清空/复制全部/点行复制。
-5. 建立交接文档体系：`AI_DEVELOPMENT.md` + `docs/`（01-07 逻辑文件）+ 平台 skill `handoff-docs` + 平台工作流「更新交接文档」「功能开发（先读交接文档）」。
-6. 目录改名 `ai-development/` → `docs/`。
+### A. 同步上游（收尾）
+- 上一会话完成 128 提交大 rebase 后，本轮补上上游最后 2 个提交：
+  - `eb530b0f` fix(markdown): 公式里 `<` 被 Jsoup 当 HTML 标签截断（MarkdownParser/LatexText/测试）
+  - `20c24e7d` chore: update deps
+- 本地此前已含等价 patch（`878f7825`/`6d71d498`），`git cherry` 判定 patch-id 相同 → `git merge upstream/master` **零冲突**，merge commit `39ff6c43`，普通 push 即可（无需 force）。
+
+### B. 对话内链接操作面板（新功能）
+- 新组件 `ui/components/ui/LinkActionSheet.kt`：ModalBottomSheet 三动作 = 浏览器打开（CustomTabs）/ 内嵌打开（Screen.WebView）/ 分享（ACTION_SEND）。
+- 接入点：ChatMessage 正文 markdown 链接、引用角标、引用列表；ChatMessageReasoning/Translation/ContextCheckpoint 的 markdown；BuiltinToolUIs 搜索结果卡片与图片。
+- `richtext/Markdown.kt` 的 `MarkdownBlock` 新增 `onLinkClick` 参数透传底层 Markdown。
+- 新增 4 个字符串 `link_action_*`（en/zh/zh-rTW 三语已同步）。
+
+### C. 修复子 Agent 消息上下文污染（bug）
+- 问题：① 子 Agent 展示消息（role=ASSISTANT）被当成主 Agent 自己说的话发给模型（上下文污染）；② 主 Agent 回复被 upsert 进子 Agent 节点（"子 Agent 对话框里出现主 Agent 输出"）；③ `useAssistantAvatar=true` 时子 Agent 消息顶部误显示主 Agent 头像/名字。
+- 修复：
+  - `data/model/Conversation.kt`：新增 `mainMessages` + `UIMessage.isSubAgentDisplayMessage()`。
+  - `service/ChatService.kt` `runTurn()`：history/updateMainContext 过滤子 Agent 消息；`replyNodeId` 跳过子 Agent 节点。
+  - `data/ai/ConversationMetaGenerator.kt`：标题/建议改用 `mainMessages`。
+  - `ui/components/message/ChatMessageAvatar.kt`：子 Agent 消息直接 return（顶部已有标签，不显示主 Agent 头像）。
 
 ## 四、已知待办 / 注意事项（下个会话请留意）
 
 1. **QQ 群加群链接的 `authKey` 有时效**：`SettingPage.kt` 的 `QQ_GROUPS.link` 过期后需换新链接（用户提供）。
 2. **重试间隔策略**（固定/抖动）只在设置里保留，运行时走上游指数退避；要完全支持需改 `ai/.../agent/Retry.kt`。
-3. **平台 AI 工作流「功能开发」在平台子会话环境中可能读不到 `/workspace` 文件**（用户反馈：运行后"什么也没有"）——第一步已改成内嵌现状摘要 + 读不到文件也能继续；若仍失败，改用主会话直接派子代理（spawn_agent）完成开发，或把需求连同本文档一起发给子会话。
-4. 「运行日志」记录一切 `RunLog.log(...)`：**关键操作与异常**（应用启动、搜索、崩溃、以及任何新埋点），不限于特定几类；排查类功能优先留运行日志。
-5. 版本号规则：没用户要求不升版；versionCode 必须单调递增（现在 193）。
-6. 构建产物路径：`assembleGithubRelease` → `app/build/outputs/apk/github/release/`；README 下载名 `app-github-arm64-v8a-release.apk`。
+3. **子 Agent 展示消息隔离**：生成/压缩/标题/建议一律用 `Conversation.mainMessages` 或 `isSubAgentDisplayMessage()` 过滤，**不要再拿 `currentMessages` 直接发模型**（见 docs/04-3.5）。
+4. **链接交互约定**：对话内链接必须走 `LinkActionSheet`，新增渲染入口时给 `MarkdownBlock` 透传 `onLinkClick`，不要自己调 `context.openUrl`（见 docs/07-7）；非对话内链接（设置/关于/捐赠页）保持原行为。
+5. 「运行日志」记录一切 `RunLog.log(...)`：**关键操作与异常**（应用启动、搜索、崩溃、以及任何新埋点），不限于特定几类；排查类功能优先留运行日志。
+6. 版本号规则：没用户要求不升版；versionCode 必须单调递增（现在 193）。
+7. 构建产物路径：`assembleGithubRelease` → `app/build/outputs/apk/github/release/`；README 下载名 `app-github-arm64-v8a-release.apk`。
 
 ## 五、给下个会话的开工步骤
 
@@ -43,5 +58,5 @@ RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天�
 ## 六、快速链接
 
 - 仓库：https://github.com/Rune-cn/rikkahub
-- 知识库：`AI_DEVELOPMENT.md` + `docs/`（01 架构 / 02 fork 定制 / 03 设置数据 / 04 生成重试 / 05 构建发布 / 06 上游同步 / 07 UI 约定 / 交接文档技能说明书.md）
+- 知识库：`AI_DEVELOPMENT.md` + `docs/`（01 架构 / 02 fork 定制 11 项 / 03 设置数据 / 04 生成重试 / 05 构建发布 / 06 上游同步 / 07 UI 约定 / 交接文档技能说明书.md）
 - nightly APK：见上文

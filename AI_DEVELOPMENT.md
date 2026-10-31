@@ -20,22 +20,26 @@
 ## 二、当前开发情况（截至 2026-10-31）
 
 - **版本**：`3.0.0`（versionCode `193`）。nightly 发布命名 `3.0.0-<commit>`，正式版（stable）为纯 `3.0.0`。
-- **上游同步**：已 rebase 上游 3.0.0/3.1.0 全量（128 提交）并对齐后续 2 个小提交；基线 `eb530b0f`。fork 在上游之上共 100+ 提交。
-- **构建状态**：✅ nightly 每天自动构建成功（GitHub Actions `daily-build.yml`），产物发布到固定 tag `nightly`。
-- **定制功能**：10 项全部保留并在 3.x 架构上重新适配（详见 [02-fork定制功能.md](docs/02-fork定制功能.md)）。
+- **上游同步**：已 rebase 上游 3.0.0/3.1.0 全量（128 提交）并对齐后续 2 个小提交；基线 merge `39ff6c43`（合并 `eb530b0f`，HEAD 与 upstream/master 完全一致）。fork 在上游之上共 100+ 提交。
+- **构建状态**：✅ nightly 每天自动构建成功（GitHub Actions `daily-build.yml`），产物发布到固定 tag `nightly`。最近一次手动验证 `b41b17f4`（链接面板+子 Agent 修复）构建成功。
+- **定制功能**：11 项全部保留并在 3.x 架构上重新适配（详见 [02-fork定制功能.md](docs/02-fork定制功能.md)）。
+- **本轮新增（2026-10-31 晚）**：
+  - 对话内链接点击弹操作面板（浏览器打开 / 内嵌打开 / 分享），见 02-11 与 07-7。
+  - 修复子 Agent 消息上下文污染与回复写错节点（`Conversation.mainMessages` 过滤展示消息），见 02-2 与 04-3.5。
 - **会话交接**：每次会话结束时更新根目录 `NEXT_SESSION.md`（一次性交接单，可直接发给下个会话；本文件是知识库）。
 - **已知待办/注意事项**：
   - 设置页 QQ 群使用 universal-share 加群链接，**`authKey` 有时效**，过期需换新链接（`SettingPage.kt` 的 `QQ_GROUPS.link`）。
   - 可配置重试的"间隔策略"（固定/抖动）在运行时仍走上游内建指数退避，仅 UI/设置保留（见 04）。
   - 设置搜索交互经历过多次修正，最终形态见 [07-UI交互与代码约定.md](docs/07-UI交互与代码约定.md) 的"设置搜索"一节。
   - 构建产物因上游 3.x 引入 github/play flavor，APK 命名与路径已变（见 05）。
+  - 子 Agent 展示消息被多个消费方读取（生成/压缩/标题/UI），新增消费方一律用 `mainMessages` / `isSubAgentDisplayMessage()`，不要直接遍历 `currentMessages` 发模型（见 04-3.5）。
 
 ## 三、代码逻辑索引（docs/ 目录，按模块单独成文件）
 
 | 文件 | 内容 |
 |---|---|
 | [01-架构总览.md](docs/01-架构总览.md) | 模块划分、上游 3.x 关键重构（GenerationLoop 删除 / PreferencesStore 拆分 / flavors） |
-| [02-fork定制功能.md](docs/02-fork定制功能.md) | fork 的 10 项定制：文件位置 + 逻辑要点（多 Agent / 工作流 / 自动允许 / 重试 / 设置搜索 / 草稿 / 节流落库 / Skill 分类 / 更新检查 / 子 Agent 视觉） |
+| [02-fork定制功能.md](docs/02-fork定制功能.md) | fork 的 11 项定制：文件位置 + 逻辑要点（多 Agent / 工作流 / 自动允许 / 重试 / 设置搜索 / 草稿 / 节流落库 / Skill 分类 / 更新检查 / 子 Agent 视觉 / **链接操作面板**；含子 Agent 上下文隔离） |
 | [03-设置与数据.md](docs/03-设置与数据.md) | 设置系统：Settings.kt + SETTINGS_FIELDS 注册机制、新增字段规范 |
 | [04-生成循环与重试.md](docs/04-生成循环与重试.md) | 新生成架构（ChatRequestFactory / AgentLoop / RetryPolicy）、子 Agent 与工作流的适配写法 |
 | [05-构建与发布.md](docs/05-构建与发布.md) | flavor 结构、版本号规则、Actions 发布流程、更新检查 |
