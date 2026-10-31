@@ -114,30 +114,6 @@ fun OtherSettingsPage() {
                                 }
                             },
                         )
-                        item(
-                            headlineContent = {
-                                Text(stringResource(R.string.extensions_page_sub_agent_inherit_context))
-                            },
-                            supportingContent = {
-                                Text(stringResource(R.string.extensions_page_sub_agent_inherit_context_desc))
-                            },
-                            trailingContent = {
-                                Switch(
-                                    checked = settings.subAgentSetting.defaultInheritContext,
-                                    onCheckedChange = { enabled ->
-                                        coroutineScope.launch {
-                                            settingsStore.update { s ->
-                                                s.copy(
-                                                    subAgentSetting = s.subAgentSetting.copy(
-                                                        defaultInheritContext = enabled,
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    },
-                                )
-                            },
-                        )
                     }
                 }
             }

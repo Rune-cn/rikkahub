@@ -11,19 +11,20 @@
 
 ## 2. 子 Agent（多 Agent 协同）
 > UI 文案统一为「子 Agent」（2026-10-31：原「多 Agent」字样全部改为「子 Agent」，含扩展管理开关与搜索关键词；英文 `Sub-agents`）。功能本质不变：主 Agent 派生子 Agent 并行执行任务。
+> 2026-10-31：**「共享对话上下文」功能已按用户要求移除**——`SubAgentSetting.defaultInheritContext` 字段、`SubAgentTask.inheritContext`、spawn_agent 的 `inherit_context` 参数、`SubAgentManager.mainContext`/`updateMainContext`（改名 `updateActiveConversation`，只记录主会话 id）全部删除；子 Agent 不再继承主对话上下文（任务描述是它唯一的上下文）。
 - 文件：
-  - `data/ai/subagent/SubAgentManager.kt`：任务调度、主上下文同步、前台服务保活。
+  - `data/ai/subagent/SubAgentManager.kt`：任务调度、前台服务保活。
   - `data/ai/tools/local/SubAgentTools.kt`：spawn_agent / wait_agent / list_agents / close_agent 工具。
   - `data/ai/tools/local/LocalTools.kt`：注册（`SUB_AGENT_TOOL_NAMES` 在此）。
-  - `ui/pages/extensions/OtherSettingsPage.kt`：默认模型 / 继承上下文 / 总开关（`Settings.subAgentSetting` + `enableSubAgent`）。
-  - `service/ChatService.kt`：子 Agent 输出流式写入主对话（`upsertSubAgentMessage` + `subAgentManager.updateMainContext`）。
+  - `ui/pages/extensions/OtherSettingsPage.kt`：子 Agent 总开关 / 默认模型（`Settings.subAgentSetting` + `enableSubAgent`）。入口显示为「子 Agent」（`extensions_page_other_category`，原"其他"页，2026-10-31 改名）。
+  - `service/ChatService.kt`：子 Agent 输出流式写入主对话（`upsertSubAgentMessage` + `subAgentManager.updateActiveConversation`）。
 - 关键点：
   - 生成循环已适配新 API（ChatTurnContext + ChatRequestFactory.createAgent + runAgent，见 04）。
   - `ChatToolFactory.createTools(..., excludeSubAgentTools = true)` 防止子 Agent 递归生成子 Agent。
   - 子 Agent 消息通过 `modelSnapshot.modelId = "sub-agent"` 标记，UI 据此做视觉区分（见第 10 项）。
   - **上下文隔离（重要）**：子 Agent 写入主对话的只是"展示消息"，其输出已通过 wait_agent 工具结果返回给主 Agent。组装主 Agent 模型上下文时必须过滤，否则模型会把子 Agent 的话当成自己说的（上下文污染）。
     - `Conversation.mainMessages` = `currentMessages` 过滤掉 `isSubAgentDisplayMessage()`（`data/model/Conversation.kt`），生成/压缩/标题建议统一用它。
-    - `ChatService.runTurn()`：`history` 用过滤后的消息；`replyNodeId` 跳过子 Agent 节点（避免主 Agent 回复写进子 Agent 消息里）；`updateMainContext` 同样过滤（子 Agent 继承主上下文时不掺入其他子 Agent 输出）。
+    - `ChatService.runTurn()`：`history` 用过滤后的消息；`replyNodeId` 跳过子 Agent 节点（避免主 Agent 回复写进子 Agent 消息里）。
     - **回复节点语义（修复过）**：只有过滤后「最后一条是主 Agent 助手消息」才复用其节点；用户再发新消息（末尾是 USER）必须新建节点，否则回复会写进旧回复节点（表现为每次对话都在旧基础上继续改）。过滤后的 `history` 与 `nodes` 索引不再一一对应，定位用 `allHistory.indexOfFirst { it.id == lastMainAssistantMessage.id }` 回查原始索引再取 `nodes[i].id`；不要用 `indexOfLast { role == ASSISTANT }` 全局找最后一个助手消息。
     - `ChatMessageAssistantAvatar` 对子 Agent 消息直接 return（顶部已有子 Agent 标签行，避免误显示主 Agent 头像/名字，`useAssistantAvatar=true` 时曾踩过）。
 
@@ -50,6 +51,8 @@
   - `EXPONENTIAL_BACKOFF`：1s、2s、4s…（默认，等价上游原始行为）；
   - `JITTER`：Full Jitter，在 `[1ms, 指数退避值]` 内随机，避免大量请求同时重试造成"重试风暴"。
   - 测试：`ai/src/test/java/me/rerere/ai/agent/RetryTest.kt`（fixed / jitter 各一条）。
+- **「恢复默认」**：重试页底部一键把重试相关设置恢复为默认（`NetworkSetting.withRetryDefaults()`，定义在 `Settings.kt`，默认值以 `NetworkSetting` 构造函数为准，不清代理等其他网络设置）。
+- **输入体验**：状态码/关键字编辑框（`RetryChipListEditor`）点「添加」后输入框全宽显示并自动滚入视野（`bringIntoViewRequester`），页面 `LazyColumn` 加 `imePadding()` 防键盘遮挡，带占位提示「输入后回车确认」。
 
 ## 5. 设置搜索（64 项索引）
 - 文件：`ui/pages/setting/SettingSearchIndex.kt`（索引 + 搜索函数 + 输入组件）与 `SettingPage.kt`（顶栏入口）。

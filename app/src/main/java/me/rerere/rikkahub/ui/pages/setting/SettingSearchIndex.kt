@@ -183,7 +183,7 @@ val SETTING_SEARCH_ITEMS: List<SettingSearchItem> = listOf(
     SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_agent_skills, SettingItemType.NAV, "技能 能力 skill agent skills", Screen.Skills),
     SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_workspace, SettingItemType.NAV, "工作区 文件 命令行 终端 workspace files terminal", Screen.Workspaces),
     SettingSearchItem(PAGE_EXTENSIONS, R.string.tool_call_page_title, SettingItemType.NAV, "工具调用 自动允许 审批 tool calls auto allow approval", Screen.ToolCalls),
-    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_other_category, SettingItemType.NAV, "其他 更多 other 子 agent", Screen.OtherSettings),
+    SettingSearchItem(PAGE_EXTENSIONS, R.string.extensions_page_other_category, SettingItemType.NAV, "子 agent 协同 设置 sub-agent settings", Screen.OtherSettings),
 
 )
 

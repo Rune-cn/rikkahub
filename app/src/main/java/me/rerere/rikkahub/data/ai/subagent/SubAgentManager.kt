@@ -58,9 +58,6 @@ class SubAgentManager(
 
         /** 同时运行的子 Agent 上限 */
         const val MAX_CONCURRENT_SUB_AGENTS = 3
-
-        /** 继承主对话上下文时最多带入的消息条数（避免上下文过长） */
-        const val MAX_CONTEXT_MESSAGES = 20
     }
 
     // 延迟解析，避免与 LocalTools / ChatToolFactory 形成 Koin 循环依赖
@@ -73,18 +70,13 @@ class SubAgentManager(
 
     private val jobs = mutableMapOf<String, Job>()
 
-    /** 主 Agent 最近的对话上下文（由 ChatService 在生成前同步），供 inherit_context 使用 */
-    @Volatile
-    private var mainContext: List<UIMessage> = emptyList()
-
     /** 当前主会话 id（由 ChatService 同步），用于把子 Agent 输出流式写入主对话 */
     @Volatile
     var activeMainConversationId: Uuid? = null
         private set
 
-    /** 由 ChatService 在开始生成前调用，同步主对话上下文与所在会话 */
-    fun updateMainContext(messages: List<UIMessage>, conversationId: Uuid) {
-        mainContext = messages
+    /** 由 ChatService 在开始生成前调用，记录当前主会话 id */
+    fun updateActiveConversation(conversationId: Uuid) {
         activeMainConversationId = conversationId
     }
 
@@ -97,7 +89,6 @@ class SubAgentManager(
         name: String,
         prompt: String,
         modelId: Uuid? = null,
-        inheritContext: Boolean? = null,
     ): Result<SubAgentTask> {
         // 清理僵尸任务：状态仍是 RUNNING 但协程已不活跃（如上游异常退出）
         val zombieNames = _tasks.value
@@ -129,13 +120,12 @@ class SubAgentManager(
             name = name,
             prompt = prompt,
             modelId = modelId,
-            inheritContext = inheritContext,
             startedAt = System.currentTimeMillis(),
         )
         _tasks.value = _tasks.value + task
         syncSubAgentService()
         jobs[name] = appScope.launch { runTask(task) }
-        Log.i(TAG, "spawn sub-agent: $name (inheritContext=$inheritContext)")
+        Log.i(TAG, "spawn sub-agent: $name")
         return Result.success(task)
     }
 
@@ -192,9 +182,7 @@ class SubAgentManager(
             )
 
             var messages = resumeMessages ?: buildList {
-                // 可选：继承主 Agent 的最近对话上下文（任务未指定时用全局设置）
-                val inheritContext = task.inheritContext ?: settings.subAgentSetting.defaultInheritContext
-                // 子 Agent 身份与规则说明（让它清楚自己是谁、能力边界、结果如何上交）
+                // 子 Agent 身份与规则说明（不继承主对话上下文；任务描述是它唯一的上下文）
                 add(
                     UIMessage(
                         role = MessageRole.SYSTEM,
@@ -205,15 +193,11 @@ class SubAgentManager(
                                 - Your task name: ${task.name}
                                 - You have the same toolset as the main agent, except you cannot spawn sub-agents.
                                 - You cannot chat with the main agent directly; your final answer is returned to it automatically when you finish. Make it complete and self-contained (plain human-readable text, not JSON).
-                                ${if (inheritContext) "- Your main conversation context is included below; use it to stay consistent with the main discussion." else "- You do NOT see the main conversation; the task description you are given is your only context."}
                                 """.trimIndent()
                             )
                         )
                     )
                 )
-                if (inheritContext) {
-                    addAll(mainContext.takeLast(MAX_CONTEXT_MESSAGES))
-                }
                 add(
                     UIMessage(
                         role = MessageRole.USER,

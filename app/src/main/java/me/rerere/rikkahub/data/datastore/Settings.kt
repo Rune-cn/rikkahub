@@ -138,6 +138,23 @@ enum class RetryMode {
     JITTER,
 }
 
+/**
+ * 把 [NetworkSetting] 里的重试相关字段恢复为默认值（其余网络设置如代理等保持不变）。
+ * 默认值以 [NetworkSetting] 构造函数为准，避免两处维护。
+ */
+fun NetworkSetting.withRetryDefaults(): NetworkSetting {
+    val def = NetworkSetting()
+    return copy(
+        enableAutoRetry = def.enableAutoRetry,
+        enableRateLimitRetry = def.enableRateLimitRetry,
+        rateLimitRetryMode = def.rateLimitRetryMode,
+        rateLimitRetryCount = def.rateLimitRetryCount,
+        retryableStatusCodes = def.retryableStatusCodes,
+        retryKeywords = def.retryKeywords,
+        stopRetryKeywords = def.stopRetryKeywords,
+    )
+}
+
 @Serializable
 data class ToolAutoAllowSetting(
     // 自动允许总开关：开启后 AI 使用工具不再弹确认框
@@ -150,8 +167,6 @@ data class ToolAutoAllowSetting(
 data class SubAgentSetting(
     // 子 Agent 默认使用的模型；null 表示继承主 Agent 当前模型
     val defaultModelId: Uuid? = null,
-    // 子 Agent 默认是否继承主 Agent 的最近对话上下文
-    val defaultInheritContext: Boolean = false,
 )
 
 @Serializable

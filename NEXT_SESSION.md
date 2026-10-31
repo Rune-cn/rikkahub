@@ -56,6 +56,12 @@ RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天�
 - 扩展管理子 Agent 开关：`extensions_page_multi_agent_enable`（en "Multi-agent"→"Sub-agents"；zh "多 Agent 工作"→"子 Agent"；zh-rTW 补齐"子 Agent"）。
 - 搜索关键词去掉「多 agent」；`multi_agent_page_title` 死字符串值同步更新（en/zh）；代码注释更新。
 
+### G. 三项收尾（用户要求）
+1. **重试选项输入体验**：`RetrySettingsPage` 的 `LazyColumn` 加 `imePadding()`；`RetryChipListEditor` 点「添加」后输入框改全宽 + 占位提示（`extensions_page_retry_input_hint`）+ `bringIntoViewRequester` 自动滚入视野，解决"输入时看不到"。
+2. **重试页「恢复默认」**：页尾 CardGroup 条目（`HugeIcons.Refresh`），一键 `NetworkSetting.withRetryDefaults()`（定义在 `Settings.kt`，以构造函数默认值为准，不动代理等其他网络设置）。
+3. **扩展管理「其他」改名「子 Agent」**：`extensions_page_other_category` = `Sub-agents`/`子 Agent`（en/zh 改值，tw 补齐）+ 搜索关键词更新；页面标题随入口同串。
+4. **删除子 Agent「共享对话上下文」**：`SubAgentSetting.defaultInheritContext`、`SubAgentTask.inheritContext`、spawn_agent 的 `inherit_context` 参数、`SubAgentManager.mainContext` 与 `updateMainContext`（改名 `updateActiveConversation(conversationId)`，只记主会话 id）全部移除；`extensions_page_sub_agent_inherit_context` 字符串删除；子 Agent 提示词固定说明"不继承主对话上下文"。
+
 ## 四、已知待办 / 注意事项（下个会话请留意）
 
 1. **QQ 群加群链接的 `authKey` 有时效**：`SettingPage.kt` 的 `QQ_GROUPS.link` 过期后需换新链接（用户提供）。

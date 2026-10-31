@@ -1288,12 +1288,17 @@
   <string name="workspace_terminal_close_confirm_title">關閉終端機 %1$d？</string>
   <string name="workspace_terminal_close_confirm_message">關閉此分頁將終止仍在其中執行的任何程序。</string>
   <string name="workspace_terminal_close">關閉</string>
+  <string name="extensions_page_other_category">子 Agent</string>
+  <string name="extensions_page_other_desc">子 Agent 設定</string>
   <string name="extensions_page_sub_agent_section">子 Agent</string>
   <string name="extensions_page_multi_agent_enable">子 Agent</string>
   <string name="extensions_page_multi_agent_enable_desc">讓主 Agent 派生子 Agent 並行處理任務；子 Agent 的輸出會串流顯示在對話中</string>
   <string name="extensions_page_retry_entry_desc">自動重試失敗的請求</string>
   <string name="extensions_page_retry_enable">自動重試</string>
   <string name="extensions_page_retry_enable_desc">網路錯誤或命中下方規則時自動重試失敗的模型請求</string>
+  <string name="extensions_page_retry_restore_defaults">還原預設</string>
+  <string name="extensions_page_retry_restore_defaults_desc">將下方所有重試設定還原為預設值</string>
+  <string name="extensions_page_retry_input_hint">輸入後按 Enter 確認</string>
   <string name="extensions_page_retry_section">重試</string>
   <string name="extensions_page_retry_interval">重試間隔</string>
   <string name="extensions_page_retry_interval_fixed">固定間隔</string>

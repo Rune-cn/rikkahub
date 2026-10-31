@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AssistChip
@@ -26,6 +28,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,11 +44,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Cancel01
+import me.rerere.hugeicons.stroke.Refresh
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.RetryMode
 import me.rerere.rikkahub.data.datastore.SettingsStore
+import me.rerere.rikkahub.data.datastore.withRetryDefaults
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.CardGroup
+import me.rerere.rikkahub.ui.components.ui.CardGroupIcon
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.plus
 import org.koin.compose.koinInject
@@ -56,6 +62,8 @@ fun RetrySettingsPage() {
     val coroutineScope = rememberCoroutineScope()
     val settingsStore = koinInject<SettingsStore>()
     val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
+    val containerColor = MaterialTheme.colorScheme.primaryContainer
+    val contentColor = MaterialTheme.colorScheme.onPrimaryContainer
 
     Scaffold(
         topBar = {
@@ -70,7 +78,9 @@ fun RetrySettingsPage() {
         containerColor = CustomColors.topBarColors.containerColor
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding(),
             contentPadding = innerPadding + PaddingValues(8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -260,6 +270,22 @@ fun RetrySettingsPage() {
                     )
                 }
             }
+            item {
+                CardGroup(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                ) {
+                    item(
+                        onClick = {
+                            coroutineScope.launch {
+                                settingsStore.update { it.copy(networkSetting = it.networkSetting.withRetryDefaults()) }
+                            }
+                        },
+                        leadingContent = { CardGroupIcon(HugeIcons.Refresh, containerColor = containerColor, contentColor = contentColor) },
+                        headlineContent = { Text(stringResource(R.string.extensions_page_retry_restore_defaults)) },
+                        supportingContent = { Text(stringResource(R.string.extensions_page_retry_restore_defaults_desc)) },
+                    )
+                }
+            }
         }
     }
 }
@@ -277,6 +303,11 @@ private fun RetryChipListEditor(
 ) {
     var adding by remember { mutableStateOf(false) }
     var input by remember { mutableStateOf("") }
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    // 点「添加」后把输入框滚入可视区域，避免被键盘或列表边缘挡住
+    LaunchedEffect(adding) {
+        if (adding) bringIntoViewRequester.bringIntoView()
+    }
 
     FlowRow(
         modifier = Modifier
@@ -308,9 +339,13 @@ private fun RetryChipListEditor(
             OutlinedTextField(
                 value = input,
                 onValueChange = { input = it },
-                modifier = Modifier.width(140.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
+                    .bringIntoViewRequester(bringIntoViewRequester),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodySmall,
+                placeholder = { Text(stringResource(R.string.extensions_page_retry_input_hint)) },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = keyboardType,
                     imeAction = ImeAction.Done,

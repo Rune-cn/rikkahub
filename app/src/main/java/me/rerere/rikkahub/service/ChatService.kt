@@ -708,11 +708,8 @@ class ChatService(
             // 注意：过滤后的 history 与 nodes 索引不再一一对应，定位回复节点必须在全量 allHistory 里按 id 找
             val history = allHistory.filterNot { it.isSubAgentDisplayMessage() }
 
-            // 同步主对话上下文，供 spawn_agent 的 inherit_context 使用（同样过滤子 Agent 展示消息）
-            subAgentManager.updateMainContext(
-                conversation.currentMessages.filterNot { it.isSubAgentDisplayMessage() },
-                conversationId,
-            )
+            // 记录当前主会话，供子 Agent 输出流式写回主对话
+            subAgentManager.updateActiveConversation(conversationId)
             // 只有「过滤子 Agent 展示消息后的最后一条」是主 Agent 的助手消息时，才接着写它所在的节点；
             // 即用户再发消息后（最后一条是 USER）必须新建节点，不能把新回复写进上一轮回复里（修复：每次对话都在旧回复节点上继续改）
             val lastMainAssistantMessage = history.lastOrNull()

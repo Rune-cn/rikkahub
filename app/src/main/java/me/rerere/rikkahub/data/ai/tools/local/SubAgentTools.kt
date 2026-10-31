@@ -62,8 +62,6 @@ private fun spawnAgentTool(manager: SubAgentManager): Tool = Tool(
         - model: optional model id override; omit to inherit your current model
         - wait: defaults to true: blocks until the sub-agent finishes and returns its result + status.
           Set false only for fire-and-forget (then you MUST call wait_agent later to get the result)
-        - inherit_context: set true to give the sub-agent your recent conversation history
-          (default false: it only sees the message, so include everything it needs)
         - Up to ${SubAgentManager.MAX_CONCURRENT_SUB_AGENTS} sub-agents can run at the same time.
     """.trimIndent().replace("\n", " "),
     parameters = {
@@ -75,15 +73,11 @@ private fun spawnAgentTool(manager: SubAgentManager): Tool = Tool(
                 })
                 put("message", buildJsonObject {
                     put("type", "string")
-                    put("description", "Full task description; the sub-agent cannot see your conversation unless inherit_context is true.")
+                    put("description", "Full task description; the sub-agent does not see your conversation, so include everything it needs.")
                 })
                 put("model", buildJsonObject {
                     put("type", "string")
                     put("description", "Optional model id override. Omit to inherit the current model.")
-                })
-                put("inherit_context", buildJsonObject {
-                    put("type", "boolean")
-                    put("description", "Whether to pass your recent conversation history to the sub-agent (default false).")
                 })
                 put("wait", buildJsonObject {
                     put("type", "boolean")
@@ -101,7 +95,6 @@ private fun spawnAgentTool(manager: SubAgentManager): Tool = Tool(
         val modelId = obj["model"]?.jsonPrimitive?.contentOrNull?.trim()
             ?.takeIf { it.isNotBlank() }
             ?.let { runCatching { Uuid.parse(it) }.getOrNull() }
-        val inheritContext = obj["inherit_context"]?.jsonPrimitive?.booleanOrNull
         val wait = obj["wait"]?.jsonPrimitive?.booleanOrNull ?: true
 
         val payload = if (name.isBlank() || message.isBlank()) {
@@ -114,7 +107,6 @@ private fun spawnAgentTool(manager: SubAgentManager): Tool = Tool(
                 name = name,
                 prompt = message,
                 modelId = modelId,
-                inheritContext = inheritContext,
             ).fold(
                 onSuccess = { task ->
                     if (wait) {
