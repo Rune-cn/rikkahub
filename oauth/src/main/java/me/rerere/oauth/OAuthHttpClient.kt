@@ -134,6 +134,21 @@ class OAuthHttpClient(
         val encoding: TokenEncoding = TokenEncoding.FORM,
     )
 
+    /** 动态注册被服务器以 4xx 拒绝。携带状态码与响应体，便于判断失败原因是否为 redirect_uri。 */
+    class ClientRegistrationException(
+        val statusCode: Int,
+        val body: String,
+        message: String,
+    ) : IOException(message) {
+        /** 是否属于「这个 redirect_uri 不被接受」，是则可换下一个候选重试。 */
+        val isRedirectUriRejected: Boolean
+            get() = statusCode in 400..499 && (
+                body.contains("invalid_redirect_uri", ignoreCase = true) ||
+                    body.contains("redirect uri", ignoreCase = true) ||
+                    body.contains("redirect_uri", ignoreCase = true)
+                )
+    }
+
     suspend fun registerClient(
         registrationEndpoint: String,
         request: ClientRegistrationRequest,
@@ -144,8 +159,40 @@ class OAuthHttpClient(
             .header("Accept", "application/json")
             .post(body.toRequestBody(JSON_MEDIA_TYPE))
             .build()
-        val text = execute(httpRequest)
+        val text = executeForRegistration(registrationEndpoint, httpRequest)
         json.decodeFromString(ClientRegistrationResponse.serializer(), text)
+    }
+
+    /**
+     * 按顺序用多个 redirect_uri 尝试动态注册，返回首个成功的结果及其实际使用的 redirect_uri。
+     *
+     * 各授权服务器对 loopback 主机名的接受标准不一致：多数接受 `localhost`，
+     * 也有服务器（例如 cxyonly.fans）只接受 `127.0.0.1` 并返回 `invalid_redirect_uri`。
+     * 这里不猜测服务器偏好，而是按调用方给出的顺序逐个尝试。
+     *
+     * 仅在服务器明确因 redirect_uri 拒绝（4xx 且响应体指向 redirect_uri）时才换下一个候选；
+     * 网络错误、5xx 等与 redirect_uri 无关的失败直接抛出，避免掩盖真正的问题。
+     */
+    suspend fun registerClientTryingRedirectUris(
+        registrationEndpoint: String,
+        request: ClientRegistrationRequest,
+        redirectUris: List<String>,
+    ): Pair<ClientRegistrationResponse, String> {
+        require(redirectUris.isNotEmpty()) { "redirect_uris 不能为空" }
+        var lastError: ClientRegistrationException? = null
+        for (redirectUri in redirectUris) {
+            try {
+                val response = registerClient(
+                    registrationEndpoint = registrationEndpoint,
+                    request = request.copy(redirectUris = listOf(redirectUri)),
+                )
+                return response to redirectUri
+            } catch (e: ClientRegistrationException) {
+                if (!e.isRedirectUriRejected) throw e
+                lastError = e
+            }
+        }
+        throw lastError ?: IOException("动态注册失败：所有 redirect_uri 都被拒绝")
     }
 
     fun generatePkce(): Pkce {
@@ -304,6 +351,21 @@ class OAuthHttpClient(
         }
     }
 
+    /** 注册专用：4xx 抛 ClientRegistrationException（可判断是否 redirect_uri 问题），其余沿用 execute 的语义。 */
+    private suspend fun executeForRegistration(url: String, request: Request): String {
+        executeRaw(request).use { response ->
+            val body = response.body.string()
+            if (!response.isSuccessful) {
+                val message = "HTTP ${response.code} for $url: ${body.take(300)}"
+                if (response.code in 400..499) {
+                    throw ClientRegistrationException(response.code, body, message)
+                }
+                throw IOException(message)
+            }
+            return body
+        }
+    }
+
     private suspend fun executeRaw(request: Request): Response =
         suspendCancellableCoroutine { continuation ->
             val call = httpClient.newCall(request)
@@ -327,3 +389,4 @@ class OAuthHttpClient(
         const val DEVICE_CODE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code"
     }
 }
+
