@@ -118,7 +118,10 @@ internal class McpOAuthCoordinator(
                         clientId = clientId,
                         clientSecret = oauth.clientSecret,
                         refreshToken = oauth.refreshToken,
-                        resources = listOf(McpOAuthDiscoveryClient.canonicalResource(config.serverUrl)),
+                        resources = listOf(
+                            oauth.resource
+                                ?: McpOAuthDiscoveryClient.canonicalResource(config.serverUrl)
+                        ),
                         scope = oauth.scope,
                     )
                 )
@@ -171,7 +174,18 @@ internal class McpOAuthCoordinator(
 
         val pkce = oauthClient.generatePkce()
         val state = oauthClient.generateState()
-        val resource = McpOAuthDiscoveryClient.canonicalResource(serverUrl)
+        // RFC 8707 资源标识符：优先用服务器在 PRM 里声明的 resource，
+        // 而不是从用户填写的 URL 推导。两者可能不同（如用户填了 www 别名主机），
+        // 而授权端点要求逐字符匹配，否则返回 invalid_target。
+        val declaredResource = protectedResource?.resource?.takeIf { it.isNotBlank() }
+        val derivedResource = McpOAuthDiscoveryClient.canonicalResource(serverUrl)
+        val resource = declaredResource ?: derivedResource
+        if (declaredResource != null && declaredResource != derivedResource) {
+            Log.i(
+                TAG,
+                "resource 采用 PRM 声明值: $declaredResource（由填写地址推导: $derivedResource）",
+            )
+        }
         val callbackSession = callbackServer.openSession(context, state)
         try {
             // 回调服务器由本进程启动，主机名只可能是 localhost / 127.0.0.1 之一。
@@ -238,6 +252,7 @@ internal class McpOAuthCoordinator(
                     registrationEndpoint = metadata.registrationEndpoint,
                     redirectUri = redirectUri,
                     scope = scope,
+                    resource = resource,
                 )
             )
 
@@ -283,6 +298,7 @@ internal class McpOAuthCoordinator(
                     registrationEndpoint = metadata.registrationEndpoint,
                     redirectUri = redirectUri,
                     scope = token.scope ?: scope,
+                    resource = resource,
                     accessToken = token.accessToken,
                     refreshToken = token.refreshToken,
                     expiresAt = computeExpiry(token.expiresIn),
@@ -328,4 +344,5 @@ internal class McpOAuthCoordinator(
             message.contains("missing or invalid")
     }
 }
+
 

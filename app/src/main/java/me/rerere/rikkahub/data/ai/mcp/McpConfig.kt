@@ -30,6 +30,16 @@ data class McpOAuthState(
     val registrationEndpoint: String? = null,
     val redirectUri: String? = null,
     val scope: String? = null,
+    /**
+     * RFC 8707 资源标识符，取自受保护资源元数据（PRM）的 `resource` 字段。
+     *
+     * 以服务器声明为准，而不是从用户填写的 URL 推导：用户可能填 `www.cxyonly.fans`
+     * 之类的别名主机，而服务器声明的是 `cxyonly.fans`，两者必须逐字符相等否则
+     * 授权端点返回 invalid_target（invalid_target）。
+     *
+     * 持久化是为了让令牌刷新使用与授权时相同的值。
+     */
+    val resource: String? = null,
     val accessToken: String? = null,
     val refreshToken: String? = null,
     val expiresAt: Long = 0L, // epoch millis, 0 表示未知/不过期
@@ -41,6 +51,7 @@ data class McpOAuthState(
         "McpOAuthState(enabled=$enabled, clientId=$clientId, clientSecret=${clientSecret.masked()}, " +
             "authorizationEndpoint=$authorizationEndpoint, tokenEndpoint=$tokenEndpoint, " +
             "registrationEndpoint=$registrationEndpoint, redirectUri=$redirectUri, scope=$scope, " +
+            "resource=$resource, " +
             "accessToken=${accessToken.masked()}, refreshToken=${refreshToken.masked()}, expiresAt=$expiresAt)"
 
     private fun String?.masked(): String = when {
@@ -100,3 +111,4 @@ val McpServerConfig.serverUrl: String
         is McpServerConfig.SseTransportServer -> url
         is McpServerConfig.StreamableHTTPServer -> url
     }
+
