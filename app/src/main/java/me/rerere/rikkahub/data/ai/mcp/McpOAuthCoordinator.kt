@@ -23,6 +23,21 @@ private const val TAG = "McpOAuthCoordinator"
 private const val TOKEN_REFRESH_LEEWAY_MS = 60_000L
 internal const val MCP_OAUTH_CALLBACK_PORT = 52_134
 internal const val MCP_OAUTH_CALLBACK_PATH = "/oauth/callback"
+
+/**
+ * 动态注册时按顺序尝试的 loopback redirect URI。
+ *
+ * 先试 `localhost`：多数授权服务器接受它，且部分服务器前置的 WAF 会拦截
+ * 请求体里带 IPv4 字面地址的 URL。
+ * 再退回 `127.0.0.1`：RFC 8252 把两者都算 loopback，但有服务器（如 cxyonly.fans）
+ * 只接受 IP 形式，对 `localhost` 返回 invalid_redirect_uri。
+ */
+internal val MCP_OAUTH_REDIRECT_URI_CANDIDATES = listOf(
+    "http://localhost:$MCP_OAUTH_CALLBACK_PORT$MCP_OAUTH_CALLBACK_PATH",
+    "http://127.0.0.1:$MCP_OAUTH_CALLBACK_PORT$MCP_OAUTH_CALLBACK_PATH",
+)
+
+/** 默认 redirect URI（localhost）。Client ID Metadata Document 声明的也是这一个。 */
 internal const val MCP_OAUTH_REDIRECT_URI =
     "http://localhost:$MCP_OAUTH_CALLBACK_PORT$MCP_OAUTH_CALLBACK_PATH"
 // 托管在 GitHub Pages 上的 Client ID Metadata Document，其 redirect_uris 必须与 MCP_OAUTH_REDIRECT_URI 一致
@@ -159,34 +174,57 @@ internal class McpOAuthCoordinator(
         val resource = McpOAuthDiscoveryClient.canonicalResource(serverUrl)
         val callbackSession = callbackServer.openSession(context, state)
         try {
-            val redirectUri = callbackSession.redirectUri
-            check(redirectUri == MCP_OAUTH_REDIRECT_URI) {
-                "OAuth 回调服务器地址不一致: $redirectUri"
+            // 回调服务器由本进程启动，主机名只可能是 localhost / 127.0.0.1 之一。
+            // 不比对固定常量：两种写法都可能出现，且部分授权服务器只接受其中之一。
+            val callbackRedirectUri = callbackSession.redirectUri
+            check(callbackRedirectUri in MCP_OAUTH_REDIRECT_URI_CANDIDATES) {
+                "OAuth 回调服务器地址不在预期范围内: $callbackRedirectUri"
             }
             val existing = config.commonOptions.oauth
-            val canReuseClient = existing?.redirectUri == redirectUri && !existing.clientId.isNullOrBlank()
+            val canReuseClient =
+                existing?.redirectUri == callbackRedirectUri && !existing.clientId.isNullOrBlank()
             var clientId = existing?.clientId.takeIf { canReuseClient }
             var clientSecret = existing?.clientSecret.takeIf { canReuseClient }
             if (clientId.isNullOrBlank() && metadata.registrationEndpoint == null &&
                 metadata.clientIdMetadataDocumentSupported
             ) {
-                // 无动态注册端点时，使用 Client ID Metadata Document（URL 即 client_id）
-                clientId = MCP_OAUTH_CLIENT_METADATA_URL
-                clientSecret = null
+                // Client ID Metadata Document 里的 redirect_uris 只有 localhost。若回调服务器
+                // 声明的是 127.0.0.1，这个 client_id 与 redirect_uri 不匹配，授权会被拒；
+                // 此时不采用它，交给下面的动态注册按候选顺序处理。
+                if (callbackRedirectUri == MCP_OAUTH_REDIRECT_URI) {
+                    clientId = MCP_OAUTH_CLIENT_METADATA_URL
+                    clientSecret = null
+                } else {
+                    Log.i(
+                        TAG,
+                        "跳过 Client ID Metadata Document：其 redirect_uris 仅含 localhost，" +
+                            "当前回调为 $callbackRedirectUri",
+                    )
+                }
             }
+            // 注册成功后必须以「服务器实际接受的」redirect_uri 构造后续请求，
+            // 否则授权请求与 token 请求里的 redirect_uri 会和注册值不一致而失败。
+            var redirectUri = callbackRedirectUri
             if (clientId.isNullOrBlank()) {
                 val registrationEndpoint = metadata.registrationEndpoint
                     ?: error("授权服务器不支持动态注册，且未预配置 client_id")
-                val registration = oauthClient.registerClient(
-                    registrationEndpoint = registrationEndpoint,
-                    request = OAuthHttpClient.ClientRegistrationRequest(
-                        clientName = config.commonOptions.name.ifBlank { "RikkaHub" },
-                        redirectUris = listOf(redirectUri),
-                        scope = scope,
-                    ),
-                )
+                val (registration, acceptedRedirectUri) =
+                    oauthClient.registerClientTryingRedirectUris(
+                        registrationEndpoint = registrationEndpoint,
+                        request = OAuthHttpClient.ClientRegistrationRequest(
+                            clientName = config.commonOptions.name.ifBlank { "RikkaHub" },
+                            redirectUris = listOf(callbackRedirectUri),
+                            scope = scope,
+                        ),
+                        redirectUris = MCP_OAUTH_REDIRECT_URI_CANDIDATES,
+                    )
                 clientId = registration.clientId
                 clientSecret = registration.clientSecret
+                redirectUri = acceptedRedirectUri
+                Log.i(
+                    TAG,
+                    "动态注册成功: ${config.commonOptions.name} redirect_uri=$acceptedRedirectUri",
+                )
             }
 
             persistOAuthState(
@@ -290,3 +328,4 @@ internal class McpOAuthCoordinator(
             message.contains("missing or invalid")
     }
 }
+
