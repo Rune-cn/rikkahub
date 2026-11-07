@@ -43,6 +43,13 @@
    - `gradle/gradle-daemon-jvm.properties`（JBR 21 直链，绕开 foojay 服务故障）
    - 签名密钥通过 GitHub Secrets（`KEY_BASE64`、`SIGNING_CONFIG`）注入
 
+7. **移除内置广告提供商**（返利/推广项，**冲突时不要合回来**）：
+   - `app/.../data/datastore/DefaultProviders.kt`（删除 AiHubMix / APIMart / 随想AI网关 / MaruCode / 302.AI）
+   - `app/.../data/datastore/RecommendedProviders.kt`（整个「推荐提供商」Sheet 已删除）
+   - `app/.../ui/pages/setting/SettingProviderPage.kt`（移除入口按钮与列表项）
+   - 判据：带返利参数（`?aff=` / `?promo=` / 跳转短链）或纯推广文案的内置提供商一律不加回；
+     正规厂商（OpenAI / Gemini / DeepSeek / OpenRouter / 硅基流动 / 阿里云百炼 等）保留
+
 ## 如何同步上游更新
 
 ```bash

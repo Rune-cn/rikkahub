@@ -962,7 +962,6 @@
   <string name="setting_provider_page_save_success">Erfolgreich gespeichert</string>
   <string name="setting_provider_page_scan_qr_code">QR-Code scannen</string>
   <string name="setting_provider_page_search_providers">Anbieter suchen</string>
-  <string name="setting_provider_page_recommend">Empfohlene Anbieter</string>
   <string name="setting_provider_page_select_all">Alle auswählen (%1$d)</string>
   <string name="setting_provider_page_select_from_gallery">Aus Galerie auswählen</string>
   <string name="setting_provider_page_service_account_email">Service-Account-E-Mail</string>
