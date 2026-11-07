@@ -436,7 +436,7 @@
   <string name="permission_diaog_title">권한 요청</string>
   <string name="permission_go_to_settings">앱 설정으로 이동</string>
   <string name="permission_local_network">로컬 네트워크</string>
-  <string name="permission_local_network_desc">같은 로컬 네트워크의 기기에서 Web 서버에 접근할 수 있도록 허용합니다</string>
+  <string name="permission_local_network_desc">로컬 네트워크의 자체 호스팅 서비스에 연결하거나 다른 기기에서 Web 서버에 접근하려면 필요합니다</string>
   <string name="permission_microphone">마이크</string>
   <string name="permission_microphone_desc">음성 인식을 위해 마이크 권한이 필요합니다</string>
   <string name="permission_notification">알림</string>
@@ -1061,8 +1061,6 @@ mDNS 주소: .local 호스트네임을 사용하며, IP를 몰라도 같은 네�
   <string name="use_web_search">웹 검색 사용</string>
   <string name="user_default_name">사용자</string>
   <string name="video">동영상</string>
-  <string name="web_search_disabled">웹 검색 비활성화됨</string>
-  <string name="web_search_enabled">웹 검색 활성화됨</string>
   <string name="setting_theme_page_import_theme">가져오기</string>
   <string name="setting_theme_page_export_success">테마 JSON이 클립보드에 복사되었습니다</string>
   <string name="setting_theme_page_import_success">테마를 가져왔습니다</string>
@@ -1476,7 +1474,6 @@ mDNS 주소: .local 호스트네임을 사용하며, IP를 몰라도 같은 네�
   <string name="setting_page_media">미디어</string>
   <string name="setting_page_media_desc">이미지 및 동영상 생성 제공자, 에셋 업로드</string>
   <string name="setting_media_page_providers">제공자</string>
-  <string name="setting_media_page_edit_provider">제공자 편집</string>
   <string name="setting_media_page_add_provider">제공자 추가</string>
   <string name="media_creation_error_interrupted">작업이 완료되기 전에 앱이 종료되었습니다</string>
   <string name="media_creation_error_provider_deleted">제공자 \"%1$s\"이(가) 삭제되었습니다</string>
@@ -1780,4 +1777,27 @@ mDNS 주소: .local 호스트네임을 사용하며, IP를 몰라도 같은 네�
   <string name="floating_chat_status_awaiting_approval">도구 호출 확인 대기 중</string>
   <string name="floating_chat_status_done">답변 완료</string>
   <string name="floating_chat_status_idle">대기 중</string>
+  <string name="setting_model_page_memory_model">기억 통합 모델</string>
+  <string name="setting_model_page_memory_model_desc">백그라운드에서 대화를 장기 기억으로 정리하는 데 사용되는 모델입니다. 설정하지 않으면 빠른 모델을 사용합니다.</string>
+  <string name="setting_model_page_memory_model_follow_fast">빠른 모델과 동일</string>
+  <string name="background_tasks_running">백그라운드 작업: %1$d개 실행 중</string>
+  <string name="background_tasks_title">백그라운드 작업</string>
+  <string name="background_tasks_empty">이 대화에는 백그라운드 작업이 없습니다</string>
+  <string name="background_tasks_stopping">중지 중…</string>
+  <string name="background_tasks_log_truncated">로그의 끝부분을 표시합니다. 전체 로그: %1$s</string>
+  <string name="background_tasks_no_output_yet">아직 출력이 없습니다</string>
+  <string name="background_tasks_no_output">출력 없음</string>
+  <string name="background_tasks_status_running">실행 중 · %1$s</string>
+  <string name="background_tasks_status_exited">코드 %1$d(으)로 종료됨 · %2$s</string>
+  <string name="background_tasks_status_stopped">중지됨 · %1$s</string>
+  <string name="background_tasks_duration_seconds">%1$d초</string>
+  <string name="background_tasks_duration_minutes">%1$d분 %2$d초</string>
+  <string name="background_tasks_duration_hours">%1$d시간 %2$d분</string>
+  <string name="tool_ui_shell_background_running">백그라운드에서 실행 중 · %1$s</string>
+  <string name="tool_ui_shell_background_stopped">중지됨 · %1$s</string>
+  <string name="tool_ui_shell_background">백그라운드 · %1$s</string>
+  <string name="chat_page_notice_retry">재시도</string>
+  <string name="notification_background_shell_running">백그라운드 명령 실행 중: %1$d</string>
+  <string name="background_shell_notice_exited">백그라운드 명령이 코드 %1$d(으)로 종료되었습니다: %2$s</string>
+  <string name="background_shell_notice_stopped">백그라운드 명령을 사용자가 중지했습니다: %1$s</string>
 </resources>

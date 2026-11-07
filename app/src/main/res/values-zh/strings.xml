@@ -449,7 +449,7 @@
   <string name="permission_diaog_title">权限请求</string>
   <string name="permission_go_to_settings">前往设置</string>
   <string name="permission_local_network">本地网络</string>
-  <string name="permission_local_network_desc">允许同一局域网内的设备访问 Web 服务器</string>
+  <string name="permission_local_network_desc">连接局域网内的自建服务，以及让其他设备访问 Web 服务器时需要此权限</string>
   <string name="permission_microphone">麦克风</string>
   <string name="permission_microphone_desc">需要麦克风权限以进行语音识别</string>
   <string name="permission_notification">通知</string>
@@ -1128,8 +1128,6 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="use_web_search">网络搜索</string>
   <string name="user_default_name">用户</string>
   <string name="video">视频</string>
-  <string name="web_search_disabled">已禁用网页搜索</string>
-  <string name="web_search_enabled">已启用网页搜索</string>
   <string name="setting_theme_page_import_theme">导入</string>
   <string name="setting_theme_page_export_success">主题 JSON 已复制到剪贴板</string>
   <string name="setting_theme_page_import_success">主题导入成功</string>
@@ -1701,7 +1699,6 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="setting_page_media">媒体</string>
   <string name="setting_page_media_desc">图像与视频生成提供商、素材上传</string>
   <string name="setting_media_page_providers">提供商</string>
-  <string name="setting_media_page_edit_provider">编辑提供商</string>
   <string name="setting_media_page_add_provider">添加提供商</string>
   <string name="setting_media_page_empty">还没有媒体生成提供商，点右上角添加</string>
   <string name="setting_media_page_s3_desc">部分接口只接受公网地址的素材（如视频生成的参考图、参考视频）。在这里配置一个 S3 兼容的对象存储服务后，本地文件会先上传到它的桶里，再以临时地址交给接口；上传的文件 7 天后自动清理。此配置与备份的 S3 互相独立。</string>
@@ -1982,4 +1979,27 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="link_action_open_in_app">内嵌打开</string>
   <string name="link_action_share_link">分享链接</string>
   <string name="link_action_copy_link">复制链接</string>
+  <string name="setting_model_page_memory_model">记忆整理模型</string>
+  <string name="setting_model_page_memory_model_desc">用于在后台将对话整理为长期记忆的模型；未设置时使用快速模型</string>
+  <string name="setting_model_page_memory_model_follow_fast">跟随快速模型</string>
+  <string name="background_tasks_running">后台任务：%1$d 个运行中</string>
+  <string name="background_tasks_title">后台任务</string>
+  <string name="background_tasks_empty">此对话中没有后台任务</string>
+  <string name="background_tasks_stopping">正在停止…</string>
+  <string name="background_tasks_log_truncated">显示的是日志末尾部分。完整日志：%1$s</string>
+  <string name="background_tasks_no_output_yet">暂无输出</string>
+  <string name="background_tasks_no_output">无输出</string>
+  <string name="background_tasks_status_running">运行中 · %1$s</string>
+  <string name="background_tasks_status_exited">已退出，退出码 %1$d · %2$s</string>
+  <string name="background_tasks_status_stopped">已停止 · %1$s</string>
+  <string name="background_tasks_duration_seconds">%1$d秒</string>
+  <string name="background_tasks_duration_minutes">%1$d分 %2$d秒</string>
+  <string name="background_tasks_duration_hours">%1$d小时 %2$d分</string>
+  <string name="tool_ui_shell_background_running">后台运行中 · %1$s</string>
+  <string name="tool_ui_shell_background_stopped">已停止 · %1$s</string>
+  <string name="tool_ui_shell_background">后台 · %1$s</string>
+  <string name="chat_page_notice_retry">重试</string>
+  <string name="notification_background_shell_running">后台命令运行中：%1$d</string>
+  <string name="background_shell_notice_exited">后台命令已退出，退出码为 %1$d：%2$s</string>
+  <string name="background_shell_notice_stopped">后台命令已被你停止：%1$s</string>
 </resources>

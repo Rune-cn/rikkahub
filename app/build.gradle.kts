@@ -22,10 +22,10 @@ if (file("google-services.json").exists()) {
 // - 预发布版（nightly）：[应用版本]-[构建 commit 短 SHA]，如 2.5.8-a3ea1cd1
 // - 正式版（stable）：纯应用版本号，如 2.5.8（构建时传 -PversionWithSha=false）
 // 应用版本号在此处统一维护；Release 名称由工作流按同一规则生成
-val appVersion = "3.0.0"
+val appVersion = "3.1.1"
 
 // versionCode 每次发版手动 +1（必须单调递增，Android 靠它判断升级）
-val appVersionCode = 193
+val appVersionCode = 194
 val gitShortSha = runCatching {
     providers.exec {
         commandLine("git", "rev-parse", "--short=8", "HEAD")
@@ -329,10 +329,12 @@ dependencies {
     implementation(libs.image.viewer)
 
     // JLatexMath
-    // https://github.com/rikkahub/jlatexmath-android
-    implementation(libs.jlatexmath)
-    implementation(libs.jlatexmath.font.greek)
-    implementation(libs.jlatexmath.font.cyrillic)
+    // https://github.com/re-ovo/bettertext
+    implementation(platform(libs.bettertext.bom))
+    implementation(libs.bettertext.text)
+    implementation(libs.bettertext.markdown)
+    implementation(libs.bettertext.latex)
+    implementation(libs.bettertext.highlight)
 
     // mcp
     implementation(libs.modelcontextprotocol.kotlin.sdk)
@@ -351,7 +353,6 @@ dependencies {
     implementation(project(":ai"))
     implementation(project(":web"))
     implementation(project(":document"))
-    implementation(project(":highlight"))
     implementation(project(":search"))
     implementation(project(":speech"))
     implementation(project(":mediagen"))

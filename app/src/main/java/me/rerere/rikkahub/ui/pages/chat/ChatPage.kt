@@ -34,6 +34,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.runtime.derivedStateOf
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.rerere.ui.toast.ToastType
+import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.Job
@@ -74,12 +76,15 @@ import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.Conversation
 import me.rerere.rikkahub.data.repository.WorkspaceRepository
+import me.rerere.rikkahub.service.BackgroundShellStatus
 import me.rerere.rikkahub.service.ChatError
+import me.rerere.rikkahub.ui.components.ai.BackgroundTasksSheet
 import me.rerere.rikkahub.ui.components.ai.ChatAttachmentPickerActions
 import me.rerere.rikkahub.data.ai.subagent.SubAgentManager
 import me.rerere.rikkahub.data.ai.tools.local.UPDATE_PLAN_TOOL_NAME
 import me.rerere.rikkahub.data.model.SubAgentStatus
 import me.rerere.rikkahub.ui.components.ai.ChatInput
+import me.rerere.rikkahub.ui.components.ai.ChatTopBarCapsule
 import me.rerere.rikkahub.ui.components.message.TaskProgressBanner
 import me.rerere.rikkahub.ui.components.message.tools.SubAgentRunningBanner
 import me.rerere.rikkahub.ui.components.message.tools.parseTaskPlan
@@ -345,6 +350,11 @@ private fun ChatPageContent(
         }.orEmpty()
     }
 
+    // 消息滚到标题栏下面时才显示胶囊背景，空页面或在顶部时按钮直接浮在背景上
+    val listScrolledUnderTopBar by remember(chatListState) {
+        derivedStateOf { chatListState.canScrollBackward }
+    }
+
     TTSAutoPlay(vm = vm, setting = setting, conversation = conversation)
 
     // 当前任务计划（update_plan 工具），用于输入框上方的进度展示
@@ -376,6 +386,8 @@ private fun ChatPageContent(
                     bigScreen = bigScreen,
                     drawerState = drawerState,
                     previewMode = previewMode,
+                    hazeState = hazeState,
+                    showCapsuleBackground = !previewMode && listScrolledUnderTopBar,
                     onNewChat = {
                         navigateToChatPage(navController)
                     },
@@ -390,6 +402,15 @@ private fun ChatPageContent(
             bottomBar = {
                 val messageQueue by vm.messageQueue.collectAsStateWithLifecycle()
                 val voiceState by vm.voiceSession.state.collectAsStateWithLifecycle()
+                val backgroundTasks by vm.backgroundTasks.collectAsStateWithLifecycle()
+                var showBackgroundTasks by remember { mutableStateOf(false) }
+                if (showBackgroundTasks) {
+                    BackgroundTasksSheet(
+                        tasks = backgroundTasks,
+                        onStop = vm::stopBackgroundTask,
+                        onDismiss = { showBackgroundTasks = false },
+                    )
+                }
                 Column {
                     // 待办进度：显示在聊天输入框上方（有未完成步骤时）
                     activeTaskPlan?.takeIf { !it.allCompleted }?.let { plan ->
@@ -419,6 +440,8 @@ private fun ChatPageContent(
                     onBeginEditQueuedMessage = vm::beginEditQueuedMessage,
                     onFinishEditQueuedMessage = vm::finishEditQueuedMessage,
                     onResumeMessageQueue = vm::resumeMessageQueue,
+                    runningBackgroundTasks = backgroundTasks.count { it.status == BackgroundShellStatus.RUNNING },
+                    onShowBackgroundTasks = { showBackgroundTasks = true },
                     loading = loadingJob != null,
                     settings = setting,
                     assistant = assistant,
@@ -427,12 +450,6 @@ private fun ChatPageContent(
                     completionProviders = completionProviders,
                     onCancelClick = {
                         vm.stopGeneration()
-                    },
-                    onUpdateSearchMode = { mode ->
-                        vm.updateSearch(
-                            enableWebSearch = mode == SearchMode.LOCAL,
-                            builtInSearch = mode == SearchMode.BUILT_IN,
-                        )
                     },
                     onSendClick = {
                         if (currentChatModel == null) {
@@ -469,9 +486,6 @@ private fun ChatPageContent(
                     },
                     onUpdateChatModel = vm::setChatModel,
                     onUpdateAssistant = vm::updateAssistant,
-                    onUpdateSearchService = { index ->
-                        vm.updateSettings { it.copy(searchServiceSelected = index) }
-                    },
                     onMoreClick = {
                         showFilesSheet = true
                     },
@@ -605,6 +619,15 @@ private fun ChatFilesPickerSheet(
             onCompressContext = vm::handleCompressContext,
             onUpdateAssistant = vm::updateAssistant,
             onUpdateWorkspaceCwd = vm::updateWorkspaceCwd,
+            onUpdateSearchMode = { mode ->
+                vm.updateSearch(
+                    enableWebSearch = mode == SearchMode.LOCAL,
+                    builtInSearch = mode == SearchMode.BUILT_IN,
+                )
+            },
+            onUpdateSearchService = { index ->
+                vm.updateSettings { it.copy(searchServiceSelected = index) }
+            },
             showCompressDialog = showCompressDialog,
             onShowCompressDialogChange = { showCompressDialog = it },
             onDismiss = { dismissAll() },
@@ -638,6 +661,8 @@ private fun TopBar(
     drawerState: DrawerState,
     bigScreen: Boolean,
     previewMode: Boolean,
+    hazeState: HazeState,
+    showCapsuleBackground: Boolean,
     onClickMenu: () -> Unit,
     onNewChat: () -> Unit,
     onUpdateTitle: (String) -> Unit
@@ -652,12 +677,19 @@ private fun TopBar(
         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
         navigationIcon = {
             if (!bigScreen) {
-                IconButton(
-                    onClick = {
-                        scope.launch { drawerState.open() }
-                    }
+                ChatTopBarCapsule(
+                    hazeState = hazeState,
+                    displaySetting = settings.displaySetting,
+                    showBackground = showCapsuleBackground,
+                    modifier = Modifier.padding(start = 8.dp, end = 4.dp),
                 ) {
-                    Icon(HugeIcons.Menu03, "Messages")
+                    IconButton(
+                        onClick = {
+                            scope.launch { drawerState.open() }
+                        }
+                    ) {
+                        Icon(HugeIcons.Menu03, "Messages")
+                    }
                 }
             }
         },
@@ -696,20 +728,27 @@ private fun TopBar(
             }
         },
         actions = {
-            IconButton(
-                onClick = {
-                    onClickMenu()
-                }
+            ChatTopBarCapsule(
+                hazeState = hazeState,
+                displaySetting = settings.displaySetting,
+                showBackground = showCapsuleBackground,
+                modifier = Modifier.padding(start = 4.dp, end = 8.dp),
             ) {
-                Icon(if (previewMode) HugeIcons.Cancel01 else HugeIcons.LeftToRightListBullet, "Chat Options")
-            }
+                IconButton(
+                    onClick = {
+                        onClickMenu()
+                    }
+                ) {
+                    Icon(if (previewMode) HugeIcons.Cancel01 else HugeIcons.LeftToRightListBullet, "Chat Options")
+                }
 
-            IconButton(
-                onClick = {
-                    onNewChat()
+                IconButton(
+                    onClick = {
+                        onNewChat()
+                    }
+                ) {
+                    Icon(HugeIcons.MessageAdd01, "New Message")
                 }
-            ) {
-                Icon(HugeIcons.MessageAdd01, "New Message")
             }
         },
     )

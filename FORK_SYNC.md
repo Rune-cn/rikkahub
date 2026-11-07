@@ -9,12 +9,12 @@
 |---|---|
 | 本仓库 | `Rune-cn/rikkahub`（https://github.com/Rune-cn/rikkahub） |
 | 上游仓库 | `rikkahub/rikkahub`（https://github.com/rikkahub/rikkahub） |
-| fork 基线（上游 commit） | `b64beeef`（feat(chat): 会话开始后把模型、思考级别、搜索等配置固定在会话上） |
-| 最近一次同步（上游 commit） | `4a7a39c4`（2026-10-06，上游新增 2 个提交：会话列表排序、AI 消息模型显示修复） |
 | 上游默认分支 | `master` |
 | 本仓库默认分支 | `master` |
+| 同步方式 | `git merge upstream/master`（见下节） |
 
-> ✅ 最近一次同步已完成：`git rebase upstream/master` 零冲突，落后 0 / 领先 14（定制提交），构建通过。
+> ⚠️ **不要把基线 commit 与「领先/落后多少个提交」写死在本文件**：每次同步后必然过期（本文件此前
+> 就因为写死而失效）。需要时用文末「快速命令」现场查询。
 
 ## 本分支的定制改动（同步时注意保持）
 
@@ -52,30 +52,38 @@
 
 ## 如何同步上游更新
 
+**用 merge，不要用 rebase。** 本分支有 160+ 个定制提交，且与上游大量改动同一批文件；rebase 要逐个
+回放这些提交、对同一批文件反复解冲突，还要强推改写历史。merge 只需一轮冲突解决，且推送是普通提交、
+不需要 `--force`。
+
 ```bash
 cd /workspace/rikkahub
 
 # 1. 拉取上游最新代码（只下载，不合并）
 git fetch upstream
 
-# 2. 查看上游改了什么
+# 2. 先看上游改了什么
 git log --oneline master..upstream/master        # 上游新增的提交
 git diff master...upstream/master --stat         # 上游的改动概览
 
-# 3. 合并上游到本地（推荐 rebase，历史更线性）
-git rebase upstream/master
-# 或：git merge upstream/master
+# 3. 合并上游（本地解决冲突后再提交）
+git merge upstream/master
 
-# 4. 若冲突：手动解决（优先保留本分支定制，见上表），然后
+# 4. 冲突处理：按上文「本分支的定制改动」逐项判断，保留本分支定制
 git add <解决好的文件>
-git rebase --continue     # 如果用的是 rebase
-# 或 git commit           # 如果用的是 merge
+git commit
 
-# 5. 推送（rebase 后需要强推）
-git push origin master --force-with-lease
+# 5. 推送（merge 不需要 --force）
+git push origin master
 ```
 
-推送到 `master` 后，GitHub Actions 会自动构建并发布新的 Nightly Release APK。
+> 冲突集中在少数文件（上次 35 个双方都改的文件中只有 14 个真正冲突）。解决后**必须**做两件事：
+> 1. 全文搜索 `<<<<<<<` 确认没有残留标记；
+> 2. 搜索被本分支删除但上游仍引用的符号（例如上游的归一化逻辑会引用 `RECOMMENDED_PROVIDERS`，
+>    本分支已删除该文件）——这类引用不会产生冲突，只会静默导致编译失败。
+
+推送到 `master` 后，GitHub Actions 会自动构建；**构建失败时不会发布**（发布步骤以构建成功为前提），
+所以坏提交不会污染 Release。
 
 ## 注意事项
 
@@ -83,6 +91,9 @@ git push origin master --force-with-lease
   本分支已改为指向本仓库。
 - 上游若改动 `NetworkSetting`、`WorkspaceTools`、`GenerationLoop`、`ChatVM` 等文件，
   合并时检查本分支的定制是否仍在。
+- `app/build.gradle.kts` 的版本号：上游用硬编码 `versionCode` / `versionName`，本分支用
+  `val appVersion` / `val appVersionCode` 变量（CI 依赖）。冲突时**保留变量形式**，并把数值推进到
+  不小于上游的值（如上游 3.1.1 / 194），否则用户无法覆盖安装。
 - 会优先使用本地缓存的 JBR 21（`~/.gradle/jdks`），无需每次重新下载。
 
 ## 快速命令

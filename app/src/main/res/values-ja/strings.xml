@@ -436,7 +436,7 @@
   <string name="permission_diaog_title">権限リクエスト</string>
   <string name="permission_go_to_settings">アプリ設定へ移動</string>
   <string name="permission_local_network">ローカルネットワーク</string>
-  <string name="permission_local_network_desc">同じローカルネットワーク上のデバイスから Web サーバーへアクセスできるようにします</string>
+  <string name="permission_local_network_desc">ローカルネットワーク上のセルフホストサービスへの接続や、他のデバイスから Web サーバーへのアクセスに必要です</string>
   <string name="permission_microphone">マイク</string>
   <string name="permission_microphone_desc">音声認識にはマイクの権限が必要です</string>
   <string name="permission_notification">通知</string>
@@ -1061,8 +1061,6 @@ mDNSアドレス: .localホスト名を使用し、IPを知らなくても同じ
   <string name="use_web_search">ウェブ検索を</string>
   <string name="user_default_name">ユーザー</string>
   <string name="video">動画</string>
-  <string name="web_search_disabled">ウェブ検索が無効になりました</string>
-  <string name="web_search_enabled">ウェブ検索が有効になりました</string>
   <string name="setting_theme_page_import_theme">インポート</string>
   <string name="setting_theme_page_export_success">テーマJSONがクリップボードにコピーされました</string>
   <string name="setting_theme_page_import_success">テーマが正常にインポートされました</string>
@@ -1476,7 +1474,6 @@ mDNSアドレス: .localホスト名を使用し、IPを知らなくても同じ
   <string name="setting_page_media">メディア</string>
   <string name="setting_page_media_desc">画像・動画生成プロバイダー、アセットのアップロード</string>
   <string name="setting_media_page_providers">プロバイダー</string>
-  <string name="setting_media_page_edit_provider">プロバイダーを編集</string>
   <string name="setting_media_page_add_provider">プロバイダーを追加</string>
   <string name="setting_media_page_empty">メディア生成プロバイダーはまだありません。追加するには上部の + をタップしてください。</string>
   <string name="setting_media_page_s3_desc">一部のAPIは、公開URL上のアセット（動画生成用の参照画像や参照動画など）しか受け付けません。ここでS3互換のオブジェクトストレージサービスを設定すると、ローカルファイルはまずそのバケットにアップロードされ、その後、一時URLとしてAPIに渡されます。アップロードされたファイルは7日後に自動的に削除されます。この設定は、バックアップに使用されるS3とは独立しています。</string>
@@ -1780,4 +1777,27 @@ mDNSアドレス: .localホスト名を使用し、IPを知らなくても同じ
   <string name="floating_chat_status_awaiting_approval">ツール呼び出しの確認待ち</string>
   <string name="floating_chat_status_done">返信完了</string>
   <string name="floating_chat_status_idle">待機中</string>
+  <string name="setting_model_page_memory_model">記憶整理モデル</string>
+  <string name="setting_model_page_memory_model_desc">バックグラウンドで会話を長期記憶に整理するために使用されるモデル。未設定の場合は高速モデルを使用します</string>
+  <string name="setting_model_page_memory_model_follow_fast">高速モデルと同じ</string>
+  <string name="background_tasks_running">バックグラウンドタスク: %1$d件実行中</string>
+  <string name="background_tasks_title">バックグラウンドタスク</string>
+  <string name="background_tasks_empty">この会話にはバックグラウンドタスクはありません</string>
+  <string name="background_tasks_stopping">停止中…</string>
+  <string name="background_tasks_log_truncated">ログの末尾を表示しています。完全なログ: %1$s</string>
+  <string name="background_tasks_no_output_yet">まだ出力がありません</string>
+  <string name="background_tasks_no_output">出力なし</string>
+  <string name="background_tasks_status_running">実行中 · %1$s</string>
+  <string name="background_tasks_status_exited">コード %1$d で終了 · %2$s</string>
+  <string name="background_tasks_status_stopped">停止 · %1$s</string>
+  <string name="background_tasks_duration_seconds">%1$d秒</string>
+  <string name="background_tasks_duration_minutes">%1$d分 %2$d秒</string>
+  <string name="background_tasks_duration_hours">%1$d時間%2$d分</string>
+  <string name="tool_ui_shell_background_running">バックグラウンドで実行中 · %1$s</string>
+  <string name="tool_ui_shell_background_stopped">停止 · %1$s</string>
+  <string name="tool_ui_shell_background">バックグラウンド · %1$s</string>
+  <string name="chat_page_notice_retry">再試行</string>
+  <string name="notification_background_shell_running">バックグラウンドで実行中のコマンド: %1$d</string>
+  <string name="background_shell_notice_exited">バックグラウンドコマンドがコード %1$d で終了しました: %2$s</string>
+  <string name="background_shell_notice_stopped">バックグラウンドコマンドを停止しました: %1$s</string>
 </resources>

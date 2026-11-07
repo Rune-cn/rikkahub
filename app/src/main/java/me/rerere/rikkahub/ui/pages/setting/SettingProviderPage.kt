@@ -136,6 +136,8 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
         searchQuery = ""
         pendingScrollId = provider.id.toString()
         vm.updateSettings { latest ->
+            // 连点时第二次写入已经能看到第一次的结果，避免出现重复 id
+            if (latest.providers.any { it.id == provider.id }) return@updateSettings latest
             latest.copy(providers = listOf(provider) + latest.providers)
         }
     }
