@@ -172,12 +172,16 @@ class SubAgentManager(
 
             updateTask(task.name) { it.copy(modelName = model.displayName) }
 
+            // 子 Agent 的会话标识：工具（工作区 shell 的后台任务归属）与生成请求必须用同一个
+            val conversationId = Uuid.random()
+
             // 子 Agent 拥有与主 Agent 同源的工具集（含技能、MCP、工作区、搜索、记忆等），
             // 但排除子 Agent 管理工具本身，避免无限递归
             val tools = chatToolFactory.createTools(
                 settings = settings,
                 assistant = assistant,
                 model = model,
+                conversationId = conversationId,
                 excludeSubAgentTools = true,
             )
 
@@ -213,7 +217,7 @@ class SubAgentManager(
                 assistant = assistant,
                 model = model,
                 providerSetting = model.findProvider(settings.providers) ?: error("Provider not found"),
-                conversationId = Uuid.random(),
+                conversationId = conversationId,
                 conversationSystemPrompt = null,
                 workspaceCwd = null,
                 memories = if (assistant.enableMemory) memoryRepository.getFiles(assistant.memoryId) else emptyList(),

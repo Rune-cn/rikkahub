@@ -265,11 +265,15 @@ class WorkflowRunner(
             .replace("{{prev}}", prev)
             .ifBlank { input }
 
+        // 工作流步骤的会话标识：工具（工作区 shell 的后台任务归属）与生成请求必须用同一个
+        val conversationId = Uuid.random()
+
         val tools = if (step.type == WorkflowStepType.AGENT) {
             chatToolFactory.createTools(
                 settings = settings,
                 assistant = assistant,
                 model = model,
+                conversationId = conversationId,
             )
         } else {
             emptyList()
@@ -282,7 +286,7 @@ class WorkflowRunner(
             assistant = assistant,
             model = model,
             providerSetting = model.findProvider(settings.providers) ?: error("Provider not found"),
-            conversationId = Uuid.random(),
+            conversationId = conversationId,
             conversationSystemPrompt = null,
             workspaceCwd = null,
             memories = if (assistant.enableMemory) memoryRepository.getFiles(assistant.memoryId) else emptyList(),

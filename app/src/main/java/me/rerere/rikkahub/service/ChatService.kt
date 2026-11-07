@@ -1453,7 +1453,7 @@ class ChatService(
             if (session.state.value.currentMessages.any { message ->
                     message.parts.any { it is UIMessagePart.Tool && it.isPending }
                 }) return
-            session.messageQueue.resume()
+            session.inbox.resume()
             val job = launchGenerationJob(
                 conversationId = conversationId,
                 keepAliveInBackground = true,
