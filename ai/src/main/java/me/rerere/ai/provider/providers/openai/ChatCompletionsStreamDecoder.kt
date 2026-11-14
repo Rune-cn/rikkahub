@@ -41,8 +41,11 @@ internal class ChatCompletionsStreamDecoder : StreamChunkDecoder {
 
         val chunks = buildList {
             event.data.trim().split("\n").filter(String::isNotBlank).forEach { line ->
-                // 部分中转会在流中夹杂 `data: null` 之类的非对象行，直接跳过
-                val payload = json.parseToJsonElement(line).jsonObjectOrNull ?: return@forEach
+                // 部分中转会在流中夹杂 `data: null` 之类的非对象行，直接跳过；
+                // 另外流可能在中途断开、单行 JSON 不完整，解析失败同样按"跳过该行"处理，
+                // 不能让一行坏数据把整条流打断（否则整个回复直接失败）。
+                val payload = runCatching { json.parseToJsonElement(line) }
+                    .getOrNull()?.jsonObjectOrNull ?: return@forEach
                 payload["error"]?.let { throw it.parseErrorDetail() }
                 responseId = payload["id"]?.jsonPrimitive?.contentOrNull ?: responseId
                 responseModel = payload["model"]?.jsonPrimitive?.contentOrNull ?: responseModel
