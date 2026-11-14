@@ -28,16 +28,25 @@ internal fun Settings.withBuiltInDefaults(): Settings {
             assistants.add(defaultAssistant.copy())
         }
     }
-    val ttsProviders = this.ttsProviders.ifEmpty { DEFAULT_TTS_PROVIDERS }.toMutableList()
+    // 先剔除已下架的内置 TTS（如 AiHubMix），再补内置项，否则会被 withBuiltInDefaults 重新加回来
+    val ttsProviders = this.ttsProviders
+        .filterNot { provider -> provider.id in RETIRED_BUILT_IN_TTS_PROVIDER_IDS }
+        .ifEmpty { DEFAULT_TTS_PROVIDERS }
+        .toMutableList()
     DEFAULT_TTS_PROVIDERS.forEach { defaultTTSProvider ->
         if (ttsProviders.none { provider -> provider.id == defaultTTSProvider.id }) {
             ttsProviders.add(defaultTTSProvider.copyProvider())
         }
     }
+    // 选中的 TTS 被剔除时回落到第一个可用项（默认列表首项就是系统 TTS），避免悬空引用
+    val selectedTTSProviderId = this.selectedTTSProviderId
+        .takeIf { id -> ttsProviders.any { provider -> provider.id == id } }
+        ?: ttsProviders.first().id
     return copy(
         providers = providers,
         assistants = assistants,
         ttsProviders = ttsProviders,
+        selectedTTSProviderId = selectedTTSProviderId,
     )
 }
 
