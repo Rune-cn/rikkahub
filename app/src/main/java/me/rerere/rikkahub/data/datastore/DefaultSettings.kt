@@ -18,7 +18,7 @@ internal val DEFAULT_ASSISTANTS = listOf(
         id = Uuid.parse("3d47790c-c415-4b90-9388-751128adb0a0"),
         name = "",
         systemPrompt = """
-            You are a helpful assistant, called {{char}}, based on model {{model_name}}.
+            You are an AI coding assistant running through an API relay
 
             ## Info
             - Date: {{cur_date}}
@@ -41,13 +41,17 @@ internal val DEFAULT_TTS_PROVIDERS = listOf(
         id = DEFAULT_SYSTEM_TTS_ID,
         name = "",
     ),
-    TTSProviderSetting.OpenAI(
-        id = Uuid.parse("e36b22ef-ca82-40ab-9e70-60cad861911c"),
-        name = "AiHubMix",
-        baseUrl = "https://aihubmix.com/v1",
-        model = "gpt-4o-mini-tts",
-        voice = "alloy",
-    )
+)
+
+/**
+ * 已下架的内置 TTS 提供商 ID。
+ *
+ * 上游曾在 [DEFAULT_TTS_PROVIDERS] 里内置 AiHubMix（OpenAI 兼容 TTS），fork 不再内置。
+ * 归一化时按 ID 剔除，既清掉老用户已落库的旧条目，也防止 [withBuiltInDefaults] 把它加回来；
+ * 用 ID 而不是按名字匹配，避免误删用户自己新建的同名提供商。
+ */
+internal val RETIRED_BUILT_IN_TTS_PROVIDER_IDS = setOf(
+    Uuid.parse("e36b22ef-ca82-40ab-9e70-60cad861911c"),
 )
 
 internal val DEFAULT_ASSISTANTS_IDS = DEFAULT_ASSISTANTS.map { it.id }
