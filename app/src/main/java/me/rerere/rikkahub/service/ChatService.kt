@@ -991,7 +991,9 @@ class ChatService(
         )
     }
 
-    private fun retryStatus(): String = context.getString(R.string.chat_generation_retrying_only)
+    // 上游改成了带参数的调用点；按 fork 既有文案，只显示"重试中…"，不拼接具体原因
+    private fun retryStatus(@Suppress("UNUSED_PARAMETER") attempt: RetryAttempt): String =
+        context.getString(R.string.chat_generation_retrying_only)
 
     private suspend fun finishInterruptedPendingTools(session: ConversationSession) {
         session.tryUpdate { it.cancelInterruptedTools() }
