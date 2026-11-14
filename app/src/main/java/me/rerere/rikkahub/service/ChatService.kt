@@ -826,6 +826,22 @@ class ChatService(
                             if (now - lastStreamSaveTs >= 1000) {
                                 lastStreamSaveTs = now
                                 session.flush()
+                                // 心跳 + 内存快照：闪退后靠最后这几条判断崩在哪一步、内存是否见底。
+                                // 只在有工具参数时记录（生成普通文本时没必要刷盘）。
+                                val tool = event.message.parts.lastOrNull { it is UIMessagePart.Tool }
+                                    as? UIMessagePart.Tool
+                                if (tool != null) {
+                                    val rt = Runtime.getRuntime()
+                                    val usedMb = (rt.totalMemory() - rt.freeMemory()) / 1048576
+                                    val maxMb = rt.maxMemory() / 1048576
+                                    RunLog.log(
+                                        TAG,
+                                        "生成中 tool=${tool.toolName} input=${tool.input.length}字 " +
+                                            "heap=${usedMb}/${maxMb}MB",
+                                        // 用 W 级是为了落盘（RunLog 只落 W/E），本条本身不是警告
+                                        'W',
+                                    )
+                                }
                             }
                             // 通知等边缘副作用由 ChatNotificationManager 消费；
                             // tryEmit 不挂起，事件丢失只影响单次通知更新，不能反压生成链
