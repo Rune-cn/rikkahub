@@ -148,6 +148,9 @@ fun SkillDetailPage(skillName: String) {
                                 ?: stringResource(R.string.skill_category_uncategorized),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            // 分类名较长时省略，避免把右侧「变更」按钮挤出去
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                     if (!readOnly) {
@@ -338,14 +341,16 @@ private fun FileItem(
             .fillMaxWidth()
             .clickable(onClick = onEdit)
             .heightIn(min = 64.dp)
-            .padding(start = 16.dp + TreeIndent * depth, end = if (deletable) 4.dp else 16.dp),
+            // 右侧留出与其它列表项一致的边距；按钮自身的触摸区内边距已经够，不再额外挤压
+            .padding(start = 16.dp + TreeIndent * depth, end = if (deletable) 8.dp else 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CardGroupIcon(HugeIcons.File02)
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 16.dp),
+                // 左侧与图标保持 16dp，右侧只留 8dp：按钮本身有内边距，这里再给 16dp 会显得拥挤
+                .padding(start = 16.dp, end = 8.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
