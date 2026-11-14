@@ -4,17 +4,21 @@ import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -41,14 +45,26 @@ import me.rerere.rikkahub.utils.RunLog
 import me.rerere.rikkahub.utils.writeClipboardText
 
 /**
- * 运行日志页：展示内存环形运行日志（时间 / 级别 / 标签 / 内容）。
- * 点击某条复制该行；右上角刷新 / 清空。
+ * 运行日志页。
+ *
+ * 两个来源：
+ * - 「本次运行」：内存环形日志，进程内实时可读，重启后清空。
+ * - 「已保存」：落盘 runlog.txt，包含历次 W/E（含崩溃堆栈），重启后仍在。
+ *
+ * 右上角：导出全部（内存+落盘，一键复制）/ 刷新 / 清空。
  */
 @Composable
 fun RunLogPage() {
+    var selectedTab by remember { mutableStateOf(0) }
     var entries by remember { mutableStateOf(RunLog.entriesList()) }
+    var diskText by remember { mutableStateOf(RunLog.readDiskLog()) }
     val context = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    fun refresh() {
+        entries = RunLog.entriesList()
+        diskText = RunLog.readDiskLog()
+    }
 
     Scaffold(
         topBar = {
@@ -58,21 +74,17 @@ fun RunLogPage() {
                 actions = {
                     IconButton(
                         onClick = {
-                            val all = entries.joinToString("\n") {
-                                "${it.time} [${it.level}] ${it.tag}: ${it.message}"
-                            }
-                            context.writeClipboardText(all)
-                            Toast.makeText(context, R.string.run_log_copy_all_done, Toast.LENGTH_SHORT).show()
+                            // 导出「内存 + 落盘」全量：崩溃排查时这一份就够
+                            context.writeClipboardText(RunLog.exportText())
+                            Toast.makeText(context, R.string.run_log_export_done, Toast.LENGTH_SHORT).show()
                         }
                     ) {
                         Icon(
                             HugeIcons.Copy01,
-                            contentDescription = stringResource(R.string.run_log_copy_all),
+                            contentDescription = stringResource(R.string.run_log_export),
                         )
                     }
-                    IconButton(
-                        onClick = { entries = RunLog.entriesList() }
-                    ) {
+                    IconButton(onClick = { refresh() }) {
                         Icon(
                             HugeIcons.Refresh01,
                             contentDescription = stringResource(R.string.run_log_refresh),
@@ -81,7 +93,7 @@ fun RunLogPage() {
                     IconButton(
                         onClick = {
                             RunLog.clear()
-                            entries = RunLog.entriesList()
+                            refresh()
                         }
                     ) {
                         Icon(
@@ -97,31 +109,81 @@ fun RunLogPage() {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = CustomColors.topBarColors.containerColor,
     ) { contentPadding ->
-        if (entries.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = stringResource(R.string.run_log_empty),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding),
+        ) {
+            TabRow(selectedTabIndex = selectedTab) {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0; refresh() },
+                    text = { Text(stringResource(R.string.run_log_tab_memory)) },
+                )
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1; refresh() },
+                    text = { Text(stringResource(R.string.run_log_tab_disk)) },
                 )
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                items(entries, key = { it.id }) { entry ->
-                    RunLogRow(entry = entry)
+
+            if (selectedTab == 0) {
+                if (entries.isEmpty()) {
+                    EmptyHint(stringResource(R.string.run_log_empty))
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        items(entries, key = { it.id }) { entry ->
+                            RunLogRow(entry = entry)
+                        }
+                    }
+                }
+            } else {
+                if (diskText.isBlank()) {
+                    EmptyHint(stringResource(R.string.run_log_disk_empty))
+                } else {
+                    val listState = rememberLazyListState()
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                        state = listState,
+                    ) {
+                        // 落盘内容按行渲染，方便单行复制
+                        items(diskText.lines()) { line ->
+                            Text(
+                                text = line,
+                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        context.writeClipboardText(line)
+                                        Toast.makeText(context, R.string.run_log_copied, Toast.LENGTH_SHORT).show()
+                                    }
+                                    .padding(vertical = 1.dp),
+                            )
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun EmptyHint(text: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(24.dp),
+        )
     }
 }
 
@@ -134,14 +196,15 @@ private fun RunLogRow(entry: RunLog.Entry) {
         'I' -> MaterialTheme.colorScheme.onSurfaceVariant
         else -> MaterialTheme.colorScheme.onSurface
     }
+    val line = "${entry.time} [${entry.level}] ${entry.tag}: ${entry.message}"
     Text(
-        text = "${entry.time} [${entry.level}] ${entry.tag}: ${entry.message}",
+        text = line,
         color = color,
         style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                context.writeClipboardText("${entry.time} [${entry.level}] ${entry.tag}: ${entry.message}")
+                context.writeClipboardText(line)
                 Toast.makeText(context, R.string.run_log_copied, Toast.LENGTH_SHORT).show()
             },
     )
