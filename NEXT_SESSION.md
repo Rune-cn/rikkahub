@@ -6,70 +6,32 @@
 
 ## 一、项目一句话
 
-RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天客户端，Kotlin + Compose（Material3 Expressive）。包名 `app.ai.rune`，当前版本 **3.0.0**（versionCode 193）。
+RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天客户端，Kotlin + Compose（Material3 Expressive）。包名 `app.ai.rune`，当前版本 **3.1.0**（versionCode 195）。
 
-## 二、当前状态（截至 2026-10-31）
+## 二、当前状态（截至 2026-11-14）
 
-- **上游**：已同步至 `39ff6c43`（merge 上游 `eb530b0f`，HEAD 与 upstream/master 完全一致，`HEAD..upstream/master` = 0）。fork 在上游之上有 100+ 提交。
-- **构建**：✅ nightly 自动构建成功（GitHub Actions `daily-build.yml`），APK 发布到 tag `nightly`：
-  https://github.com/Rune-cn/rikkahub/releases/download/nightly/app-github-arm64-v8a-release.apk
-  最近一次手动验证 `b41b17f4` 构建成功。
-- **定制功能**（11 项，均在 3.x 架构上适配完成）：多 Agent、AI 工作流+无限画布、工具自动允许、可配置重试、设置搜索、输入框草稿、生成中节流落库、Skill 手动分类、更新检查指向本 fork、子 Agent 消息视觉区分、**对话内链接操作面板（浏览器/内嵌/分享）**。另：QQ 群入口（1131916400，universal-share 链接）、捐赠页新增「爱发电·Rune」(afdian.com/a/CNRune)、独立「运行日志」页。
+- **上游**：fork HEAD 基于上游 `3.1.1`（merge `eff05733`）。**上游已到 `64452581`（3.2.0），fork 落后 173 个提交 / 121 个文件，尚未同步。** 同步方案见下方「四、已知待办」第 6 条。
+- **构建**：最近一次成功构建是 `16d3690c`（Daily Build #342，2026-11-11，schedule 触发）。
+  ⚠️ **2026-11-14 的 6 个提交尚未经过 CI 验证**——通过 GitHub API/MCP 提交的改动不会触发 `push` 事件工作流（GitHub 防递归策略），需手动 `workflow_dispatch` 或本地 `./gradlew :app:assembleGithubDebug`。
+- **本轮改动（2026-11-14，6 个提交）**：
+  1. `refactor(sub-agent)`：子 Agent 默认模型选择从 `CardGroup.item` 的 `supportingContent`（手写 `Column` + `padding(top=4.dp)`）改为 **`CardGroup.formItem`**，整行占满并与卡片其它项对齐。
+  2. `feat(tts)`：**移除内置 AiHubMix 语音服务商**，`DEFAULT_TTS_PROVIDERS` 只留 `SystemTTS`，新增 `RETIRED_BUILT_IN_TTS_PROVIDER_IDS` 常量。
+  3. `fix(tts)`：`withBuiltInDefaults()` 里**先 filterNot 再补默认项**，防止 AiHubMix 每次归一化复活；同时修正 `selectedTTSProviderId` 悬空引用。
+  4-6. 文档同步：`docs/02`（新增 12 节）、`docs/03`（新增归一化规范）、`AI_DEVELOPMENT.md`（版本与同步待办）。
 
-## 三、上一次会话做了什么（本轮进展）
+## 三、上一轮会话的结论与踩坑（务必先读）
 
-### A. 同步上游（收尾）
-- 上一会话完成 128 提交大 rebase 后，本轮补上上游最后 2 个提交：
-  - `eb530b0f` fix(markdown): 公式里 `<` 被 Jsoup 当 HTML 标签截断（MarkdownParser/LatexText/测试）
-  - `20c24e7d` chore: update deps
-- 本地此前已含等价 patch（`878f7825`/`6d71d498`），`git cherry` 判定 patch-id 相同 → `git merge upstream/master` **零冲突**，merge commit `39ff6c43`，普通 push 即可（无需 force）。
+### A. AiHubMix 移除的两个必知点
+- **只删定义不够**：`SettingsNormalization.withBuiltInDefaults()` 每次读盘/改设置都会把 `DEFAULT_TTS_PROVIDERS` 里缺失的项补回来 → 必须「先 filterNot 再补默认」。
+- **必须按固定 UUID 匹配**（`e36b22ef-ca82-40ab-9e70-60cad861911c`），不能按名字 `"AiHubMix"`，否则会误删用户自建的同类提供商。
+- **不要动**：`SettingProviderPage.kt` 里 `provider.name == "AiHubMix"` 的「10% 优惠」标签、`AIIconMatcher.kt` 的 `PATTERN_AIHUBMIX`——那是**聊天提供商**的通用能力，与语音服务无关。
 
-### B. 对话内链接操作面板（新功能）
-- 新组件 `ui/components/ui/LinkActionSheet.kt`：ModalBottomSheet 三动作 = 浏览器打开（CustomTabs）/ 内嵌打开（Screen.WebView）/ 分享（ACTION_SEND）。
-- 接入点：ChatMessage 正文 markdown 链接、引用角标、引用列表；ChatMessageReasoning/Translation/ContextCheckpoint 的 markdown；BuiltinToolUIs 搜索结果卡片与图片。
-- `richtext/Markdown.kt` 的 `MarkdownBlock` 新增 `onLinkClick` 参数透传底层 Markdown。
-- 新增 4 个字符串 `link_action_*`（en/zh/zh-rTW 三语已同步）。
+### B. 验证文件的正确姿势（重要踩坑）
+**不要用 `raw.githubusercontent.com` 判断文件是否已更新**：它有 CDN 缓存，刚提交的文件可能仍返回旧内容（本次曾因此误判「改动丢失」）。
+正确做法：用 GitHub API（`gh_get_file` / `gh_get_content_sha`），或按 commit SHA 拉取。
 
-### C. 修复子 Agent 消息上下文污染（bug）
-- 问题：① 子 Agent 展示消息（role=ASSISTANT）被当成主 Agent 自己说的话发给模型（上下文污染）；② 主 Agent 回复被 upsert 进子 Agent 节点（"子 Agent 对话框里出现主 Agent 输出"）；③ `useAssistantAvatar=true` 时子 Agent 消息顶部误显示主 Agent 头像/名字。
-- 修复：
-  - `data/model/Conversation.kt`：新增 `mainMessages` + `UIMessage.isSubAgentDisplayMessage()`。
-  - `service/ChatService.kt` `runTurn()`：history/updateMainContext 过滤子 Agent 消息；`replyNodeId` 跳过子 Agent 节点。
-  - `data/ai/ConversationMetaGenerator.kt`：标题/建议改用 `mainMessages`。
-  - `ui/components/message/ChatMessageAvatar.kt`：子 Agent 消息直接 return（顶部已有标签，不显示主 Agent 头像）。
-
-### D. 重试间隔策略运行时生效（新功能，完成待办2）
-- 之前：设置里的「固定 / 指数退避 / 随机抖动」只在 UI/设置里保留，运行时一律上游指数退避。
-- 现在：
-  - `ai/.../agent/Retry.kt` 新增 `RetryBackoff` 枚举（FIXED / EXPONENTIAL_BACKOFF / JITTER），`RetryPolicy` 增加 `backoff` 字段（默认 EXPONENTIAL_BACKOFF，行为不变）；`withRetry` 按策略计算等待时间，JITTER 为 Full Jitter（`[1ms, 指数退避值]` 内随机）。
-  - `ChatRequestFactory.retryPolicy()` 把 `NetworkSetting.rateLimitRetryMode` 映射进 `RetryPolicy.backoff`（新增 `RetryBackoff` / `RetryMode` import）。
-  - 测试：`RetryTest.kt` 新增 `fixed backoff keeps the same delay` / `jitter backoff waits within the exponential cap`。
-
-### E. 重试设置独立成页 + 状态文案简化 + 重试页总开关（用户要求，经历两轮定稿）
-- 扩展管理新增「重试」入口（`HugeIcons.Refresh` 图标，位于"其他"上方）：`Screen.RetrySettings`（RouteActivity）+ 新页面 `ui/pages/extensions/RetrySettingsPage.kt`（从 OtherSettingsPage 搬入：**自动重试总开关** / 重试间隔 / 最大次数 / 可重试状态码 / 重试关键字 / 停止重试关键字 + `RetryChipListEditor`）。
-- **重试页总开关**：顶部「自动重试」`Switch` 绑 `NetworkSetting.enableAutoRetry`（`extensions_page_retry_enable`）；`enableAutoRetry=false` → `RetryPolicy.NONE`。**上游「设置 → 网络」页的同字段「自动重试」开关已移除**（`SettingPreferencesNetworkPage.kt`，`setting_page_preferences_network_auto_retry` 字符串从 en/zh/zh-rTW 删除；其他方言 locale 残留为未引用资源，不动）。
-- 重试状态文案：`ChatService.retryStatus()` 只返回「重试中…」（`chat_generation_retrying_only`，三语），不再拼接「网络连接已断开 / 连接超时」等具体原因（移除 4 个网络异常 import）。
-- 设置搜索：索引项 `extensions_page_retry_section` → `Screen.RetrySettings`（关键词含"自动重试"）；「其他」项去掉「自动重试」关键词。
-- zh-rTW 补齐重试相关翻译（此前整块回退英文）。
-
-### F. UI 文案「多 Agent」→「子 Agent」（用户要求）
-- 扩展管理子 Agent 开关：`extensions_page_multi_agent_enable`（en "Multi-agent"→"Sub-agents"；zh "多 Agent 工作"→"子 Agent"；zh-rTW 补齐"子 Agent"）。
-- 搜索关键词去掉「多 agent」；`multi_agent_page_title` 死字符串值同步更新（en/zh）；代码注释更新。
-
-### G. 三项收尾（用户要求）
-1. **重试选项输入体验**：`RetrySettingsPage` 的 `LazyColumn` 加 `imePadding()`；`RetryChipListEditor` 点「添加」后输入框改全宽 + 占位提示（`extensions_page_retry_input_hint`）+ `bringIntoViewRequester` 自动滚入视野，解决"输入时看不到"。
-2. **重试页「恢复默认」**：页尾 CardGroup 条目（`HugeIcons.Refresh`），一键 `NetworkSetting.withRetryDefaults()`（定义在 `Settings.kt`，以构造函数默认值为准，不动代理等其他网络设置）。
-3. **扩展管理「其他」改名「子 Agent」**：`extensions_page_other_category` = `Sub-agents`/`子 Agent`（en/zh 改值，tw 补齐）+ 搜索关键词更新；页面标题随入口同串。
-4. **删除子 Agent「共享对话上下文」**：`SubAgentSetting.defaultInheritContext`、`SubAgentTask.inheritContext`、spawn_agent 的 `inherit_context` 参数、`SubAgentManager.mainContext` 与 `updateMainContext`（改名 `updateActiveConversation(conversationId)`，只记主会话 id）全部移除；`extensions_page_sub_agent_inherit_context` 字符串删除；子 Agent 提示词固定说明"不继承主对话上下文"。
-
-### H. 子 Agent 图标副标题 + 正式版更新检测双方案（用户要求）
-1. **图标/副标题**：扩展管理「子 Agent」入口图标 `HugeIcons.Settings03` → `HugeIcons.AiBrain01`；副标题 `extensions_page_other_desc` → 「主 Agent 可派生子 Agent 并行处理任务」（en/zh/tw 同步）。
-2. **更新检测**（`utils/UpdateChecker.kt`，2026-10-31 命令行实测）：
-   - 实测结论：`api.github.com/.../releases/latest` 匿名会 **403 限流**（60 次/h）；网页 `github.com/Rune-cn/rikkahub/releases/latest` 返回 **302**，`Location: .../releases/tag/<tag>` 无配额限制；资产命名旧（2.5.7=`app-arm64-v8a-release.apk`）新（nightly=`app-github-arm64-v8a-release.apk`）不一致，不能只靠猜。
-   - 落地：API 优先（资产/日志/时间齐全）→ 失败降级 302 兜底（仅 tag 版本，资产按新版命名拼直链+HEAD 校验，不通退发布页）。nightly 是 prerelease=true，`releases/latest` 不会误判。
-3. **关于页「检查更新」手动入口**（用户反馈"没显示更新内容"后添加）：`SettingAboutPage` 版本行下新增条目（`HugeIcons.Refresh` + `about_page_check_update`），点击调 `updateChecker.checkNowOnce()` 完整跑一次检查；Success 弹 `AlertDialog`（版本/更新内容/下载按钮），Idle/Error 走 Toast。聊天抽屉更新卡片的显示还受「暂停更新提醒」（`updateCheckDisabledUntilEpochMillis`）与 `settings.init` 门槛影响——手动入口不受影响，专门用于验证检测链路。
-4. **更新检查运行日志埋点**（用户建议"建索引/埋点"后添加）：`UpdateChecker` 全链路写 `RunLog`（标签 `UpdateCheck`，级别 I/W/E）：开始 / API HTTP 码与解析 / 302 Location 与 tag / 版本比较结论 / 直链 HEAD 探测结果 / 最终判定；`SettingAboutPage` 手动检查开始与结果；`ChatVM` 抽屉卡片启用门槛变化（init / 暂停至）。排查"不显示更新"：装新包 → 关于 → 检查更新 → 关于 → 运行日志 → 看 `UpdateCheck` 行。
-   - 2026-10-31 测试用：向仓库发布了占位正式版 **`3.1.0`**（tag/name=3.1.0，prerelease=false，附当前 nightly APK）验证检测可触发；验证后可在 Releases 页删除。
+### C. API 提交不触发 CI
+经 GitHub API（MCP `gh_put_file`）提交的内容**不会**触发 `daily-build.yml`。需要构建时用 `workflow_dispatch` 或本地构建。
 
 ## 四、已知待办 / 注意事项（下个会话请留意）
 
@@ -77,19 +39,22 @@ RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天�
 2. **子 Agent 展示消息隔离**：生成/压缩/标题/建议一律用 `Conversation.mainMessages` 或 `isSubAgentDisplayMessage()` 过滤，**不要再拿 `currentMessages` 直接发模型**（见 docs/04-3.5）。
 3. **链接交互约定**：对话内链接必须走 `LinkActionSheet`，新增渲染入口时给 `MarkdownBlock` 透传 `onLinkClick`，不要自己调 `context.openUrl`（见 docs/07-7）；非对话内链接（设置/关于/捐赠页）保持原行为。
 4. 「运行日志」记录一切 `RunLog.log(...)`：**关键操作与异常**（应用启动、搜索、崩溃、以及任何新埋点），不限于特定几类；排查类功能优先留运行日志。
-5. 版本号规则：没用户要求不升版；versionCode 必须单调递增（现在 193）。
-6. 构建产物路径：`assembleGithubRelease` → `app/build/outputs/apk/github/release/`；README 下载名 `app-github-arm64-v8a-release.apk`。
+5. 版本号规则：没用户要求不升版；versionCode 必须单调递增（现在 195）。
+6. **上游同步（最高优先）**：fork 落后上游 173 提交 / 121 文件（merge base `dfbe9a08` → 上游 `64452581`，3.1.1 → 3.2.0）。**用 merge 不要 rebase**（fork 有 100+ 定制提交，rebase 会逐个重放、反复解同一批冲突）。
+   - 冲突高发：`service/ChatService.kt`（+281/-105，含节流落库与子 Agent 上下文隔离）、`ui/pages/chat/ChatList.kt`（上游拆成 `ChatListOverlays/ChatListPreview/ChatListSwipe/ChatSelection` 四个新文件）、`ui/pages/chat/ChatPage.kt`（+144/-18）、`data/datastore/SettingsNormalization.kt`、`data/ai/ChatRequestFactory.kt`。
+   - **同步后必查**：上游 HEAD 仍在 `DEFAULT_TTS_PROVIDERS` 里内置 AiHubMix，确认它没有被带回来（`grep -n "RETIRED_BUILT_IN_TTS_PROVIDER_IDS" SettingsNormalization.kt` 应仍有 filterNot）。
+7. 构建产物路径：`assembleGithubRelease` → `app/build/outputs/apk/github/release/`；README 下载名 `app-github-arm64-v8a-release.apk`。
 
 ## 五、给下个会话的开工步骤
 
 1. 读 `AI_DEVELOPMENT.md` 与本文档并列对照（本文档是快照，AI_DEVELOPMENT 是知识库）。
 2. 按需求类型翻 `docs/` 对应篇（设置→03，生成/工具→04，构建/版本→05，UI→07，同步→06）。
 3. 遵守铁律：**任何修改都必须同步更新 AI_DEVELOPMENT.md + 相关 docs/ 文件**；中文；不写密钥/PAT；UI 代码禁 emoji；图标用前 grep 验证。
-4. 开发后：本地静态自检 → 提交推送（触发 CI）→ 构建失败按 docs/06 排查套路修 → 更新本文档与知识库。
+4. 开发后：本地静态自检 → 提交推送 → **注意 API/MCP 提交不会触发 CI**，需手动 `workflow_dispatch` 或本地构建 → 构建失败按 docs/06 排查套路修 → 更新本文档与知识库。
 5. 交付时（每次都要）：回复里附 nightly 下载链接 —— https://github.com/Rune-cn/rikkahub/releases/download/nightly/app-github-arm64-v8a-release.apk
 
 ## 六、快速链接
 
 - 仓库：https://github.com/Rune-cn/rikkahub
-- 知识库：`AI_DEVELOPMENT.md` + `docs/`（01 架构 / 02 fork 定制 11 项 / 03 设置数据 / 04 生成重试 / 05 构建发布 / 06 上游同步 / 07 UI 约定 / 交接文档技能说明书.md）
+- 知识库：`AI_DEVELOPMENT.md` + `docs/`（01 架构 / 02 fork 定制 12 项 / 03 设置数据 / 04 生成重试 / 05 构建发布 / 06 上游同步 / 07 UI 约定 / 交接文档技能说明书.md）
 - nightly APK：见上文
