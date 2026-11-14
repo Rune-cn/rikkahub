@@ -48,4 +48,8 @@ sealed class LocalToolOption {
     @Serializable
     @SerialName("workflow_manage")
     data object Workflow : LocalToolOption()
+
+    @Serializable
+    @SerialName("phone_use")
+    data object PhoneUse : LocalToolOption()
 }

@@ -6,6 +6,9 @@ import me.rerere.rikkahub.data.ai.subagent.SubAgentManager
 import me.rerere.rikkahub.data.skills.SkillManager
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.event.AppEventBus
+import me.rerere.rikkahub.data.files.FilesManager
+import me.rerere.rikkahub.phoneuse.PhoneUseManager
+import me.rerere.rikkahub.phoneuse.isFloatingChatWindowOn
 import me.rerere.tts.provider.TTSManager
 
 class LocalTools(
@@ -15,6 +18,8 @@ class LocalTools(
     private val settingsStore: SettingsStore,
     private val subAgentManager: SubAgentManager,
     private val skillManager: SkillManager,
+    private val phoneUseManager: PhoneUseManager,
+    private val filesManager: FilesManager,
 ) {
     val javascriptTool by lazy { buildJavascriptTool() }
 
@@ -41,7 +46,20 @@ class LocalTools(
     val workflowTools by lazy { buildWorkflowTools(settingsStore) }
 
     val skillCategoryTools by lazy { buildSkillCategoryTools(skillManager) }
-
+    val phoneUseTool by lazy {
+        buildPhoneUseTool(
+            ownPackageName = context.packageName,
+            manager = phoneUseManager,
+            isFloatingWindowOn = { isFloatingChatWindowOn(context, settingsStore.settingsFlow.value) },
+            saveScreenshot = { bytes ->
+                filesManager.createChatFilesByByteArrays(
+                    byteArrays = listOf(bytes),
+                    displayName = "screenshot.jpg",
+                    mimeType = "image/jpeg",
+                ).first().toString()
+            },
+        )
+    }
     fun getTools(options: List<LocalToolOption>): List<Tool> {
         val tools = mutableListOf<Tool>()
         if (options.contains(LocalToolOption.JavascriptEngine)) {
@@ -81,6 +99,10 @@ class LocalTools(
         }
         // Skill 分类管理：AI 可直接查看/设置分类（内置 skill 只读），走工具审批
         tools.addAll(skillCategoryTools)
+        // 不支持的渠道和系统版本上，之前在别处开过（比如导入的备份）也不提供
+        if (options.contains(LocalToolOption.PhoneUse) && PhoneUseManager.isSupported) {
+            tools.add(phoneUseTool)
+        }
         return tools
     }
 }
