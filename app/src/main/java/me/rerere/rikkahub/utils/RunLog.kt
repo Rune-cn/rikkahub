@@ -6,18 +6,18 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * 环形运行日志：记录应用启动、搜索等关键操作与未捕获异常，
- * 供「设置 → 关于 → 运行日志」页面排查问题。
+ * 运行日志：记录应用启动、生成、工具执行、异常等关键路径，
+ * 供「设置 → 关于 → 运行日志」页面排查问题，崩溃后也能读回落盘内容。
  *
- * 内存部分是环形缓冲（进程被杀即清空），只供 UI 展示；
- * 但 W/E 级别（尤其是崩溃）会同步追加到 [init] 指定的 runlog.txt，
- * 否则闪退后进程一死，崩溃堆栈就彻底丢了，无法排查。
+ * - 内存：环形缓冲（[MAX_ENTRIES] 条），进程内实时可读，UI 直接展示。
+ * - 落盘：W/E 级同步追加到 runlog.txt，崩溃时进程被杀也能留下证据。
+ * - 导出：可用 [exportText] 取全量文本，供用户复制/分享。
  */
 object RunLog {
-    const val MAX_ENTRIES = 1000
+    const val MAX_ENTRIES = 2000
 
     /** 落盘文件的保留上限，超出后裁剪；崩溃堆栈通常几十 KB，足够放很多次 */
-    private const val MAX_DISK_BYTES = 512L * 1024
+    private const val MAX_DISK_BYTES = 1024L * 1024
 
     data class Entry(
         val id: Long,
@@ -48,15 +48,35 @@ object RunLog {
         }
     }
 
+    /**
+     * 记一条日志。
+     *
+     * @param level V/D/I/W/E；W/E 会同时落盘。
+     * @param throwable 传入时自动附加完整堆栈，省得调用方自己 stackTraceToString。
+     */
     @Synchronized
-    fun log(tag: String, message: String, level: Char = 'I') {
-        entries.addLast(Entry(seq++, fmt.format(Date()), level, tag, message))
-        if (entries.size > MAX_ENTRIES) entries.removeFirst()
-        // 只有可能用于事后排查的级别才落盘，避免 I 级日志频繁写盘
+    fun log(tag: String, message: String, level: Char = 'I', throwable: Throwable? = null) {
+        val text = if (throwable != null) {
+            "$message\n${throwable.stackTraceToString()}"
+        } else {
+            message
+        }
+        entries.addLast(Entry(seq++, fmt.format(Date()), level, tag, text))
+        while (entries.size > MAX_ENTRIES) entries.removeFirst()
+        // 只有可能用于事后排查的级别才落盘，避免 I/V/D 频繁写盘
         if (level == 'E' || level == 'W') {
-            appendToDisk(level, tag, message)
+            appendToDisk(level, tag, text)
         }
     }
+
+    /** 便捷方法：捕获异常并记录，返回 null 便于 `?: return` */
+    inline fun <T> guard(tag: String, what: String, block: () -> T): T? =
+        try {
+            block()
+        } catch (t: Throwable) {
+            log(tag, "$what 失败", 'E', t)
+            null
+        }
 
     private fun appendToDisk(level: Char, tag: String, message: String) {
         val file = logFile ?: return
@@ -67,13 +87,32 @@ object RunLog {
         }
     }
 
-    /** 读回落盘日志，供崩溃页/日志页展示 */
+    /** 读回落盘日志（崩溃后内存已清空时用） */
     fun readDiskLog(): String = runCatching {
         logFile?.takeIf { it.exists() }?.readText().orEmpty()
     }.getOrDefault("")
 
+    /** 全量文本：内存日志 + 落盘日志，供「复制全部 / 导出」用 */
+    fun exportText(): String {
+        val mem = entriesList().joinToString("\n") {
+            "${it.time} [${it.level}] ${it.tag}: ${it.message}"
+        }
+        val disk = readDiskLog()
+        return buildString {
+            appendLine("===== 内存日志（本次进程，共 ${entries.size} 条）=====")
+            appendLine(mem.ifBlank { "(空)" })
+            appendLine()
+            appendLine("===== 落盘日志（runlog.txt，含历史崩溃）=====")
+            appendLine(disk.ifBlank { "(空)" })
+        }
+    }
+
     @Synchronized
-    fun clear() = entries.clear()
+    fun clear() {
+        entries.clear()
+        // 同时清掉落盘内容，避免清空后日志页仍显示旧历史
+        runCatching { logFile?.takeIf { it.exists() }?.writeText("") }
+    }
 
     /** 返回快照（新→旧排序），列表 UI 直接用 */
     @Synchronized
