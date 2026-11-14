@@ -65,6 +65,8 @@ const val MEMORY_DREAM_NOTIFICATION_CHANNEL_ID = "memory_dream"
 class RikkaHubApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        // 必须最先初始化：崩溃日志要能落盘，否则闪退后堆栈随进程一起消失
+        RunLog.init(File(filesDir, "logs"))
         RunLog.log("App", "启动 ${BuildConfig.VERSION_NAME}(${BuildConfig.VERSION_CODE})")
         // Restore files and settings before eager Koin singletons or workers can access them.
         try {
