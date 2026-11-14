@@ -1,4 +1,4 @@
-# 02 · Fork 定制功能（11 项，全部保留并适配 3.x）
+# 02 · Fork 定制功能（12 项，全部保留并适配 3.x）
 
 > 同步/排查前先读这份清单：每一项都有"文件 + 逻辑要点"。
 > 改功能时只动这些文件，别改上游同名功能的行为（如请求日志不属于本清单）。
@@ -17,6 +17,7 @@
   - `data/ai/tools/local/SubAgentTools.kt`：spawn_agent / wait_agent / list_agents / close_agent 工具。
   - `data/ai/tools/local/LocalTools.kt`：注册（`SUB_AGENT_TOOL_NAMES` 在此）。
   - `ui/pages/extensions/OtherSettingsPage.kt`：子 Agent 总开关 / 默认模型（`Settings.subAgentSetting` + `enableSubAgent`）。入口显示为「子 Agent」（`extensions_page_other_category`，原"其他"页，2026-10-31 改名；入口图标 `HugeIcons.AiBrain01`，副标题「主 Agent 可派生子 Agent 并行处理任务」）。
+  - **默认模型的 UI 形态**：必须用 `CardGroup.formItem`（标题行 + 下方整行内容），不要塞进 `item` 的 `supportingContent` 里手写 `Column` + 额外 `padding`——`formItem` 自带 `padding(horizontal=16.dp, vertical=12.dp)` 与 `spacedBy(12.dp)`，和设置页其它表单项对齐。`ModelSelector` 用 `Modifier.fillMaxWidth()` 占满整行，标题在 `headlineContent`、说明文案在 `supportingContent`。
   - `service/ChatService.kt`：子 Agent 输出流式写入主对话（`upsertSubAgentMessage` + `subAgentManager.updateActiveConversation`）。
 - 关键点：
   - 生成循环已适配新 API（ChatTurnContext + ChatRequestFactory.createAgent + runAgent，见 04）。
@@ -98,6 +99,17 @@
   - `BuiltinToolUIs.kt`（`SearchWebPreview`）：搜索结果卡片/图片点击改弹面板（图片、URL 卡片）。
 - 配套：`ui/components/richtext/Markdown.kt` 的 `MarkdownBlock` 增加 `onLinkClick: ((String) -> Unit)? = null` 参数透传给底层 `Markdown`（为 null 时维持上游默认：系统 UriHandler 打开浏览器）。
 - 字符串：`link_action_*` 四个（en/zh/zh-rTW 三语已同步）。
+
+## 12. 移除内置语音服务商 AiHubMix（TTS）
+- 上游在 `data/datastore/DefaultSettings.kt` 的 `DEFAULT_TTS_PROVIDERS` 里内置了一个 AiHubMix（OpenAI 兼容 TTS，`baseUrl = https://aihubmix.com/v1`），本 fork **不再内置**。
+- 改动（两处，缺一不可）：
+  1. `DefaultSettings.kt`：从 `DEFAULT_TTS_PROVIDERS` 只保留 `SystemTTS`；新增常量 `RETIRED_BUILT_IN_TTS_PROVIDER_IDS`（固定 UUID `e36b22ef-ca82-40ab-9e70-60cad861911c`）记录已下架项。
+  2. `data/datastore/SettingsNormalization.kt` 的 `withBuiltInDefaults()`：**先**按 ID 过滤掉 `RETIRED_BUILT_IN_TTS_PROVIDER_IDS`，**再**补内置项。
+- **为什么要在归一化里删**：`withBuiltInDefaults()` 每次读盘和每次改设置都会跑，只要 `DEFAULT_TTS_PROVIDERS` 里还有该项就会自动补回；而且老用户 DataStore 里已经落库的旧条目不会自己消失。所以必须显式过滤，否则会「复活」。
+- **按 ID 而不是按名字匹配**：用户可能自己新建一个叫 AiHubMix 的提供商（自定义 baseUrl/apiKey），按名字删会误删。固定 UUID 只命中上游内置的那一条。
+- 选中项悬空处理：如果 `selectedTTSProviderId` 指向被删的项，回落到列表第一项（默认即系统 TTS）。
+- 不受影响、**不要删**的地方：`ui/pages/setting/SettingProviderPage.kt` 里 `provider.name == "AiHubMix"` 的「10% 优惠」标签、`utils/AIIconMatcher.kt` 的 `PATTERN_AIHUBMIX` 图标匹配——这两处是给**聊天提供商**用的通用能力（用户自建同名 provider 时显示），与语音服务无关。
+- 上游同步注意：这两处是上游代码，每次同步上游后都要确认 AiHubMix 没有被 `DEFAULT_TTS_PROVIDERS` 带回来（见 06）。
 
 ## 其他 fork 改动（非功能）
 - 关于页：GitHub/License 指向本仓库，无官网/群（群入口在设置页关于卡片，上游 Discord 已移除，替换为 QQ 群）。
