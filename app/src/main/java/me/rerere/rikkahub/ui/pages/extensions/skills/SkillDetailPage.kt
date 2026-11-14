@@ -125,6 +125,8 @@ fun SkillDetailPage(skillName: String) {
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(innerPadding + PaddingValues(16.dp)),
+            // 分类卡片与下方文件树之间留出间距，否则两块 Surface 会紧贴在一起
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             // 手动分类（预置分类带名称与描述，也可自定义）
             Surface(
