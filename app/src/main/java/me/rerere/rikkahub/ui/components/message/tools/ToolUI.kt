@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -158,8 +159,14 @@ fun DefaultToolPreview(
                 Text(stringResource(R.string.chat_message_tool_call_label, context.tool.toolName))
             }
         ) {
+            // 流式生成时 arguments 每个 token 都变，pretty 序列化（递归+缩进）成本随长度增长，
+            // 直接写在参数里会每帧重算，长参数（几百字符的路径串）时足以卡死主线程。按值缓存。
+            val prettyArguments = remember(context.arguments) {
+                runCatching { JsonInstantPretty.encodeToString(context.arguments) }
+                    .getOrElse { context.arguments.toString() }
+            }
             HighlightCodeBlock(
-                code = JsonInstantPretty.encodeToString(context.arguments),
+                code = prettyArguments,
                 language = "json",
                 style = TextStyle(fontSize = 10.sp, lineHeight = 12.sp)
             )
