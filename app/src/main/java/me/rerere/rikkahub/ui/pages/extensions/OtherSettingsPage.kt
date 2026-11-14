@@ -1,13 +1,12 @@
 package me.rerere.rikkahub.ui.pages.extensions
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -21,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
+import me.rerere.ai.provider.ModelType
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.datastore.findModelById
@@ -79,41 +79,37 @@ fun OtherSettingsPage() {
                         },
                     )
                     if (settings.enableSubAgent) {
-                        item(
+                        // 模型选择用 formItem：标题行 + 下方整行选择器，与设置页其它表单项同一套卡片内边距
+                        formItem(
                             headlineContent = {
                                 Text(stringResource(R.string.extensions_page_sub_agent_model))
                             },
                             supportingContent = {
-                                Column {
-                                    Text(
-                                        text = stringResource(R.string.extensions_page_sub_agent_model_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                    ModelSelector(
-                                        modelId = settings.subAgentSetting.defaultModelId,
-                                        providers = settings.providers,
-                                        type = me.rerere.ai.provider.ModelType.CHAT,
-                                        allowClear = true,
-                                        modifier = Modifier.padding(top = 4.dp),
-                                        onSelect = { model ->
-                                            val selectedId = model.id.takeIf { id ->
-                                                settings.findModelById(id) != null
-                                            }
-                                            coroutineScope.launch {
-                                                settingsStore.update { s ->
-                                                    s.copy(
-                                                        subAgentSetting = s.subAgentSetting.copy(
-                                                            defaultModelId = selectedId,
-                                                        )
-                                                    )
-                                                }
-                                            }
-                                        },
-                                    )
-                                }
+                                Text(stringResource(R.string.extensions_page_sub_agent_model_desc))
                             },
-                        )
+                        ) {
+                            ModelSelector(
+                                modelId = settings.subAgentSetting.defaultModelId,
+                                providers = settings.providers,
+                                type = ModelType.CHAT,
+                                allowClear = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                onSelect = { model ->
+                                    val selectedId = model.id.takeIf { id ->
+                                        settings.findModelById(id) != null
+                                    }
+                                    coroutineScope.launch {
+                                        settingsStore.update { s ->
+                                            s.copy(
+                                                subAgentSetting = s.subAgentSetting.copy(
+                                                    defaultModelId = selectedId,
+                                                )
+                                            )
+                                        }
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             }
