@@ -2,6 +2,25 @@
 
 本分支（`Rune-cn/rikkahub`）所有版本记录。格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [3.2.0] - 2026-11-15（正式版）
+
+更新内容：
+
+- **同步上游**：合并 rikkahub 上游 3.2.0（121 个文件，含 Phone Use、自动压缩上下文、ChatList 重构等）
+- **优化 MCP OAuth / MCP 认证**：上游修复动态注册按候选回退 loopback 主机名、resource 采用 PRM 声明值（解决别名主机 invalid_target）
+- **优化一些界面**：延续 3.1.0 的子 Agent 模型选择样式统一、技能详情页间距调整
+- **去除广告提供商**：内置提供商列表不再包含推广/返利性质的服务商（AiHubMix、APIMart、302.AI、随想AI网关、MaruCode、STA1N API）
+
+### 合并说明
+
+上游本次改动涉及 ChatService、ChatList、ChatPage 等 fork 深度定制区域，共 16 个文件冲突，逐个按「上游架构 + fork 功能」合并：
+
+- 子 Agent 上下文过滤移植进上游新的 `replyTargetOf()`
+- 生成中节流落库与内存心跳保留
+- 厂商内置列表剔除推广商，AiHubMix 移除逻辑保持
+
+---
+
 ## [3.1.0] - 2026-11-14（正式版）
 
 更新内容：
