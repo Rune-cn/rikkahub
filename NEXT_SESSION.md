@@ -6,19 +6,28 @@
 
 ## 一、项目一句话
 
-RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天客户端，Kotlin + Compose（Material3 Expressive）。包名 `app.ai.rune`，当前版本 **3.1.0**（versionCode 195）。
+RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天客户端，Kotlin + Compose（Material3 Expressive）。包名 `app.ai.rune`，当前版本 **3.2.0**（versionCode 196）。
 
-## 二、当前状态（截至 2026-11-14）
+## 二、当前状态（截至 2026-11-15）
 
-- **上游**：fork HEAD 基于上游 `3.1.1`（merge `eff05733`）。**上游已到 `64452581`（3.2.0），fork 落后 173 个提交 / 121 个文件，尚未同步。** 同步方案见下方「四、已知待办」第 6 条。
-- **构建**：✅ Actions 已恢复正常。最近成功构建 `2dcd57c`（run #345，2026-11-14，push 触发，17:37 完成），产物发布到 tag `nightly`，版本 `3.1.0-2dcd57ca`。
-- **本轮改动（2026-11-14）**：
-  1. `fix(sub-agent)`：子 Agent 默认模型选择**改用 `ModelField`**（`Surface` + `tonalElevation` + `CircleShape` 圆形底色块），配合 `rememberModelListState` + `ModelListSheet`，与「设置 → 默认模型」页完全一致。
-     **教训**：第一版用了 `ModelSelector`，它渲染的是裸 `TextButton`，没有底色容器；正确的组件是 `ModelField`。参见 `SettingModelPage.kt` 的 `modelItem()` 扩展函数。
-  2. `feat(tts)`：**移除内置 AiHubMix 语音服务商**，`DEFAULT_TTS_PROVIDERS` 只留 `SystemTTS`，新增 `RETIRED_BUILT_IN_TTS_PROVIDER_IDS` 常量。
-  3. `fix(tts)`：`withBuiltInDefaults()` 里**先 filterNot 再补默认项**，防止 AiHubMix 每次归一化复活；同时修正 `selectedTTSProviderId` 悬空引用。
-  4. `fix(skill)`：技能详情页文件列表行距优化——行尾 4dp → 8dp（`ItemActionMenu` 的 IconButton 自带 48dp 触摸区，再贴 4dp 会显得挤）；文本区 `padding(horizontal=16dp)` → `start 16dp / end 8dp`。分类名加 `maxLines = 1` + Ellipsis，避免把「变更」按钮挤出屏幕。
-  5-8. 文档同步：`docs/02`（第 12 节）、`docs/03`（归一化规范）、`AI_DEVELOPMENT.md`、`CHANGELOG.md`（补 3.1.0）。
+- **上游**：✅ **已同步到 3.2.0**（上游 `64452581`），merge 提交见 `eb2d8539`。121 个文件、16 个冲突全部解决。
+- **构建**：✅ 正式版 **3.2.0（versionCode 196）已发布**（run #363 stable success）。
+  - APK：https://github.com/Rune-cn/rikkahub/releases/download/3.2.0/app-github-arm64-v8a-release.apk
+- **本轮改动（2026-11-15）**：同步上游 3.2.0。
+  - 合并策略：**上游架构 + fork 功能**，不整段选边。
+  - 子 Agent 上下文过滤移植进上游新的 `replyTargetOf()`（上游用 `history.lastIndex` 直接索引 `nodes`，但 fork 的过滤会让索引错位，必须回 `allHistory` 按 id 查）。
+  - 生成中节流落库 + 内存心跳保留在上游新的 `while(true)` 生成循环里。
+  - `compressConversation` 整体采用上游（改成 `launchCompressionJob` + `await`），fork 的同步实现作废。
+  - 广告/推广提供商随合并一并未引入（AiHubMix、APIMart、302.AI、随想AI网关、MaruCode、STA1N API）。
+  - 版本号：3.1.0/195 → **3.2.0/196**。
+
+### 合并时踩的三个坑（下次同步会再遇到）
+
+1. **`ChatList.kt` 的 import 别一股脑选上游**。上游把 460 行拆到了 `ChatListOverlays/Preview/Swipe` 和 `ChatSelection` 四个新文件，但 `ChatList.kt` 里**仍保留了 fork 的「继续生成」按钮**，它还要用 `OutlinedButton`/`Icon`/`HugeIcons.Play`/`stringResource`/`R`。全选上游侧 → 编译报 `Unresolved reference`。
+2. **DI 参数要跟着构造函数走**。`LocalTools` 合并后是 8 个参数（新增上游 `phoneUseManager`/`filesManager`），`AppModule` 里的 `LocalTools(get(), ...)` 必须同步补齐，否则 `No value passed for parameter`。
+3. **上游改了方法签名要看调用点**。`retryStatus()` 被上游改成 `retryStatus(attempt)`，定义侧不改就报 `Too many arguments`。
+
+> 这三次错误都只靠 GitHub Actions 才暴露 —— **合并后必须跑 CI**，本地静态检查发现不了。
 
 ## 三、上一轮会话的结论与踩坑（务必先读）
 
