@@ -139,6 +139,7 @@ import me.rerere.rikkahub.ui.pages.setting.SettingMediaPage
 import me.rerere.rikkahub.ui.pages.setting.SettingMediaProviderDetailPage
 import me.rerere.rikkahub.ui.pages.setting.SettingSpeechPage
 import me.rerere.rikkahub.ui.pages.setting.SettingWebPage
+import me.rerere.rikkahub.ui.pages.quickstart.QuickStartPage
 import me.rerere.rikkahub.ui.pages.share.handler.ShareHandlerPage
 import me.rerere.rikkahub.ui.pages.stats.StatsPage
 import me.rerere.rikkahub.ui.pages.translator.TranslatorPage
@@ -535,6 +536,10 @@ class RouteActivity : ComponentActivity() {
                                 SettingDonatePage()
                             }
 
+                            entry<Screen.QuickStart> {
+                                QuickStartPage()
+                            }
+
                             entry<Screen.SettingFiles> {
                                 SettingFilesPage()
                             }
@@ -807,6 +812,9 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object SettingDonate : Screen
+
+    @Serializable
+    data object QuickStart : Screen
 
     @Serializable
     data object SettingFiles : Screen

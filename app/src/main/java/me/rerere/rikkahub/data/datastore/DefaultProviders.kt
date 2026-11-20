@@ -9,6 +9,9 @@ import kotlin.uuid.Uuid
 
 val DEFAULT_AUTO_MODEL_ID = Uuid.parse("b7055fb4-39f9-4042-a88a-0d80ed76cf08")
 
+/** 内置 DeepSeek 提供商，快速入门页的迁移流程会直接跳到它 */
+val DEEPSEEK_PROVIDER_ID = Uuid.parse("f099ad5b-ef03-446d-8e78-7e36787f780b")
+
 val DEFAULT_PROVIDERS = listOf(
     ProviderSetting.OpenAI(
         id = Uuid.parse("1eeea727-9ee5-4cae-93e6-6fb01a4d051e"),
@@ -40,7 +43,7 @@ val DEFAULT_PROVIDERS = listOf(
         },
     ),
     ProviderSetting.OpenAI(
-        id = Uuid.parse("f099ad5b-ef03-446d-8e78-7e36787f780b"),
+        id = DEEPSEEK_PROVIDER_ID,
         name = "DeepSeek",
         baseUrl = "https://api.deepseek.com/v1",
         apiKey = "",

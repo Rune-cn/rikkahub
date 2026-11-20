@@ -22,12 +22,8 @@ internal fun Settings.withBuiltInDefaults(): Settings {
             )
         } else provider
     }.toMutableList()
-    val assistants = this.assistants.ifEmpty { DEFAULT_ASSISTANTS }.toMutableList()
-    DEFAULT_ASSISTANTS.forEach { defaultAssistant ->
-        if (assistants.none { it.id == defaultAssistant.id }) {
-            assistants.add(defaultAssistant.copy())
-        }
-    }
+    // 内置助手可以删除，只在一个都不剩时补回，不按 id 逐个补齐
+    val assistants = this.assistants.ifEmpty { DEFAULT_ASSISTANTS }
     // 先剔除已下架的内置 TTS（如 AiHubMix），再补内置项，否则会被 withBuiltInDefaults 重新加回来
     val ttsProviders = this.ttsProviders
         .filterNot { provider -> provider.id in RETIRED_BUILT_IN_TTS_PROVIDER_IDS }
@@ -60,6 +56,11 @@ internal fun Settings.withoutInvalidReferences(): Settings {
     val validModelIds by lazy { settings.providers.flatMap { it.models }.mapTo(HashSet()) { it.id } }
     val asrProviders = settings.asrProviders.distinctBy { it.id }
     return settings.copy(
+        // 选中的助手被删除后改选第一个，避免直接读 assistantId 的地方拿到失效的 ID
+        assistantId = settings.assistantId
+            .takeIf { id -> settings.assistants.any { it.id == id } }
+            ?: settings.assistants.firstOrNull()?.id
+            ?: settings.assistantId,
         providers = settings.providers.distinctBy { it.id }.map { provider ->
             provider.copyProvider(models = provider.models.distinctBy { model -> model.id })
         },

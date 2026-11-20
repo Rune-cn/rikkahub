@@ -54,8 +54,6 @@ internal val RETIRED_BUILT_IN_TTS_PROVIDER_IDS = setOf(
     Uuid.parse("e36b22ef-ca82-40ab-9e70-60cad861911c"),
 )
 
-internal val DEFAULT_ASSISTANTS_IDS = DEFAULT_ASSISTANTS.map { it.id }
-
 val DEFAULT_MODE_INJECTIONS = listOf(
     PromptInjection.ModeInjection(
         id = Uuid.parse("b87eaf16-f5cd-4ac1-9e4f-b11ae3a61d74"),

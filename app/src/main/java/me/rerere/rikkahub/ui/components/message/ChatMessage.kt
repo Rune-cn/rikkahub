@@ -497,21 +497,37 @@ private fun MessagePartsBlock(
                                 }
                             } else {
                                 if (settings.displaySetting.showAssistantBubble) {
-                                    ChatMessageBubble(
-                                        role = role,
-                                        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = settings.displaySetting.bubbleOpacity),
-                                        modifier = Modifier.animateContentSize(),
-                                    ) {
-                                        MarkdownBlock(
-                                            content = part.text.replaceRegexes(
-                                                assistant = assistant,
-                                                scope = AssistantAffectScope.ASSISTANT,
-                                                visual = true,
-                                            ),
-                                            streaming = streamingText,
-                                            onClickCitation = handleClickCitation,
-                                            onLinkClick = onLinkClick,
-                                        )
+                                    val content = part.text.replaceRegexes(
+                                        assistant = assistant,
+                                        scope = AssistantAffectScope.ASSISTANT,
+                                        visual = true,
+                                    )
+                                    val splitByParagraph = settings.displaySetting.splitAssistantBubbleByParagraph
+                                    // 拆成多个气泡只影响显示，消息本身还是一条
+                                    val paragraphs = remember(content, splitByParagraph) {
+                                        if (splitByParagraph) {
+                                            splitMarkdownParagraphs(content).ifEmpty { listOf(content) }
+                                        } else {
+                                            listOf(content)
+                                        }
+                                    }
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        paragraphs.fastForEachIndexed { index, paragraph ->
+                                            key(index) {
+                                                ChatMessageBubble(
+                                                    role = role,
+                                                    color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = settings.displaySetting.bubbleOpacity),
+                                                    modifier = Modifier.animateContentSize(),
+                                                ) {
+                                                    MarkdownBlock(
+                                                        content = paragraph,
+                                                        streaming = streamingText && index == paragraphs.lastIndex,
+                                                        onClickCitation = handleClickCitation,
+                                                        onLinkClick = onLinkClick,
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 } else {
                                     MarkdownBlock(
