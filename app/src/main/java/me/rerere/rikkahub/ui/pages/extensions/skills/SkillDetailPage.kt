@@ -131,8 +131,8 @@ fun SkillDetailPage(skillName: String) {
             // 手动分类（预置分类带名称与描述，也可自定义）
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
                 Row(
                     modifier = Modifier
@@ -143,7 +143,7 @@ fun SkillDetailPage(skillName: String) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = stringResource(R.string.skill_detail_category),
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.titleSmallEmphasized,
                         )
                         Text(
                             text = category?.takeIf { it.isNotBlank() }

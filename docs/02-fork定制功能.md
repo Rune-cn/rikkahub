@@ -6,6 +6,7 @@
 ## 1. 工具审批「自动允许」
 - 设置：全局总开关 + 每工具开关，存在 `Settings.toolAutoAllowSetting`（`data/datastore/Settings.kt`）。
 - UI：`ui/pages/extensions/ToolCallPage.kt`（扩展管理 → 工具调用）。
+  - 形态：两个 `CardGroup`（总开关 / 工具列表），总开关用 `switchItem` + `CardGroupIcon(HugeIcons.Tools)`，图标底色随开关状态变化；工具行同样走 `switchItem`（整行可点）；页面边距 `16/8`。
 - 逻辑：`data/ai/tools/ChatToolFactory.kt` 的 `createTools()` 末尾：开启后把非 disabled 工具的 `needsApproval` 置为 false；**ask_user 默认不参与**（disabledTools 默认含它）。
 - 旧机制 `WORKSPACE_ALLOW_ALL_APPROVAL_KEY`（工作区维度全部允许）已废弃移除，勿再引入。
 
@@ -35,6 +36,7 @@
   - `data/ai/tools/local/WorkflowTools.kt`：AI 可调用的工作流工具。
   - `data/model/Workflow.kt`：数据模型（节点/步骤/状态）。
   - `ui/pages/workflow/WorkflowPage.kt` / `WorkflowCanvas.kt`：列表页 + 无限画布（网格、缩放、拖拽、编辑、类型选择）。
+  - **列表页形态（3.3.0 起）**：独立卡片用 `ListItem`（`ListItemDefaults.shapes(20.dp)` + `CustomColors.listItemColors` + `animateItem()`），整行点击进画布；尾随 `Switch` + `ItemActionMenu`（运行/编辑/复制/导出/删除）；新建走 `ExtendedFloatingActionButton`，导入移到顶栏动作；删除用 `RikkaConfirmDialog`；空态用 `MaterialShapes.Cookie9Sided` 图标块 + `headlineSmallEmphasized`。
   - 入口：扩展管理 → AI 工作流（`Screen.Workflows`）。
 - 数据：`Settings.workflows`（JSON 列表）。
 - 运行：`WorkflowRunner` 用新代理 API（见 04），每步 AST 用 ChatTurnContext + createAgent + runAgent + toText 取结果。
@@ -44,6 +46,7 @@
 - UI：**独立「重试」页**（`ui/pages/extensions/RetrySettingsPage.kt`，扩展管理 → 重试，位于"其他"上方；原"其他"页里的重试设置已全部搬入，入口图标 `HugeIcons.Refresh`）。
   - **总开关在重试页顶部**：`Switch(enableAutoRetry)`（「自动重试」，`extensions_page_retry_enable`）；上游「设置 → 网络」页里同字段的「自动重试」开关已移除（`setting_page_preferences_network_auto_retry` 字符串删除，其他方言 locale 的该键为未引用残留，不处理）。
   - `enableRateLimitRetry` 字段保留（默认 true），与规则开关合并为总开关逻辑：`enableAutoRetry=false` → 不重试；否则按下方规则。
+  - **UI 形态（3.3.0 起）**：总开关用 `switchItem` + `CardGroupIcon(HugeIcons.Refresh)`；间隔 / 最大次数 / 三组关键字编辑器全部用 `formItem`（标题行 + 下方整行内容，不用 `supportingContent` 手写），页面边距 `16/8`。
   - 设置搜索索引指向 `Screen.RetrySettings`（`SettingSearchIndex.kt`）。
 - 运行时：`ChatRequestFactory.retryPolicy()` 读取上述字段映射到 `me.rerere.ai.agent.RetryPolicy`（maxRetries + retryOn 谓词；停止关键字优先）。
 - 状态提示：重试时只显示"重试中…"（`ChatService.retryStatus()` → `chat_generation_retrying_only`），不再拼接"网络连接已断开"等具体错误原因（`chat_generation_network_*` 字符串不再被引用，保留为上游资源）。
@@ -73,6 +76,7 @@
 - `data/skills/SkillManager.kt`：SKILL.md frontmatter 的 `category` 字段（parseSkillDir 里读取）；`SkillMetadata.category`。
 - 工具：`data/ai/tools/local/SkillCategoryTools.kt`（list_skills / set_skill_category）。
 - UI：`ui/pages/extensions/skills/SkillsPage.kt`（列表 ⋮ 菜单 → 分类、分类徽标）、`SkillDetailPage.kt`（分类行）。
+  - 3.3.0 起：分类行卡片用 `MaterialTheme.shapes.large` + `surfaceContainerHigh` + `titleSmallEmphasized`；分类对话框的预置项改为 `selectableGroup()` + `selectable(role = RadioButton)` 整行可选（触控区 ≥48dp），Radio 自身不再接收点击。
 - 上游曾做自动分类，本 fork 用**手动分类**（带名称+描述）替代。
 
 ## 9. 更新检查指向本 fork 正式版
@@ -111,8 +115,23 @@
 - 不受影响、**不要删**的地方：`ui/pages/setting/SettingProviderPage.kt` 里 `provider.name == "AiHubMix"` 的「10% 优惠」标签、`utils/AIIconMatcher.kt` 的 `PATTERN_AIHUBMIX` 图标匹配——这两处是给**聊天提供商**用的通用能力（用户自建同名 provider 时显示），与语音服务无关。
 - 上游同步注意：这两处是上游代码，每次同步上游后都要确认 AiHubMix 没有被 `DEFAULT_TTS_PROVIDERS` 带回来（见 06）。
 
+## 13. UI 规范对齐（3.3.0 起，新页面照此写）
+
+上游已整体转向 Material3 Expressive，fork 定制页也在 3.3.0 同步时统一重做。新增/改动页面时按下面几条执行：
+
+- **页面骨架**：`Scaffold` + `LargeFlexibleTopAppBar`，`Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)`；`LazyColumn` 的 `contentPadding = innerPadding + PaddingValues(horizontal = 16.dp, vertical = 8.dp)`，`verticalArrangement = spacedBy(16.dp)`。不要再给 `CardGroup` 额外加 `horizontal = 8.dp`（会变成 16+8 双重内边距）。
+- **设置/表单**：一律 `CardGroup` 分组；整行可点的开关用 `switchItem`，标题+下方整行内容（选择器、分段按钮、标签编辑器）用 `formItem`；入口行带 `CardGroupIcon`（40dp 圆底），图标底色随开关状态在 `primaryContainer` / `surfaceContainerHigh` 之间切换。
+- **独立卡片列表**（互不相关的条目）：`ListItem` + `ListItemDefaults.shapes(RoundedCornerShape(20.dp))` + `CustomColors.listItemColors` + `animateItem()`；次要操作统一放 `ItemActionMenu`（删除放最后并 `destructive = true`），不要手写 `DropdownMenu` 或文本「⋮」。
+- **底部主操作**：列表页用 `ExtendedFloatingActionButton`，`contentPadding` 底部留 96dp；次要动作（导入等）放顶栏 `IconButton`。
+- **空态**：`MaterialShapes.Cookie9Sided.toShape()` 图标块（112–128dp，`primaryContainer`）+ `headlineSmallEmphasized` 标题 + `bodyMedium` 说明；不要只放一行灰字。
+- **标签页**：用 `SecondaryTabRow` / `SecondaryScrollableTabRow`（`containerColor = CustomColors.topBarColors.containerColor`），不要用旧的 `TabRow`。
+- **字体**：标题用 `headlineSmallEmphasized` / `titleMediumEmphasized` / `titleSmallEmphasized`，行内强调用 `labelLargeEmphasized` / `labelMediumEmphasized`。
+- **颜色**：只用 `MaterialTheme.colorScheme` / `CustomColors`，禁止硬编码色值（运行日志的 W 级从 `0xFFB25C00` 改为 `tertiary`）。
+- **确认弹窗**：统一 `RikkaConfirmDialog`（`me.rerere.ui.components`），不要自己拼 `AlertDialog`。
+- **等宽文本**：日志/代码用 `me.rerere.rikkahub.ui.theme.JetbrainsMono`，不要 `FontFamily.Monospace`。
+
 ## 其他 fork 改动（非功能）
 - 关于页：GitHub/License 指向本仓库，无官网/群（群入口在设置页关于卡片，上游 Discord 已移除，替换为 QQ 群）。
 - 捐赠页：保留上游 Kofi/爱发电 + 新增「爱发电 · Rune」(`afdian.com/a/CNRune`)。
 - 设置页：QQ 群（QQGroup，universal-share 链接 + 群号复制兜底）。
-- 运行日志（新增页）：见 `utils/RunLog.kt` + `ui/pages/log/RunLogPage.kt`，与上游"请求日志"独立。
+- 运行日志（新增页）：见 `utils/RunLog.kt` + `ui/pages/log/RunLogPage.kt`，与上游"请求日志"独立。3.3.0 起：`SecondaryTabRow` 两个页签，每条日志一张 `CustomColors.cardColorsOnSurfaceContainer` 卡片（等宽字体、可点击复制），空态用 Cookie9Sided 图标块。

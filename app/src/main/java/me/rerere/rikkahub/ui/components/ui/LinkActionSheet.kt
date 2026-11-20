@@ -61,7 +61,7 @@ fun LinkActionSheet(
         ) {
             Text(
                 text = url,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMediumEmphasized,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )

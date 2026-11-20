@@ -2,6 +2,25 @@
 
 本分支（`Rune-cn/rikkahub`）所有版本记录。格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [3.3.0] - 2026-11-21（正式版）
+
+更新内容：
+
+- **同步上游 3.3.0**：合并 rikkahub 上游 `358e2931`（22 个提交，含快速入门页、助手回复按段落拆分气泡、DeepSeek 语音合成/识别、工作区共享存储挂载、消息概览标记上下文压缩点、安全模式清理超大设置等）
+- **定制功能 UI 对齐 Material3 Expressive**：工作流列表与画布、运行日志、重试、工具调用、子 Agent 消息/进度条统一到上游新版规范（20dp 卡片圆角、`CardGroup` 分组、`ItemActionMenu`、`ListItem` 整行点击、`SecondaryTabRow`、emphasized 字体）
+- **延续去除广告提供商**：内置提供商仍不含 AiHubMix、APIMart、302.AI、随想AI网关、MaruCode、STA1N API
+
+### 合并说明
+
+上游本次 22 个提交与 fork 定制有 5 处冲突，按「上游架构 + fork 功能」逐个处理：
+
+- `DefaultProviders.kt` 以上游为基底，仅剔除 6 个推广商，保留上游新增的 `DEEPSEEK_PROVIDER_ID`
+- `SettingsNormalization.kt` 采用上游「内置助手可删、清空才补回」，同时保留已下架 TTS 过滤
+- `ChatMessage.kt` 采用上游按段落拆分气泡，fork 的链接操作面板透传到每个段落
+- `SettingPage.kt` 搜索态优先整页结果，非搜索态用上游 QuickStart 提示卡
+
+---
+
 ## [3.2.0] - 2026-11-15（正式版）
 
 更新内容：

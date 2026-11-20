@@ -3,7 +3,6 @@ package me.rerere.rikkahub.ui.pages.extensions.skills
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.annotation.StringRes
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,15 +25,11 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -50,6 +45,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -90,6 +86,9 @@ import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.plus
 import me.rerere.ui.components.RikkaConfirmDialog
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.ui.semantics.Role
 
 @Composable
 fun SkillsPage() {
@@ -224,9 +223,9 @@ fun SkillsPage() {
                 item(key = "header_$categoryName") {
                     Text(
                         text = categoryName,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleSmallEmphasized,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
+                        modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 2.dp),
                     )
                 }
                 items(list, key = { it.skillDir.absolutePath }) { skill ->
@@ -270,19 +269,28 @@ fun SkillsPage() {
             title = { Text(stringResource(R.string.skill_detail_category)) },
             text = {
                 Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .selectableGroup(),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     presets.forEach { (name, desc, value) ->
+                        val selected = categoryInput == value
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { categoryInput = value },
+                                .clip(MaterialTheme.shapes.medium)
+                                .selectable(
+                                    selected = selected,
+                                    onClick = { categoryInput = value },
+                                    role = Role.RadioButton,
+                                )
+                                .padding(horizontal = 4.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(
-                                selected = categoryInput == value,
-                                onClick = { categoryInput = value },
+                                selected = selected,
+                                onClick = null,
                             )
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(name, style = MaterialTheme.typography.bodyMedium)

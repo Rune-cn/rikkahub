@@ -1,7 +1,6 @@
 package me.rerere.rikkahub.ui.components.message
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,9 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -58,22 +54,19 @@ internal fun TaskPlanCard(
         MaterialTheme.colorScheme.onSurface
     }
 
-    Card(
+    Surface(
+        onClick = { expanded = !expanded },
         modifier = modifier
             .fillMaxWidth()
             .animateContentSize(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        ),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
-        Column(
-            modifier = Modifier.padding(vertical = 4.dp),
-        ) {
+        Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { expanded = !expanded }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -89,7 +82,7 @@ internal fun TaskPlanCard(
                         plan.completed,
                         plan.total,
                     ),
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.labelLargeEmphasized,
                     color = titleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -111,7 +104,7 @@ internal fun TaskPlanCard(
                     plan = plan,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 12.dp, end = 12.dp, bottom = 8.dp, top = 2.dp),
+                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp, top = 2.dp),
                 )
             }
         }
@@ -130,18 +123,16 @@ internal fun TaskProgressBanner(
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Surface(
+        onClick = { expanded = !expanded },
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 3.dp,
-        shadowElevation = 4.dp,
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
-        Column(modifier = Modifier.padding(vertical = 2.dp)) {
+        Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { expanded = !expanded }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -154,7 +145,7 @@ internal fun TaskProgressBanner(
                 )
                 Text(
                     text = stringResource(R.string.chat_task_progress, plan.completed, plan.total),
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelLargeEmphasized,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Icon(
@@ -174,7 +165,7 @@ internal fun TaskProgressBanner(
                         .widthIn(max = 320.dp)
                         .heightIn(max = 220.dp)
                         .verticalScroll(rememberScrollState())
-                        .padding(start = 12.dp, end = 12.dp, bottom = 8.dp, top = 2.dp),
+                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp, top = 2.dp),
                 )
             }
         }

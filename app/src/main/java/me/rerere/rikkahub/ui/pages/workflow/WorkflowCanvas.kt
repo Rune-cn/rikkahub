@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
@@ -201,7 +199,7 @@ fun WorkflowCanvas(
                 Icon(HugeIcons.Add01, contentDescription = null, modifier = Modifier.size(18.dp))
             }
             SmallFloatingActionButton(onClick = { scale = (scale / 1.25f).coerceAtLeast(0.2f) }) {
-                Text("−", style = MaterialTheme.typography.titleMedium)
+                Text("−", style = MaterialTheme.typography.labelLargeEmphasized)
             }
             SmallFloatingActionButton(
                 onClick = {
@@ -234,13 +232,11 @@ private fun CanvasNodeCard(
     Surface(
         onClick = onClick,
         modifier = Modifier.width(CanvasMetrics.NODE_W.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.large,
         color = bg,
-        tonalElevation = 2.dp,
-        shadowElevation = 3.dp,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -256,7 +252,7 @@ private fun CanvasNodeCard(
                 )
                 Text(
                     text = node.name.ifBlank { stringResource(R.string.workflow_untitled) },
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.labelLargeEmphasized,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

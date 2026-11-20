@@ -1,26 +1,33 @@
 package me.rerere.rikkahub.ui.pages.log
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,20 +35,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Bookshelf01
 import me.rerere.hugeicons.stroke.Copy01
+import me.rerere.hugeicons.stroke.Database02
 import me.rerere.hugeicons.stroke.Delete01
 import me.rerere.hugeicons.stroke.Refresh01
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.ui.theme.JetbrainsMono
 import me.rerere.rikkahub.utils.RunLog
+import me.rerere.rikkahub.utils.plus
 import me.rerere.rikkahub.utils.writeClipboardText
 
 /**
@@ -114,7 +125,10 @@ fun RunLogPage() {
                 .fillMaxSize()
                 .padding(contentPadding),
         ) {
-            TabRow(selectedTabIndex = selectedTab) {
+            SecondaryTabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = CustomColors.topBarColors.containerColor,
+            ) {
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0; refresh() },
@@ -129,12 +143,15 @@ fun RunLogPage() {
 
             if (selectedTab == 0) {
                 if (entries.isEmpty()) {
-                    EmptyHint(stringResource(R.string.run_log_empty))
+                    EmptyHint(
+                        icon = HugeIcons.Bookshelf01,
+                        title = stringResource(R.string.run_log_empty),
+                    )
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         items(entries, key = { it.id }) { entry ->
                             RunLogRow(entry = entry)
@@ -143,28 +160,19 @@ fun RunLogPage() {
                 }
             } else {
                 if (diskText.isBlank()) {
-                    EmptyHint(stringResource(R.string.run_log_disk_empty))
+                    EmptyHint(
+                        icon = HugeIcons.Database02,
+                        title = stringResource(R.string.run_log_disk_empty),
+                    )
                 } else {
-                    val listState = rememberLazyListState()
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                        state = listState,
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         // 落盘内容按行渲染，方便单行复制
                         items(diskText.lines()) { line ->
-                            Text(
-                                text = line,
-                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        context.writeClipboardText(line)
-                                        Toast.makeText(context, R.string.run_log_copied, Toast.LENGTH_SHORT).show()
-                                    }
-                                    .padding(vertical = 1.dp),
-                            )
+                            DiskLogRow(line = line)
                         }
                     }
                 }
@@ -174,15 +182,39 @@ fun RunLogPage() {
 }
 
 @Composable
-private fun EmptyHint(text: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
+private fun EmptyHint(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
     ) {
+        Box(
+            modifier = Modifier
+                .padding(bottom = 8.dp)
+                .size(112.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = MaterialShapes.Cookie9Sided.toShape(),
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        }
         Text(
-            text = text,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(24.dp),
+            text = title,
+            style = MaterialTheme.typography.headlineSmallEmphasized,
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -192,20 +224,83 @@ private fun RunLogRow(entry: RunLog.Entry) {
     val context = LocalContext.current
     val color = when (entry.level) {
         'E' -> MaterialTheme.colorScheme.error
-        'W' -> Color(0xFFB25C00)
+        'W' -> MaterialTheme.colorScheme.tertiary
         'I' -> MaterialTheme.colorScheme.onSurfaceVariant
         else -> MaterialTheme.colorScheme.onSurface
     }
     val line = "${entry.time} [${entry.level}] ${entry.tag}: ${entry.message}"
-    Text(
-        text = line,
-        color = color,
-        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
                 context.writeClipboardText(line)
                 Toast.makeText(context, R.string.run_log_copied, Toast.LENGTH_SHORT).show()
             },
-    )
+        colors = CustomColors.cardColorsOnSurfaceContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = entry.time,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = JetbrainsMono,
+                )
+                Text(
+                    text = "[${entry.level}]",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = color,
+                    fontFamily = JetbrainsMono,
+                )
+                Text(
+                    text = entry.tag,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontFamily = JetbrainsMono,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Text(
+                text = entry.message,
+                style = MaterialTheme.typography.bodySmall,
+                color = color,
+                fontFamily = JetbrainsMono,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DiskLogRow(line: String) {
+    val context = LocalContext.current
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                context.writeClipboardText(line)
+                Toast.makeText(context, R.string.run_log_copied, Toast.LENGTH_SHORT).show()
+            },
+        colors = CustomColors.cardColorsOnSurfaceContainer,
+    ) {
+        Text(
+            text = line,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontFamily = JetbrainsMono,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+        )
+    }
 }

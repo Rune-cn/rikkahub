@@ -1255,6 +1255,7 @@
   <string name="tool_call_entry_desc">Auto-allow tool calls and choose which tools</string>
   <string name="tool_call_auto_allow">Auto Allow</string>
   <string name="tool_call_auto_allow_desc">Allow AI tool calls without confirmation. Pick the tools below.</string>
+  <string name="tool_call_built_in_tools">Built-in tools</string>
   <string name="extensions_page_retry_add_tag">Add</string>
   <string name="extensions_page_sub_agent_section">Sub-agent</string>
   <string name="extensions_page_sub_agent_model">Sub-agent model</string>

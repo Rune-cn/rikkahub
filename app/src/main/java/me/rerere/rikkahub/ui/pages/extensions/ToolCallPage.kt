@@ -3,12 +3,10 @@ package me.rerere.rikkahub.ui.pages.extensions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -20,10 +18,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
+import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Tools
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.CardGroup
+import me.rerere.rikkahub.ui.components.ui.CardGroupIcon
+import me.rerere.rikkahub.ui.components.ui.switchItem
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.plus
 import org.koin.compose.koinInject
@@ -83,68 +85,72 @@ fun ToolCallPage() {
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = innerPadding + PaddingValues(8.dp),
+            contentPadding = innerPadding + PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item {
-                CardGroup(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                ) {
-                    item(
-                        headlineContent = { Text(stringResource(R.string.tool_call_auto_allow)) },
-                        supportingContent = {
-                            Text(
-                                text = stringResource(R.string.tool_call_auto_allow_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            item("autoAllow") {
+                val containerColor = MaterialTheme.colorScheme.primaryContainer
+                val contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                CardGroup {
+                    switchItem(
+                        checked = autoAllow.enabled,
+                        onCheckedChange = { enabled ->
+                            coroutineScope.launch {
+                                settingsStore.update {
+                                    it.copy(
+                                        toolAutoAllowSetting = it.toolAutoAllowSetting.copy(
+                                            enabled = enabled,
+                                        )
+                                    )
+                                }
+                            }
+                        },
+                        leadingContent = {
+                            CardGroupIcon(
+                                icon = HugeIcons.Tools,
+                                containerColor = if (autoAllow.enabled) containerColor
+                                else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                contentColor = if (autoAllow.enabled) contentColor
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         },
-                        trailingContent = {
-                            Switch(
-                                checked = autoAllow.enabled,
-                                onCheckedChange = { enabled ->
+                        headlineContent = { Text(stringResource(R.string.tool_call_auto_allow)) },
+                        supportingContent = {
+                            Text(stringResource(R.string.tool_call_auto_allow_desc))
+                        },
+                    )
+                }
+            }
+
+            // 开启后显示工具列表，可自由选择哪些工具自动允许
+            if (autoAllow.enabled) {
+                item("builtInTools") {
+                    CardGroup(
+                        title = { Text(stringResource(R.string.tool_call_built_in_tools)) },
+                    ) {
+                        BUILT_IN_TOOL_NAMES.forEach { toolName ->
+                            switchItem(
+                                checked = toolName !in autoAllow.disabledTools,
+                                onCheckedChange = { allowed ->
                                     coroutineScope.launch {
                                         settingsStore.update {
+                                            val disabled = it.toolAutoAllowSetting.disabledTools
                                             it.copy(
                                                 toolAutoAllowSetting = it.toolAutoAllowSetting.copy(
-                                                    enabled = enabled,
+                                                    disabledTools = if (allowed) {
+                                                        disabled - toolName
+                                                    } else {
+                                                        disabled + toolName
+                                                    }
                                                 )
                                             )
                                         }
                                     }
                                 },
-                            )
-                        },
-                    )
-                    // 开启后显示工具列表，可自由选择哪些工具自动允许
-                    if (autoAllow.enabled) {
-                        BUILT_IN_TOOL_NAMES.forEach { toolName ->
-                            item(
                                 headlineContent = {
                                     Text(
                                         text = toolName,
                                         style = MaterialTheme.typography.bodyMedium,
-                                    )
-                                },
-                                trailingContent = {
-                                    Switch(
-                                        checked = toolName !in autoAllow.disabledTools,
-                                        onCheckedChange = { allowed ->
-                                            coroutineScope.launch {
-                                                settingsStore.update {
-                                                    val disabled = it.toolAutoAllowSetting.disabledTools
-                                                    it.copy(
-                                                        toolAutoAllowSetting = it.toolAutoAllowSetting.copy(
-                                                            disabledTools = if (allowed) {
-                                                                disabled - toolName
-                                                            } else {
-                                                                disabled + toolName
-                                                            }
-                                                        )
-                                                    )
-                                                }
-                                            }
-                                        },
                                     )
                                 },
                             )

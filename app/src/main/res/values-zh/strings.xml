@@ -1233,6 +1233,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="tool_call_entry_desc">自动允许工具调用，并可自由选择工具</string>
   <string name="tool_call_auto_allow">自动允许</string>
   <string name="tool_call_auto_allow_desc">允许 AI 调用工具时无需确认，可在下方自由选择工具</string>
+  <string name="tool_call_built_in_tools">内置工具</string>
   <string name="extensions_page_retry_add_tag">添加</string>
   <string name="extensions_page_sub_agent_section">子 Agent</string>
   <string name="extensions_page_sub_agent_model">子 Agent 模型</string>

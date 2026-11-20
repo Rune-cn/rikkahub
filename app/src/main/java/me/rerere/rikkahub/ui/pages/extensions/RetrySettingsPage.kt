@@ -1,7 +1,6 @@
 package me.rerere.rikkahub.ui.pages.extensions
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +23,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -52,6 +50,7 @@ import me.rerere.rikkahub.data.datastore.withRetryDefaults
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.CardGroup
 import me.rerere.rikkahub.ui.components.ui.CardGroupIcon
+import me.rerere.rikkahub.ui.components.ui.switchItem
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.plus
 import org.koin.compose.koinInject
@@ -64,6 +63,7 @@ fun RetrySettingsPage() {
     val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
     val containerColor = MaterialTheme.colorScheme.primaryContainer
     val contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    val retryEnabled = settings.networkSetting.enableAutoRetry
 
     Scaffold(
         topBar = {
@@ -81,203 +81,182 @@ fun RetrySettingsPage() {
             modifier = Modifier
                 .fillMaxSize()
                 .imePadding(),
-            contentPadding = innerPadding + PaddingValues(8.dp),
+            contentPadding = innerPadding + PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item {
+            item("retryRules") {
                 CardGroup(
-                    modifier = Modifier.padding(horizontal = 8.dp),
                     title = { Text(stringResource(R.string.extensions_page_retry_section)) },
                 ) {
-                    item(
+                    switchItem(
+                        checked = retryEnabled,
+                        onCheckedChange = { enabled ->
+                            coroutineScope.launch {
+                                settingsStore.update {
+                                    it.copy(
+                                        networkSetting = it.networkSetting.copy(
+                                            enableAutoRetry = enabled,
+                                        )
+                                    )
+                                }
+                            }
+                        },
+                        leadingContent = {
+                            CardGroupIcon(
+                                icon = HugeIcons.Refresh,
+                                containerColor = if (retryEnabled) containerColor
+                                else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                contentColor = if (retryEnabled) contentColor
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
                         headlineContent = { Text(stringResource(R.string.extensions_page_retry_enable)) },
                         supportingContent = {
                             Text(stringResource(R.string.extensions_page_retry_enable_desc))
                         },
-                        trailingContent = {
-                            Switch(
-                                checked = settings.networkSetting.enableAutoRetry,
-                                onCheckedChange = { enabled ->
-                                    coroutineScope.launch {
-                                        settingsStore.update {
-                                            it.copy(
-                                                networkSetting = it.networkSetting.copy(
-                                                    enableAutoRetry = enabled,
-                                                )
-                                            )
-                                        }
-                                    }
-                                },
-                            )
-                        },
                     )
-                    item(
+
+                    formItem(
                         headlineContent = { Text(stringResource(R.string.extensions_page_retry_interval)) },
-                        supportingContent = {
-                            val modes = listOf(
-                                RetryMode.FIXED,
-                                RetryMode.EXPONENTIAL_BACKOFF,
-                                RetryMode.JITTER,
-                            )
-                            val modeLabels = listOf(
-                                stringResource(R.string.extensions_page_retry_interval_fixed),
-                                stringResource(R.string.extensions_page_retry_interval_exponential),
-                                stringResource(R.string.extensions_page_retry_interval_jitter),
-                            )
-                            SingleChoiceSegmentedButtonRow(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp)
-                            ) {
-                                modes.forEachIndexed { index, mode ->
-                                    SegmentedButton(
-                                        shape = SegmentedButtonDefaults.itemShape(index, modes.size),
-                                        selected = settings.networkSetting.rateLimitRetryMode == mode,
-                                        onClick = {
-                                            coroutineScope.launch {
-                                                settingsStore.update {
-                                                    it.copy(
-                                                        networkSetting = it.networkSetting.copy(
-                                                            rateLimitRetryMode = mode,
-                                                        )
+                    ) {
+                        val modes = listOf(
+                            RetryMode.FIXED,
+                            RetryMode.EXPONENTIAL_BACKOFF,
+                            RetryMode.JITTER,
+                        )
+                        val modeLabels = listOf(
+                            stringResource(R.string.extensions_page_retry_interval_fixed),
+                            stringResource(R.string.extensions_page_retry_interval_exponential),
+                            stringResource(R.string.extensions_page_retry_interval_jitter),
+                        )
+                        SingleChoiceSegmentedButtonRow(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            modes.forEachIndexed { index, mode ->
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(index, modes.size),
+                                    selected = settings.networkSetting.rateLimitRetryMode == mode,
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            settingsStore.update {
+                                                it.copy(
+                                                    networkSetting = it.networkSetting.copy(
+                                                        rateLimitRetryMode = mode,
                                                     )
-                                                }
+                                                )
                                             }
-                                        },
-                                    ) {
-                                        Text(modeLabels[index])
-                                    }
+                                        }
+                                    },
+                                ) {
+                                    Text(modeLabels[index])
                                 }
                             }
-                        },
-                    )
-                    item(
+                        }
+                    }
+
+                    formItem(
                         headlineContent = { Text(stringResource(R.string.extensions_page_retry_max_count)) },
-                        supportingContent = {
-                            val counts = listOf(3, 5)
-                            SingleChoiceSegmentedButtonRow(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp)
-                            ) {
-                                counts.forEachIndexed { index, count ->
-                                    SegmentedButton(
-                                        shape = SegmentedButtonDefaults.itemShape(index, counts.size),
-                                        selected = settings.networkSetting.rateLimitRetryCount == count,
-                                        onClick = {
-                                            coroutineScope.launch {
-                                                settingsStore.update {
-                                                    it.copy(
-                                                        networkSetting = it.networkSetting.copy(
-                                                            rateLimitRetryCount = count,
-                                                        )
+                    ) {
+                        val counts = listOf(3, 5)
+                        SingleChoiceSegmentedButtonRow(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            counts.forEachIndexed { index, count ->
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(index, counts.size),
+                                    selected = settings.networkSetting.rateLimitRetryCount == count,
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            settingsStore.update {
+                                                it.copy(
+                                                    networkSetting = it.networkSetting.copy(
+                                                        rateLimitRetryCount = count,
                                                     )
-                                                }
+                                                )
                                             }
-                                        },
-                                    ) {
-                                        Text(count.toString())
-                                    }
-                                }
-                            }
-                        },
-                    )
-                    // 可重试状态码
-                    item(
-                        headlineContent = {
-                            Text(stringResource(R.string.extensions_page_retry_status_codes))
-                        },
-                        supportingContent = {
-                            Column {
-                                Text(
-                                    text = stringResource(R.string.extensions_page_retry_status_codes_desc),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                RetryChipListEditor(
-                                    items = settings.networkSetting.retryableStatusCodes.map { it.toString() },
-                                    keyboardType = KeyboardType.Number,
-                                ) { list ->
-                                    val codes = list.mapNotNull { it.toIntOrNull() }.filter { it in 100..599 }
-                                    coroutineScope.launch {
-                                        settingsStore.update {
-                                            it.copy(
-                                                networkSetting = it.networkSetting.copy(
-                                                    retryableStatusCodes = codes,
-                                                )
-                                            )
                                         }
-                                    }
+                                    },
+                                ) {
+                                    Text(count.toString())
                                 }
                             }
-                        },
-                    )
-                    // 重试关键字
-                    item(
-                        headlineContent = {
-                            Text(stringResource(R.string.extensions_page_retry_keywords))
-                        },
+                        }
+                    }
+
+                    formItem(
+                        headlineContent = { Text(stringResource(R.string.extensions_page_retry_status_codes)) },
                         supportingContent = {
-                            Column {
-                                Text(
-                                    text = stringResource(R.string.extensions_page_retry_keywords_desc),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                RetryChipListEditor(
-                                    items = settings.networkSetting.retryKeywords,
-                                ) { list ->
-                                    coroutineScope.launch {
-                                        settingsStore.update {
-                                            it.copy(
-                                                networkSetting = it.networkSetting.copy(
-                                                    retryKeywords = list,
-                                                )
-                                            )
-                                        }
-                                    }
+                            Text(stringResource(R.string.extensions_page_retry_status_codes_desc))
+                        },
+                    ) {
+                        RetryChipListEditor(
+                            items = settings.networkSetting.retryableStatusCodes.map { it.toString() },
+                            keyboardType = KeyboardType.Number,
+                        ) { list ->
+                            val codes = list.mapNotNull { it.toIntOrNull() }.filter { it in 100..599 }
+                            coroutineScope.launch {
+                                settingsStore.update {
+                                    it.copy(
+                                        networkSetting = it.networkSetting.copy(
+                                            retryableStatusCodes = codes,
+                                        )
+                                    )
                                 }
                             }
-                        },
-                    )
-                    // 停止重试关键字
-                    item(
-                        headlineContent = {
-                            Text(stringResource(R.string.extensions_page_stop_retry_keywords))
-                        },
+                        }
+                    }
+
+                    formItem(
+                        headlineContent = { Text(stringResource(R.string.extensions_page_retry_keywords)) },
                         supportingContent = {
-                            Column {
-                                Text(
-                                    text = stringResource(R.string.extensions_page_stop_retry_keywords_desc),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                RetryChipListEditor(
-                                    items = settings.networkSetting.stopRetryKeywords,
-                                ) { list ->
-                                    coroutineScope.launch {
-                                        settingsStore.update {
-                                            it.copy(
-                                                networkSetting = it.networkSetting.copy(
-                                                    stopRetryKeywords = list,
-                                                )
-                                            )
-                                        }
-                                    }
+                            Text(stringResource(R.string.extensions_page_retry_keywords_desc))
+                        },
+                    ) {
+                        RetryChipListEditor(
+                            items = settings.networkSetting.retryKeywords,
+                        ) { list ->
+                            coroutineScope.launch {
+                                settingsStore.update {
+                                    it.copy(
+                                        networkSetting = it.networkSetting.copy(
+                                            retryKeywords = list,
+                                        )
+                                    )
                                 }
                             }
+                        }
+                    }
+
+                    formItem(
+                        headlineContent = { Text(stringResource(R.string.extensions_page_stop_retry_keywords)) },
+                        supportingContent = {
+                            Text(stringResource(R.string.extensions_page_stop_retry_keywords_desc))
                         },
-                    )
+                    ) {
+                        RetryChipListEditor(
+                            items = settings.networkSetting.stopRetryKeywords,
+                        ) { list ->
+                            coroutineScope.launch {
+                                settingsStore.update {
+                                    it.copy(
+                                        networkSetting = it.networkSetting.copy(
+                                            stopRetryKeywords = list,
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            item {
-                CardGroup(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                ) {
+            item("restoreDefaults") {
+                CardGroup {
                     item(
                         onClick = {
                             coroutineScope.launch {
-                                settingsStore.update { it.copy(networkSetting = it.networkSetting.withRetryDefaults()) }
+                                settingsStore.update {
+                                    it.copy(networkSetting = it.networkSetting.withRetryDefaults())
+                                }
                             }
                         },
                         leadingContent = { CardGroupIcon(HugeIcons.Refresh, containerColor = containerColor, contentColor = contentColor) },
@@ -310,9 +289,7 @@ private fun RetryChipListEditor(
     }
 
     FlowRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {

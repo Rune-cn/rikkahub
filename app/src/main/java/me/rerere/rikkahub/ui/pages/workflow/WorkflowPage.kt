@@ -1,8 +1,6 @@
 package me.rerere.rikkahub.ui.pages.workflow
 
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.clickable
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,7 +30,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.OutlinedButton
 import kotlinx.serialization.decodeFromString
 import me.rerere.hugeicons.stroke.Pencil
 import androidx.compose.material3.MaterialTheme
@@ -43,13 +40,10 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -70,26 +64,34 @@ import me.rerere.hugeicons.stroke.Play
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.PlusSign
 import me.rerere.rikkahub.R
-import me.rerere.hugeicons.stroke.Settings03
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.ai.workflow.WorkflowRunner
 import me.rerere.rikkahub.data.datastore.SettingsStore
-import me.rerere.rikkahub.data.datastore.findModelById
 import me.rerere.rikkahub.data.model.Workflow
 import me.rerere.rikkahub.data.model.WorkflowNodeType
 import me.rerere.rikkahub.data.model.WorkflowNode
 import me.rerere.rikkahub.data.model.WorkflowRunState
-import me.rerere.rikkahub.data.model.WorkflowStep
 import me.rerere.rikkahub.data.model.WorkflowStepStatus
 import me.rerere.rikkahub.data.model.WorkflowStepType
 import me.rerere.rikkahub.ui.components.ai.ModelSelector
 import me.rerere.rikkahub.ui.components.nav.BackButton
-import me.rerere.rikkahub.ui.components.ui.CardGroup
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.plus
 import org.koin.compose.koinInject
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.toShape
+import androidx.compose.ui.text.style.TextAlign
+import me.rerere.hugeicons.stroke.AiMagic
+import me.rerere.rikkahub.ui.components.ui.CardGroupIcon
+import me.rerere.rikkahub.ui.components.ui.ItemAction
+import me.rerere.rikkahub.ui.components.ui.ItemActionMenu
+import me.rerere.ui.components.RikkaConfirmDialog
 
 @Composable
 fun WorkflowPage() {
@@ -185,169 +187,55 @@ fun WorkflowPage() {
             LargeFlexibleTopAppBar(
                 title = { Text(stringResource(R.string.workflow_page_title)) },
                 navigationIcon = { BackButton() },
+                actions = {
+                    IconButton(
+                        onClick = { importLauncher.launch(arrayOf("application/json")) },
+                    ) {
+                        Icon(
+                            imageVector = HugeIcons.Download01,
+                            contentDescription = stringResource(R.string.workflow_import),
+                        )
+                    }
+                },
                 scrollBehavior = scrollBehavior,
                 colors = CustomColors.topBarColors,
             )
         },
-        modifier = Modifier,
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                text = { Text(stringResource(R.string.workflow_new)) },
+                icon = { Icon(HugeIcons.PlusSign, contentDescription = null) },
+                onClick = { editing = Workflow() },
+            )
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = CustomColors.topBarColors.containerColor,
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = innerPadding + PaddingValues(8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            // 底部留出悬浮按钮的位置，最后一项的菜单才点得到
+            contentPadding = innerPadding + PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
+            // 工作流之间互不相关，各自一张卡片，不做成分组
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item {
-                CardGroup(modifier = Modifier.padding(horizontal = 8.dp)) {
-                    if (workflows.isEmpty()) {
-                        item(
-                            headlineContent = { Text(stringResource(R.string.workflow_no_workflows)) },
-                            supportingContent = { Text(stringResource(R.string.workflow_entry_desc)) },
-                        )
-                    }
+            if (workflows.isEmpty()) {
+                item("emptyWorkflows") {
+                    EmptyWorkflows(modifier = Modifier.fillParentMaxHeight(0.6f))
                 }
             }
-            workflows.forEach { workflow ->
-                item(key = workflow.id) {
-                    var menuExpanded by remember(workflow.id) { mutableStateOf(false) }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                            .clickable { navController.navigate(Screen.WorkflowCanvas(workflow.id)) }
-                            .padding(start = 16.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = workflow.name.ifBlank { stringResource(R.string.workflow_untitled) },
-                                style = MaterialTheme.typography.titleSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Text(
-                                text = workflow.description.ifBlank {
-                                    stringResource(
-                                        R.string.workflow_steps_count,
-                                        if (workflow.nodes.isNotEmpty()) workflow.nodes.size else workflow.steps.size
-                                    )
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        Switch(
-                            checked = workflow.enabled,
-                            onCheckedChange = { enabled -> save(workflow.copy(enabled = enabled)) },
-                        )
-                        IconButton(
-                            onClick = { running = workflow },
-                            enabled = workflow.enabled,
-                        ) {
-                            Icon(
-                                imageVector = HugeIcons.Play,
-                                contentDescription = stringResource(R.string.workflow_run),
-                            )
-                        }
-                        Box {
-                            IconButton(onClick = { menuExpanded = true }) {
-                                Text(
-                                    text = "⋮",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false },
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.workflow_edit)) },
-                                    leadingIcon = { Icon(HugeIcons.Settings03, null) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        editing = workflow
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.workflow_rename)) },
-                                    leadingIcon = { Icon(HugeIcons.Pencil, null) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        editing = workflow
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.workflow_duplicate)) },
-                                    leadingIcon = { Icon(HugeIcons.Copy01, null) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        duplicateWorkflow(workflow)
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.workflow_export)) },
-                                    leadingIcon = { Icon(HugeIcons.Download01, null) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        exportWorkflow(workflow)
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            text = stringResource(R.string.workflow_delete_confirm),
-                                            color = MaterialTheme.colorScheme.error,
-                                        )
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            HugeIcons.Cancel01,
-                                            null,
-                                            tint = MaterialTheme.colorScheme.error,
-                                        )
-                                    },
-                                    onClick = {
-                                        menuExpanded = false
-                                        deleteTarget = workflow
-                                    },
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Button(
-                        onClick = { editing = Workflow() },
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Icon(HugeIcons.PlusSign, contentDescription = null)
-                        Text(
-                            text = stringResource(R.string.workflow_new),
-                            modifier = Modifier.padding(start = 8.dp),
-                        )
-                    }
-                    OutlinedButton(
-                        onClick = { importLauncher.launch(arrayOf("application/json")) },
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Icon(HugeIcons.Download01, contentDescription = null)
-                        Text(
-                            text = stringResource(R.string.workflow_import),
-                            modifier = Modifier.padding(start = 8.dp),
-                        )
-                    }
-                }
+            items(workflows, key = { it.id }) { workflow ->
+                WorkflowListItem(
+                    workflow = workflow,
+                    running = runningWorkflowId == workflow.id,
+                    onOpen = { navController.navigate(Screen.WorkflowCanvas(workflow.id)) },
+                    onToggleEnabled = { enabled -> save(workflow.copy(enabled = enabled)) },
+                    onRun = { running = workflow },
+                    onEdit = { editing = workflow },
+                    onDuplicate = { duplicateWorkflow(workflow) },
+                    onExport = { exportWorkflow(workflow) },
+                    onDelete = { deleteTarget = workflow },
+                    modifier = Modifier.animateItem(),
+                )
             }
         }
     }
@@ -363,39 +251,26 @@ fun WorkflowPage() {
         )
     }
 
-    // 删除二次确认（红字提示）
+    // 删除二次确认
     deleteTarget?.let { target ->
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { deleteTarget = null },
-            title = { Text(stringResource(R.string.workflow_delete_title)) },
-            text = {
-                Text(
-                    text = stringResource(
-                        R.string.workflow_delete_message,
-                        target.name.ifBlank { stringResource(R.string.workflow_untitled) },
-                    ),
-                    color = MaterialTheme.colorScheme.error,
-                )
+        RikkaConfirmDialog(
+            show = true,
+            title = stringResource(R.string.workflow_delete_title),
+            confirmText = stringResource(R.string.workflow_delete_confirm),
+            dismissText = stringResource(R.string.workflow_cancel),
+            onConfirm = {
+                remove(target.id)
+                deleteTarget = null
             },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        remove(target.id)
-                        deleteTarget = null
-                    },
-                ) {
-                    Text(
-                        text = stringResource(R.string.workflow_delete_confirm),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) {
-                    Text(stringResource(R.string.workflow_cancel))
-                }
-            },
-        )
+            onDismiss = { deleteTarget = null },
+        ) {
+            Text(
+                text = stringResource(
+                    R.string.workflow_delete_message,
+                    target.name.ifBlank { stringResource(R.string.workflow_untitled) },
+                ),
+            )
+        }
     }
 
     running?.let { workflow ->
@@ -403,6 +278,151 @@ fun WorkflowPage() {
             workflow = workflow,
             runner = runner,
             onDismiss = { running = null },
+        )
+    }
+}
+
+@Composable
+private fun EmptyWorkflows(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(bottom = 16.dp)
+                .size(128.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = MaterialShapes.Cookie9Sided.toShape(),
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = HugeIcons.AiMagic,
+                contentDescription = null,
+                modifier = Modifier.size(56.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        }
+        Text(
+            text = stringResource(R.string.workflow_no_workflows),
+            style = MaterialTheme.typography.headlineSmallEmphasized,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(R.string.workflow_entry_desc),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+private val WorkflowItemShape = RoundedCornerShape(20.dp)
+
+@Composable
+private fun WorkflowListItem(
+    workflow: Workflow,
+    running: Boolean,
+    onOpen: () -> Unit,
+    onToggleEnabled: (Boolean) -> Unit,
+    onRun: () -> Unit,
+    onEdit: () -> Unit,
+    onDuplicate: () -> Unit,
+    onExport: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ListItem(
+        onClick = onOpen,
+        modifier = modifier,
+        shapes = ListItemDefaults.shapes(shape = WorkflowItemShape),
+        colors = CustomColors.listItemColors,
+        leadingContent = {
+            if (running) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(40.dp),
+                    strokeWidth = 3.dp,
+                )
+            } else {
+                CardGroupIcon(
+                    icon = HugeIcons.AiMagic,
+                    containerColor = if (workflow.enabled) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                    },
+                    contentColor = if (workflow.enabled) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+        },
+        supportingContent = {
+            Text(
+                text = workflow.description.ifBlank {
+                    stringResource(
+                        R.string.workflow_steps_count,
+                        if (workflow.nodes.isNotEmpty()) workflow.nodes.size else workflow.steps.size,
+                    )
+                },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        trailingContent = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Switch(
+                    checked = workflow.enabled,
+                    onCheckedChange = onToggleEnabled,
+                )
+                ItemActionMenu(
+                    actions = listOf(
+                        ItemAction(
+                            text = stringResource(R.string.workflow_run),
+                            icon = HugeIcons.Play,
+                            enabled = workflow.enabled,
+                            onClick = onRun,
+                        ),
+                        ItemAction(
+                            text = stringResource(R.string.workflow_edit),
+                            icon = HugeIcons.Pencil,
+                            onClick = onEdit,
+                        ),
+                        ItemAction(
+                            text = stringResource(R.string.workflow_duplicate),
+                            icon = HugeIcons.Copy01,
+                            onClick = onDuplicate,
+                        ),
+                        ItemAction(
+                            text = stringResource(R.string.workflow_export),
+                            icon = HugeIcons.Download01,
+                            onClick = onExport,
+                        ),
+                        ItemAction(
+                            text = stringResource(R.string.workflow_delete_confirm),
+                            icon = HugeIcons.Cancel01,
+                            destructive = true,
+                            onClick = onDelete,
+                        ),
+                    ),
+                )
+            }
+        },
+    ) {
+        Text(
+            text = workflow.name.ifBlank { stringResource(R.string.workflow_untitled) },
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -429,7 +449,7 @@ private fun WorkflowEditSheet(
         ) {
             Text(
                 text = stringResource(R.string.workflow_edit_title),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.headlineSmallEmphasized,
             )
             OutlinedTextField(
                 value = draft.name,
@@ -448,7 +468,7 @@ private fun WorkflowEditSheet(
 
             Text(
                 text = stringResource(R.string.workflow_steps),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMediumEmphasized,
             )
             Text(
                 text = stringResource(R.string.workflow_step_prompt_hint),
@@ -528,7 +548,7 @@ private fun WorkflowNodeEditor(
         ) {
             Text(
                 text = stringResource(R.string.workflow_step_index, index + 1),
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelLargeEmphasized,
             )
             IconButton(onClick = onRemove) {
                 Icon(HugeIcons.Cancel01, contentDescription = null)
@@ -675,7 +695,7 @@ private fun WorkflowRunSheet(
         ) {
             Text(
                 text = workflow.name.ifBlank { stringResource(R.string.workflow_untitled) },
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.headlineSmallEmphasized,
             )
             OutlinedTextField(
                 value = input,

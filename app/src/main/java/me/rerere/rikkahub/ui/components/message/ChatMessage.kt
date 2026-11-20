@@ -171,12 +171,12 @@ fun ChatMessage(
                 if (isSubAgent) {
                     Modifier
                         .padding(horizontal = 6.dp, vertical = 3.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(MaterialTheme.shapes.large)
                         .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                         .border(
                             width = 1.dp,
                             color = MaterialTheme.colorScheme.outlineVariant,
-                            shape = RoundedCornerShape(14.dp),
+                            shape = MaterialTheme.shapes.large,
                         )
                         .padding(8.dp)
                 } else {
@@ -199,7 +199,7 @@ fun ChatMessage(
                 )
                 Text(
                     text = message.modelSnapshot?.displayName ?: "Sub-Agent",
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelMediumEmphasized,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }

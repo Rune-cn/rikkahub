@@ -17,12 +17,15 @@
 | 语言 | Kotlin + Jetpack Compose (Material3 Expressive) |
 | 模块 | `app`（Android 主模块）、`ai`（模型/Agent 核心）、`workspace`（proot/SSH 工作区）、`web-ui`（Web 前端，编译进 APK） |
 
-## 二、当前开发情况（截至 2026-11-14）
+## 二、当前开发情况（截至 2026-11-21）
 
-- **版本**：`3.1.0`（versionCode `195`）。nightly 发布命名 `3.1.0-<commit>`，正式版（stable）为纯 `3.1.0`。
-- **上游同步**：fork HEAD 基于上游 `3.1.1`（merge `eff05733`）。**截至 2026-11-14，上游已到 `64452581`（3.2.0），fork 落后 173 个提交 / 121 个文件**，尚未同步；同步方案与冲突清单见下文「上游同步待办」。
-- **构建状态**：最近一次成功构建为 `16d3690c`（Daily Build #342，2026-11-11）。注意：**通过 GitHub API 提交的文件不会触发 push 事件**，所以 2026-11-14 的 5 个提交没有自动构建，需要手动 `workflow_dispatch` 或在本地 `./gradlew :app:assembleGithubDebug` 验证。
+- **版本**：`3.3.0`（versionCode `198`，高于上游 3.3.0 的 197）。nightly 发布命名 `3.3.0-<commit>`，正式版（stable）为纯 `3.3.0`。
+- **上游同步**：✅ **已同步到上游 3.3.0**（上游 `358e2931`，22 个提交 / 116 个文件），merge commit `a3f77d01`（分支 `sync/upstream-3.3.0`），fork 侧 201 个定制提交全部保留。冲突处理判据见 `NEXT_SESSION.md` 与 `docs/06`。
+- **构建状态**：本轮已在本地 `./gradlew :app:compileGithubDebugKotlin` 通过（含资源处理；沙盒需 qemu 包装 aapt2，见 `NEXT_SESSION.md` 三-4）。尚未推送，CI 未跑。注意：**API 提交是会触发 push 构建的**；如果提交后没有构建，先看 Actions 页面是否被 GitHub 暂停（此前踩过的错误结论已纠正）。
 - **定制功能**：12 项全部保留并在 3.x 架构上重新适配（详见 [02-fork定制功能.md](docs/02-fork定制功能.md)）。
+- **本轮新增（2026-11-21）**：
+  - **同步上游 3.3.0**：22 个提交 / 116 个文件，5 处冲突（版本号、内置提供商、归一化、分段气泡、设置搜索与 QuickStart 提示卡）。详见 `NEXT_SESSION.md` 与 `docs/06`。
+  - **定制功能 UI 对齐 Material3 Expressive**：工作流列表/画布、运行日志、重试、工具调用、子 Agent 消息与进度条、技能分类卡统一到上游新规范（`ListItem` 20dp 形 + `ItemActionMenu`、`CardGroup` + `switchItem/formItem`、`SecondaryTabRow`、emphasized 字体、Cookie9Sided 空态）。新增页面照 `docs/02` 第 13 节执行。
 - **本轮新增（2026-11-14）**：
   - **子 Agent 默认模型的 UI 形态**：从 `CardGroup.item` 的 `supportingContent` 手写 `Column` + `padding(top=4.dp)` 改为 `CardGroup.formItem`（标题行 + 下方整行内容），复用卡片自带内边距，`ModelSelector` 以 `fillMaxWidth` 占满整行，与设置页其它「选择模型」项对齐。见 02-2。
   - **移除内置语音服务商 AiHubMix（TTS）**：`DEFAULT_TTS_PROVIDERS` 只保留 `SystemTTS`；新增 `RETIRED_BUILT_IN_TTS_PROVIDER_IDS` 常量，并在 `withBuiltInDefaults()` 里**先 filterNot 再补默认项**（否则每次归一化都会补回来），同时修正 `selectedTTSProviderId` 悬空引用。按固定 UUID 而非名字匹配，避免误删用户自建同名提供商。见 02-12 与 03-5。
@@ -43,9 +46,9 @@
   - 设置搜索交互经历过多次修正，最终形态见 [07-UI交互与代码约定.md](docs/07-UI交互与代码约定.md) 的"设置搜索"一节。
   - 构建产物因上游 3.x 引入 github/play flavor，APK 命名与路径已变（见 05）。
   - 子 Agent 展示消息被多个消费方读取（生成/压缩/标题/UI），新增消费方一律用 `mainMessages` / `isSubAgentDisplayMessage()`，不要直接遍历 `currentMessages` 发模型（见 04-3.5）。
-  - **上游同步待办（重要）**：fork 落后上游 173 提交 / 121 文件（merge base `dfbe9a08` → 上游 `64452581`，3.1.1 → 3.2.0）。用 **merge 不要 rebase**。冲突高发：`service/ChatService.kt`（+281/-105，含节流落库与子 Agent 上下文隔离）、`ui/pages/chat/ChatList.kt`（上游拆成 `ChatListOverlays/ChatListPreview/ChatListSwipe/ChatSelection` 四个新文件）、`ui/pages/chat/ChatPage.kt`（+144/-18）、`data/datastore/SettingsNormalization.kt`、`data/ai/ChatRequestFactory.kt`。同步后**务必**按 02-12 复核 AiHubMix 是否被上游带回来（上游 HEAD 仍在 `DEFAULT_TTS_PROVIDERS` 里内置它）。
+  - **上游同步（已完成 3.3.0）**：用 **merge 不要 rebase**（fork 有 200+ 定制提交）。本轮 5 处冲突的判据已写进 `NEXT_SESSION.md` 与 `docs/06`；下次同步优先复用。同步后**务必**按 02-12 复核 AiHubMix 是否被上游带回来（上游仍在 `DEFAULT_TTS_PROVIDERS` 里内置它）。
 
-> **提交方式注意**：经 GitHub API（MCP `gh_put_file`）提交的改动**不会触发** `daily-build.yml`（GitHub 不把 API 提交当作 push 事件）。需要验证编译时，手动 `workflow_dispatch` 或本地 `./gradlew :app:assembleGithubDebug`。
+> **提交方式注意**：经 GitHub API（MCP `gh_put_file`）提交的改动**可以正常触发** `daily-build.yml`。如果提交后没有构建，先检查 Actions 页面是否被 GitHub 暂停（fork 配额），不要先怀疑提交方式。
 
 ## 三、代码逻辑索引（docs/ 目录，按模块单独成文件）
 
