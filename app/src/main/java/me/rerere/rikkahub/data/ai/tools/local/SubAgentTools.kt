@@ -15,6 +15,13 @@ import me.rerere.ai.core.InputSchema
 import me.rerere.ai.core.Tool
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.rikkahub.data.ai.subagent.SubAgentManager
+import me.rerere.ai.core.MessageRole
+import me.rerere.rikkahub.data.model.SubAgentStatus
+import me.rerere.rikkahub.data.model.SubAgentTask
+
+/** wait_agent 回传的转录上限：消息条数与单条文本长度（避免把子 Agent 全文塞进主上下文） */
+private const val TRANSCRIPT_MAX_MESSAGES = 12
+private const val TRANSCRIPT_MAX_CHARS = 1200
 
 internal const val SPAWN_AGENT_TOOL_NAME = "spawn_agent"
 internal const val WAIT_AGENT_TOOL_NAME = "wait_agent"
@@ -40,6 +47,16 @@ internal val SUB_AGENT_TOOL_NAMES = setOf(
  * - `list_agents`：查看所有子 Agent 状态
  * - `close_agent`：取消子 Agent
  */
+/** 子 Agent 进度摘要：步数 / 工具调用数 / 最近一次工具 / 耗时，供主 Agent 轮询时判断进展 */
+private fun SubAgentTask.progressJson() = buildJsonObject {
+    put("steps", stepCount)
+    put("tool_calls", toolCallCount)
+    messages.asReversed().firstNotNullOfOrNull { message ->
+        message.parts.filterIsInstance<UIMessagePart.Tool>().lastOrNull()?.toolName
+    }?.let { put("last_tool", it) }
+    put("elapsed_seconds", elapsedSeconds)
+}
+
 internal fun buildSubAgentTools(manager: SubAgentManager): List<Tool> = listOf(
     spawnAgentTool(manager),
     waitAgentTool(manager),
@@ -180,14 +197,18 @@ private fun waitAgentTool(manager: SubAgentManager): Tool = Tool(
                         buildJsonObject {
                             put("task_name", task.name)
                             put("status", task.status.name)
+                            // 仍在运行也要让主 Agent 看得到进展，便于决定继续等还是 close_agent
+                            put("progress", task.progressJson())
                             task.result?.let { put("result", it) }
                             task.error?.let { put("error", it) }
-                            // 完整过程：让主 Agent 看到子 Agent 说了什么、调了哪些工具
+                            // 过程摘要：尾部若干条消息 + 单条截断，避免长转录把主上下文撑爆
+                            val transcript = task.messages.takeLast(TRANSCRIPT_MAX_MESSAGES)
                             put("transcript", buildJsonArray {
-                                task.messages.forEach { msg ->
+                                transcript.forEach { msg ->
                                     val texts = msg.parts
                                         .filterIsInstance<UIMessagePart.Text>()
                                         .joinToString("\n") { it.text }
+                                        .take(TRANSCRIPT_MAX_CHARS)
                                         .trim()
                                     val tools = msg.parts
                                         .filterIsInstance<UIMessagePart.Tool>()
@@ -205,10 +226,15 @@ private fun waitAgentTool(manager: SubAgentManager): Tool = Tool(
                                     }
                                 }
                             })
+                            (task.messages.size - transcript.size).takeIf { it > 0 }?.let {
+                                put("transcript_omitted", it)
+                            }
                         }
                     )
                 }
             })
+            // 与 Codex 一致：超时是正常结果，用 timed_out 告诉模型「还没等到」而不是报错
+            put("timed_out", tasks.any { it.status == SubAgentStatus.RUNNING })
             if (names.isNotEmpty() && tasks.isEmpty()) {
                 put("error", "no matching sub-agent found")
             }
@@ -289,6 +315,7 @@ private fun listAgentsTool(manager: SubAgentManager): Tool = Tool(
                             put("task_name", task.name)
                             put("status", task.status.name)
                             put("prompt", task.prompt)
+                            put("progress", task.progressJson())
                             task.result?.let { put("result", it) }
                             task.error?.let { put("error", it) }
                         }

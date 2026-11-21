@@ -8,6 +8,7 @@ import me.rerere.ai.provider.BuiltInTools
 import me.rerere.ai.provider.Model
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.rikkahub.data.ai.mcp.McpManager
+import me.rerere.rikkahub.data.ai.tools.local.ASK_USER_TOOL_NAME
 import me.rerere.rikkahub.data.ai.tools.local.LocalTools
 import me.rerere.rikkahub.data.ai.tools.local.SUB_AGENT_TOOL_NAMES
 import me.rerere.rikkahub.data.datastore.Settings
@@ -56,6 +57,8 @@ class ChatToolFactory(
         workspaceCwd: String? = null,
         /** 子 Agent 场景传 true：排除子 Agent 管理工具，避免无限递归 */
         excludeSubAgentTools: Boolean = false,
+        /** 子 Agent 场景传 true：后台没有审批 UI，工具一律放行并剔除交互类工具 */
+        autoApproveTools: Boolean = false,
     ): List<Tool> {
         val workspaceTools =
             createWorkspaceToolsIfReady(assistant.workspaceId?.toString(), workspaceCwd, conversationId)
@@ -115,6 +118,12 @@ class ChatToolFactory(
         // 自动允许：开启后，AI 使用工具不再弹确认框（含 MCP、日历、技能等）。
         // 用户可在「扩展管理 → 工具调用」页自由选择哪些工具参与自动允许；
         // ask_user 默认不参与（本质是"询问用户"，需保留交互流程）。
+        // 子 Agent 没有审批 UI：剔除 ask_user 这类需要用户实时回答的工具，其余全部放行
+        if (autoApproveTools) {
+            return outputTools
+                .filterNot { it.name == ASK_USER_TOOL_NAME }
+                .map { it.copy(needsApproval = { false }) }
+        }
         val autoAllow = settings.toolAutoAllowSetting
         return if (autoAllow.enabled) {
             outputTools.map { tool ->

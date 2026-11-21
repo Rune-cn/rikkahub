@@ -26,6 +26,7 @@
 - **本轮新增（2026-11-21）**：
   - **同步上游 3.3.0**：22 个提交 / 116 个文件，5 处冲突（版本号、内置提供商、归一化、分段气泡、设置搜索与 QuickStart 提示卡）。详见 `NEXT_SESSION.md` 与 `docs/06`。
   - **定制功能 UI 对齐 Material3 Expressive**：工作流列表/画布、运行日志、重试、工具调用、子 Agent 消息与进度条、技能分类卡统一到上游新规范（`ListItem` 20dp 形 + `ItemActionMenu`、`CardGroup` + `switchItem/formItem`、`SecondaryTabRow`、emphasized 字体、Cookie9Sided 空态）。新增页面照 `docs/02` 第 13 节执行。
+  - **子 Agent 修复与优化**：主对话此前只写入子 Agent 的最终文本，工具调用全部丢失（第一步全是工具调用时表现为「什么都不显示」）；现在 `streamingMessages` 推整条 `UIMessage`（含 Tool part），主对话完整展开工具链，详情弹窗渲染每次工具调用的参数与结果。同时：消息按 `task.id` 定位（任务名可复用）、续跑后恢复更新、停止生成只取消本会话子 Agent、后台工具强制放行并剔除 `ask_user`、步数上限 48、`wait_agent` 返回 progress 与 `timed_out`。见 `docs/02` 2.1。
 - **本轮新增（2026-11-14）**：
   - **子 Agent 默认模型的 UI 形态**：从 `CardGroup.item` 的 `supportingContent` 手写 `Column` + `padding(top=4.dp)` 改为 `CardGroup.formItem`（标题行 + 下方整行内容），复用卡片自带内边距，`ModelSelector` 以 `fillMaxWidth` 占满整行，与设置页其它「选择模型」项对齐。见 02-2。
   - **移除内置语音服务商 AiHubMix（TTS）**：`DEFAULT_TTS_PROVIDERS` 只保留 `SystemTTS`；新增 `RETIRED_BUILT_IN_TTS_PROVIDER_IDS` 常量，并在 `withBuiltInDefaults()` 里**先 filterNot 再补默认项**（否则每次归一化都会补回来），同时修正 `selectedTTSProviderId` 悬空引用。按固定 UUID 而非名字匹配，避免误删用户自建同名提供商。见 02-12 与 03-5。

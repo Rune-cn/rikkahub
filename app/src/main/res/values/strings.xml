@@ -1539,6 +1539,7 @@
   <string name="workflow_status_failed">Failed</string>
   <string name="sub_agent_not_found">Sub-agent not found</string>
   <string name="sub_agent_model_label">Model: %1$s</string>
+  <string name="sub_agent_progress">%1$d steps · %2$d tool calls · %3$ds</string>
   <string name="sub_agent_status_running">Running</string>
   <string name="sub_agent_status_done">Done</string>
   <string name="sub_agent_status_failed">Failed</string>
@@ -1546,6 +1547,7 @@
   <string name="sub_agent_role_user">Task</string>
   <string name="sub_agent_role_assistant">Assistant</string>
   <string name="sub_agent_empty_result">(no output)</string>
+  <string name="sub_agent_tool_no_result">(interrupted before returning a result)</string>
   <string name="chat_message_tool_spawn_agent">Spawn sub-agent</string>
   <string name="chat_message_tool_spawn_agent_with_name">Spawn sub-agent: %1$s</string>
   <string name="chat_message_tool_wait_agent">Wait for sub-agents</string>

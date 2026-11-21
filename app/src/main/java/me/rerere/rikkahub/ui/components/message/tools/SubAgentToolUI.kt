@@ -37,6 +37,13 @@ import me.rerere.rikkahub.data.ai.tools.local.WAIT_AGENT_TOOL_NAME
 import me.rerere.rikkahub.data.model.SubAgentStatus
 import me.rerere.rikkahub.data.model.SubAgentTask
 import org.koin.compose.koinInject
+import me.rerere.rikkahub.utils.JsonInstantPretty
+import me.rerere.rikkahub.ui.theme.JetbrainsMono
+import me.rerere.rikkahub.ui.components.richtext.MarkdownBlock
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.runtime.remember
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.CircleShape
 
 /** 启动子 Agent：标题显示任务名，详情里可查看它的完整执行过程 */
 object SpawnAgentToolUI : ToolUIRenderer {
@@ -78,56 +85,96 @@ object SpawnAgentToolUI : ToolUIRenderer {
                 // 标题 + 状态
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = task.name,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.headlineSmallEmphasized,
+                        modifier = Modifier.weight(1f),
                     )
                     SubAgentStatusBadge(task)
                 }
-                task.modelName?.let { modelName ->
-                    Text(
-                        text = stringResource(R.string.sub_agent_model_label, modelName),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                // 模型 / 步数 / 工具调用 / 耗时
+                val elapsedSeconds = remember(task.startedAt, task.finishedAt, task.status) {
+                    ((task.finishedAt ?: System.currentTimeMillis()) - task.startedAt).coerceAtLeast(0) / 1000
                 }
-                // 完整执行过程
+                val stepCount = task.messages.count { it.role == MessageRole.ASSISTANT && it.parts.isNotEmpty() }
+                val toolCallCount = task.messages.sumOf { message ->
+                    message.parts.count { it is UIMessagePart.Tool }
+                }
+                Text(
+                    text = buildList {
+                        task.modelName?.let { add(stringResource(R.string.sub_agent_model_label, it)) }
+                        add(stringResource(R.string.sub_agent_progress, stepCount, toolCallCount, elapsedSeconds))
+                    }.joinToString(" · "),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                // 完整执行过程（文本 + 工具调用及结果）
                 SubAgentConversation(messages = task.messages)
                 task.error?.let { error ->
-                    Text(
-                        text = error,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ) {
+                        Text(
+                            text = error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-/** 子 Agent 状态徽标 */
+/** 子 Agent 状态徽标（色调容器胶囊） */
 @Composable
 private fun SubAgentStatusBadge(task: SubAgentTask) {
-    val (labelRes, color) = when (task.status) {
-        SubAgentStatus.RUNNING -> R.string.sub_agent_status_running to MaterialTheme.colorScheme.primary
-        SubAgentStatus.DONE -> R.string.sub_agent_status_done to MaterialTheme.colorScheme.primary
-        SubAgentStatus.FAILED -> R.string.sub_agent_status_failed to MaterialTheme.colorScheme.error
-        SubAgentStatus.CANCELLED -> R.string.sub_agent_status_cancelled to MaterialTheme.colorScheme.onSurfaceVariant
+    val (labelRes, container, content) = when (task.status) {
+        SubAgentStatus.RUNNING -> Triple(
+            R.string.sub_agent_status_running,
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+        SubAgentStatus.DONE -> Triple(
+            R.string.sub_agent_status_done,
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+        SubAgentStatus.FAILED -> Triple(
+            R.string.sub_agent_status_failed,
+            MaterialTheme.colorScheme.errorContainer,
+            MaterialTheme.colorScheme.onErrorContainer,
+        )
+        SubAgentStatus.CANCELLED -> Triple(
+            R.string.sub_agent_status_cancelled,
+            MaterialTheme.colorScheme.surfaceContainerHigh,
+            MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
-    Text(
-        text = stringResource(labelRes),
-        style = MaterialTheme.typography.labelMedium,
-        color = color,
-    )
+    Surface(
+        shape = CircleShape,
+        color = container,
+        contentColor = content,
+    ) {
+        Text(
+            text = stringResource(labelRes),
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+        )
+    }
 }
 
-/** 只读展示子 Agent 的完整对话（文本 + 工具调用名） */
+/** 只读展示子 Agent 的完整对话（文本 + 工具调用与结果） */
 @Composable
 private fun SubAgentConversation(messages: List<UIMessage>) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         messages.forEach { message ->
             val texts = message.parts.filterIsInstance<UIMessagePart.Text>()
                 .map { it.text }
@@ -135,7 +182,7 @@ private fun SubAgentConversation(messages: List<UIMessage>) {
             val tools = message.parts.filterIsInstance<UIMessagePart.Tool>()
             if (texts.isEmpty() && tools.isEmpty()) return@forEach
 
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = when (message.role) {
                         MessageRole.USER -> stringResource(R.string.sub_agent_role_user)
@@ -146,18 +193,91 @@ private fun SubAgentConversation(messages: List<UIMessage>) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 texts.forEach { text ->
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.bodySmall,
+                    MarkdownBlock(
+                        content = text,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 tools.forEach { tool ->
-                    Text(
-                        text = "· ${tool.toolName}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
+                    SubAgentToolCallRow(tool = tool)
                 }
+            }
+        }
+    }
+}
+
+/**
+ * 子 Agent 的一次工具调用：名称 + 参数摘要 + 结果预览
+ *
+ * 参数与结果都可能很长，这里截断展示；完整内容仍可在主对话的工具详情里看到。
+ */
+@Composable
+private fun SubAgentToolCallRow(tool: UIMessagePart.Tool) {
+    val executed = tool.isExecuted
+    val accent = if (executed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+    val input = remember(tool.input) {
+        runCatching { JsonInstantPretty.encodeToString(tool.inputAsJson()) }
+            .getOrDefault(tool.input)
+            .take(600)
+    }
+    val result = remember(tool.output) {
+        tool.output.filterIsInstance<UIMessagePart.Text>()
+            .joinToString("\n") { it.text }
+            .trim()
+            .take(1200)
+    }
+
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(
+                    imageVector = HugeIcons.Tools,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = accent,
+                )
+                Text(
+                    text = tool.toolName,
+                    style = MaterialTheme.typography.labelLargeEmphasized,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = stringResource(
+                        if (executed) R.string.sub_agent_status_done else R.string.sub_agent_status_running
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = accent,
+                )
+            }
+            if (input.isNotBlank() && input != "{}") {
+                Text(
+                    text = input,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = JetbrainsMono,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 4,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (result.isNotBlank()) {
+                Text(
+                    text = result,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = JetbrainsMono,
+                    maxLines = 6,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }

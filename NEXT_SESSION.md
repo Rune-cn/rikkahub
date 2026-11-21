@@ -12,10 +12,11 @@ RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天�
 
 - **上游**：✅ **已同步到 3.3.0**（上游 `358e2931`，22 个提交 / 116 个文件），merge commit `a3f77d01`，fork 侧 201 个定制提交全部保留（merge，未 rebase）。
 - **版本号**：3.2.0/196 → **3.3.0/198**（高于上游的 197，保证覆盖安装）。
-- **构建**：✅ 本地 `./gradlew :app:compileGithubDebugKotlin` 通过（含资源处理）；尚未推送，CI 未跑。
+- **构建**：✅ 本地 `:app:compileGithubDebugKotlin` 与 `:app:testGithubDebugUnitTest`（`SubAgentDisplayTest`）通过；本轮子 Agent 改动尚未推送。
 - **本轮改动（2026-11-21）**：
   1. 同步上游 3.3.0：5 处冲突逐个按「上游架构 + fork 功能」合并（见下文）。
   2. 定制功能 UI 按上游 MD3 Expressive 规范重做（详见 `docs/02` 第 13 节）。
+  3. 修复「子 Agent 工具调用不显示」并优化子 Agent 执行（详见 `docs/02` 2.1）。
 
 ### 合并时的 5 处冲突（下次同步大概率复用同一判据）
 
@@ -40,6 +41,13 @@ RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天�
 | `ui/components/message/ChatMessage.kt` | 子 Agent 消息卡改 `shapes.large`、`labelMediumEmphasized` |
 | `ui/pages/extensions/skills/SkillDetailPage.kt` | 分类卡改 `shapes.large` + `surfaceContainerHigh` + `titleSmallEmphasized` |
 | `ui/pages/extensions/skills/SkillsPage.kt` | 分组标题 `titleSmallEmphasized`；分类对话框预置项改 `selectableGroup/selectable(Role.RadioButton)` |
+| `data/ai/subagent/SubAgentManager.kt` | 新增 `streamingMessages`（整条 `UIMessage`，含工具调用）；`parentConversationId`；`maxSteps=48`；`cancelForConversation()` |
+| `service/ChatService.kt` | 子 Agent 消息按 `task.id` 定位、拷贝全部 parts、收尾补未执行工具；停止生成时取消本会话子 Agent |
+| `data/ai/tools/ChatToolFactory.kt` | 新增 `autoApproveTools`：子 Agent 后台放行工具并剔除 `ask_user` |
+| `ui/components/message/tools/SubAgentToolUI.kt` | 详情弹窗：状态胶囊 + 模型/步数/工具数/耗时 + 每次工具调用的参数与结果预览 |
+| `data/ai/subagent/SubAgentDisplay.kt` | 新增纯函数 `buildSubAgentDisplayParts()`：按序拼接多条助手消息、streaming 去重、收尾补未执行工具 |
+| `app/src/test/.../SubAgentDisplayTest.kt` | 上述纯函数的单元测试（5 条用例） |
+| `data/model/SubAgent.kt` | 派生 `stepCount` / `toolCallCount` / `elapsedSeconds`，UI 与工具共用 |
 
 ## 三、本轮踩到的坑（务必先读）
 
@@ -53,6 +61,7 @@ RikkaHub（rikkahub/rikkahub）的 fork `Rune-cn/rikkahub`，Android LLM 聊天�
    `-Pandroid.aapt2FromMavenOverride=/usr/local/bin/aapt2`（该文件是 exec `qemu-x86_64-static` 的 ELF 包装器）。
    `:web:buildWebUi` 需要 `pnpm`，沙盒没有时用 `-x :web:buildWebUi` 跳过（CI 会正常构建）。
 5. **版本号规则**：没用户要求不升版；`versionCode` 必须单调递增（现在 **198**）。
+6. **子 Agent 的展示消息千万不要只传文本**：`toText()` 会丢掉 Tool part，子 Agent 第一步常常全是工具调用，主对话就会「什么都没有」。用 `SubAgentManager.streamingMessages` 整条消息；收尾时未执行的工具要补结果，否则主对话会出现等不到审批的 pending 按钮。
 
 ## 四、已知待办 / 注意事项
 

@@ -58,6 +58,9 @@ class SubAgentManager(
 
         /** 同时运行的子 Agent 上限 */
         const val MAX_CONCURRENT_SUB_AGENTS = 3
+
+        /** 保留多少个已结束的任务记录（超出后按结束时间淘汰最旧的，避免列表无限增长） */
+        const val MAX_RETAINED_FINISHED_TASKS = 12
     }
 
     // 延迟解析，避免与 LocalTools / ChatToolFactory 形成 Koin 循环依赖
@@ -80,9 +83,14 @@ class SubAgentManager(
         activeMainConversationId = conversationId
     }
 
-    /** 子 Agent 当前流式输出（taskName → 最新文本），供 ChatService 写入主对话 */
-    private val _outputs = MutableStateFlow<Map<String, String>>(emptyMap())
-    val outputs: StateFlow<Map<String, String>> = _outputs.asStateFlow()
+    /**
+     * 子 Agent 当前正在生成的那条助手消息（taskName → 完整消息）
+     *
+     * 带上全部 part（文本 / 推理 / 工具调用），主对话据此渲染出与主 Agent 一致的
+     * 过程视图；只传文本会让流式阶段看不到工具调用（历史 bug）。
+     */
+    private val _streamingMessages = MutableStateFlow<Map<String, UIMessage>>(emptyMap())
+    val streamingMessages: StateFlow<Map<String, UIMessage>> = _streamingMessages.asStateFlow()
 
     /** 启动子 Agent（异步，立即返回） */
     fun spawn(
@@ -120,9 +128,20 @@ class SubAgentManager(
             name = name,
             prompt = prompt,
             modelId = modelId,
+            parentConversationId = activeMainConversationId,
             startedAt = System.currentTimeMillis(),
         )
-        _tasks.value = _tasks.value + task
+        // 已结束的任务只保留最近 N 个：列表页与内存都不该无限增长
+        _tasks.value = (_tasks.value + task).let { all ->
+            val finished = all.filter { it.isFinished }.sortedByDescending { it.finishedAt ?: 0L }
+            if (finished.size <= MAX_RETAINED_FINISHED_TASKS) {
+                all
+            } else {
+                val dropped = finished.drop(MAX_RETAINED_FINISHED_TASKS)
+                dropped.forEach { jobs.remove(it.name) }
+                all.filterNot { candidate -> dropped.any { it.id == candidate.id } }
+            }
+        }
         syncSubAgentService()
         jobs[name] = appScope.launch { runTask(task) }
         Log.i(TAG, "spawn sub-agent: $name")
@@ -177,12 +196,15 @@ class SubAgentManager(
 
             // 子 Agent 拥有与主 Agent 同源的工具集（含技能、MCP、工作区、搜索、记忆等），
             // 但排除子 Agent 管理工具本身，避免无限递归
+            // 子 Agent 在后台跑，没有审批 UI：所有工具自动放行，并剔除需要用户交互的工具
+            // （ask_user 之类会一直卡住等待一个永远不会出现的回答）。
             val tools = chatToolFactory.createTools(
                 settings = settings,
                 assistant = assistant,
                 model = model,
                 conversationId = conversationId,
                 excludeSubAgentTools = true,
+                autoApproveTools = true,
             )
 
             var messages = resumeMessages ?: buildList {
@@ -196,7 +218,13 @@ class SubAgentManager(
                                 You are a SUB-AGENT spawned by the main agent Rikka to work on a delegated task.
                                 - Your task name: ${task.name}
                                 - You have the same toolset as the main agent, except you cannot spawn sub-agents.
-                                - You cannot chat with the main agent directly; your final answer is returned to it automatically when you finish. Make it complete and self-contained (plain human-readable text, not JSON).
+
+                                Working rules:
+                                1. Nobody can answer questions while you run. Never ask for confirmation; make a reasonable assumption and keep going.
+                                2. Your task message is your only context. It does not include the main conversation.
+                                3. Work autonomously until the task is actually done. Prefer using tools over guessing; check the result of every tool call before moving on.
+                                4. If a tool fails, read the error and try a different approach. Do not repeat the same failing call.
+                                5. Your final message is the deliverable. It is returned to the main agent automatically, so make it complete and self-contained: what you did, the key findings (numbers, paths, URLs, identifiers), and anything the main agent still needs to do. Use plain human-readable text, not JSON, unless the task explicitly asks for JSON.
                                 """.trimIndent()
                             )
                         )
@@ -224,32 +252,38 @@ class SubAgentManager(
                 tools = tools,
             )
             val (request, hooks) = requestFactory.createAgent(turn, messages, MutableStateFlow(null))
-            runAgent(request, hooks).flowOn(Dispatchers.IO).collect { event ->
-                when (event) {
-                    is AgentEvent.MessageUpdated -> {
-                        messages = messages.let { current ->
-                            val last = current.lastOrNull()
-                            if (last?.role == MessageRole.ASSISTANT) current.dropLast(1) + event.message
-                            else current + event.message
+            // 步数预算：防止子 Agent 在工具循环里失控（AgentRequest 默认 256 步）
+            runAgent(request.copy(maxSteps = MAX_SUB_AGENT_STEPS), hooks)
+                .flowOn(Dispatchers.IO)
+                .collect { event ->
+                    when (event) {
+                        is AgentEvent.MessageUpdated -> {
+                            messages = messages.let { current ->
+                                val last = current.lastOrNull()
+                                if (last?.role == MessageRole.ASSISTANT) current.dropLast(1) + event.message
+                                else current + event.message
+                            }
+                            // 实时同步完整对话（供详情查看）
+                            updateTask(task.name) { it.copy(messages = messages) }
+                            // 关键：整条消息（含工具调用）都推给主对话，而不是只取文本。
+                            // 子 Agent 第一步常常全是工具调用、没有文本，只推文本会导致
+                            // 主对话里看不到任何工具调用。
+                            _streamingMessages.value =
+                                _streamingMessages.value + (task.name to event.message)
+                            event.message.toText().takeIf { it.isNotBlank() }?.let { text ->
+                                finalText = text
+                            }
                         }
-                        // 实时同步完整对话（供详情查看）
-                        updateTask(task.name) { it.copy(messages = messages) }
-                        event.message.toText().takeIf { it.isNotBlank() }?.let { text ->
-                            finalText = text
-                            // 流式输出：推送最新文本（ChatService 会写入主对话）
-                            _outputs.value = _outputs.value + (task.name to text)
+
+                        is AgentEvent.Retrying -> Unit
+
+                        is AgentEvent.Finished -> {
+                            event.message.toText().takeIf { it.isNotBlank() }?.let { finalText = it }
                         }
-                    }
-
-                    is AgentEvent.Retrying -> Unit
-
-                    is AgentEvent.Finished -> {
-                        event.message.toText().takeIf { it.isNotBlank() }?.let { finalText = it }
                     }
                 }
-            }
             // 任务结束：移除流式输出（ChatService 用最终结果更新消息）
-            _outputs.value = _outputs.value - task.name
+            _streamingMessages.value = _streamingMessages.value - task.name
 
             updateTask(task.name) {
                 it.copy(
@@ -261,11 +295,13 @@ class SubAgentManager(
             }
             Log.i(TAG, "sub-agent finished: ${task.name}")
         } catch (e: CancellationException) {
+            _streamingMessages.value = _streamingMessages.value - task.name
             updateTask(task.name) {
                 it.copy(status = SubAgentStatus.CANCELLED, finishedAt = System.currentTimeMillis())
             }
             throw e
         } catch (e: Throwable) {
+            _streamingMessages.value = _streamingMessages.value - task.name
             Log.w(TAG, "sub-agent failed: ${task.name}", e)
             updateTask(task.name) {
                 it.copy(
@@ -330,9 +366,16 @@ class SubAgentManager(
         return exists
     }
 
-    /** 取消所有运行中的子 Agent（用户停止生成时调用） */
+    /** 取消所有运行中的子 Agent */
     fun cancelAll() {
         jobs.keys.toList().forEach { close(it) }
+    }
+
+    /** 取消某个主会话派生出来的子 Agent（用户停止该会话的生成时调用） */
+    fun cancelForConversation(conversationId: Uuid) {
+        _tasks.value
+            .filter { it.parentConversationId == conversationId && !it.isFinished }
+            .forEach { close(it.name) }
     }
 
     fun list(): List<SubAgentTask> = _tasks.value

@@ -2,7 +2,9 @@ package me.rerere.rikkahub.data.model
 
 import kotlinx.serialization.Serializable
 import kotlin.uuid.Uuid
+import me.rerere.ai.core.MessageRole
 import me.rerere.ai.ui.UIMessage
+import me.rerere.ai.ui.UIMessagePart
 
 /** 子 Agent 运行状态 */
 @Serializable
@@ -35,6 +37,8 @@ data class SubAgentTask(
     val prompt: String,
     /** 模型覆盖；null 表示继承主 Agent 当前模型 */
     val modelId: Uuid? = null,
+    /** 派生它的主会话 id；用于用户停止生成时只取消本会话的子 Agent */
+    val parentConversationId: Uuid? = null,
     /** 实际使用的模型显示名（运行中记录，便于展示） */
     val modelName: String? = null,
     val status: SubAgentStatus = SubAgentStatus.RUNNING,
@@ -51,4 +55,16 @@ data class SubAgentTask(
 ) {
     val isFinished: Boolean
         get() = status != SubAgentStatus.RUNNING
+
+    /** 已进行的模型步数（每步一条助手消息） */
+    val stepCount: Int
+        get() = messages.count { it.role == MessageRole.ASSISTANT && it.parts.isNotEmpty() }
+
+    /** 累计工具调用次数（含正在执行与已完成的） */
+    val toolCallCount: Int
+        get() = messages.sumOf { message -> message.parts.count { it is UIMessagePart.Tool } }
+
+    /** 已运行秒数（结束后固定为总耗时） */
+    val elapsedSeconds: Long
+        get() = ((finishedAt ?: System.currentTimeMillis()) - startedAt).coerceAtLeast(0) / 1000
 }

@@ -49,6 +49,7 @@ import me.rerere.rikkahub.data.ai.TranslationHandler
 import me.rerere.rikkahub.data.ai.mcp.McpManager
 import me.rerere.rikkahub.data.ai.prompts.buildCompressPrompt
 import me.rerere.rikkahub.data.ai.subagent.SubAgentManager
+import me.rerere.rikkahub.data.ai.subagent.buildSubAgentDisplayParts
 import me.rerere.rikkahub.data.ai.tools.ChatToolFactory
 import me.rerere.rikkahub.data.ai.tools.InvalidMcpServerNamesException
 import me.rerere.rikkahub.data.ai.transformers.TemplateTransformer
@@ -63,6 +64,8 @@ import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.Conversation
 import me.rerere.rikkahub.data.model.AssistantAffectScope
 import me.rerere.rikkahub.data.model.MessageNode
+import me.rerere.rikkahub.data.model.SubAgentTask
+import me.rerere.rikkahub.data.model.SubAgentStatus
 import me.rerere.ai.ui.ModelSnapshot
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -208,30 +211,33 @@ class ChatService(
 
     // 错误状态
     // ── 子 Agent 流式输出 → 写入主对话（像普通 AI 回复一样流式显示）──
+    // 以 SubAgentTask.id 为 key：任务名可以复用，用名字会在复用后写错消息/丢更新
     private val subAgentMessageNodes = mutableMapOf<String, Uuid>()
     private val completedSubAgentTasks = mutableSetOf<String>()
 
     init {
         appScope.launch {
-            combine(subAgentManager.outputs, subAgentManager.tasks) { o, t -> o to t }
-                .collect { (outputs, tasks) ->
-                    val cid = subAgentManager.activeMainConversationId ?: return@collect
-                    // 流式更新
-                    outputs.forEach { (taskName, text) ->
-                        if (!completedSubAgentTasks.contains(taskName)) {
-                            upsertSubAgentMessage(cid, taskName, text, finished = false)
+            combine(subAgentManager.streamingMessages, subAgentManager.tasks) { m, t -> m to t }
+                .collect { (streaming, tasks) ->
+                    // send_message 续跑复用同一个 task id：重新进入 RUNNING 时把它从
+                    // 「已收尾」集合里移除，否则续跑的输出不会再更新这条消息。
+                    tasks.filterNot { it.isFinished }.forEach { completedSubAgentTasks.remove(it.id) }
+                    // 写回派生它的那个会话，而不是「当前打开的会话」：
+                    // 用户可以一边让子 Agent 跑、一边切到别的对话。
+                    streaming.forEach { (taskName, message) ->
+                        val task = tasks.find { it.name == taskName } ?: return@forEach
+                        val cid = task.parentConversationId ?: subAgentManager.activeMainConversationId
+                            ?: return@forEach
+                        if (!completedSubAgentTasks.contains(task.id)) {
+                            upsertSubAgentMessage(cid, task, streaming = message, finished = false)
                         }
                     }
-                    // 完成：更新为最终结果并落库
+                    // 完成：用子 Agent 最后一条助手消息（保留工具调用），再落库
                     tasks.filter { it.isFinished }.forEach { task ->
-                        if (completedSubAgentTasks.add(task.name)) {
-                            upsertSubAgentMessage(
-                                cid,
-                                task.name,
-                                task.result ?: task.error ?: "",
-                                finished = true,
-                            )
-                            val latest = sessionManager.get(cid)?.state?.value ?: return@forEach
+                        val cid = task.parentConversationId ?: subAgentManager.activeMainConversationId
+                            ?: return@forEach
+                        if (completedSubAgentTasks.add(task.id)) {
+                            upsertSubAgentMessage(cid, task, streaming = null, finished = true)
                             sessionManager.get(cid)?.flush()
                         }
                     }
@@ -239,11 +245,19 @@ class ChatService(
         }
     }
 
-    /** 在会话中创建/更新一条「子 Agent」消息（流式） */
+    /**
+     * 在会话中创建/更新一条「子 Agent」消息（流式）
+     *
+     * 子 Agent 一次任务会产生**多条**助手消息（每次模型调用一条，工具结果回来后再开下一条）。
+     * 主对话里要看到完整过程，就必须把这些消息按时间顺序拼起来；只取"当前这条"会让
+     * 上一步的工具调用在进入下一步时凭空消失（历史 bug：看起来像"不显示工具调用"）。
+     *
+     * [streaming] 是正在生成、可能还没写进 [SubAgentTask.messages] 的那条消息。
+     */
     private fun upsertSubAgentMessage(
         conversationId: Uuid,
-        taskName: String,
-        text: String,
+        task: SubAgentTask,
+        streaming: UIMessage?,
         finished: Boolean,
     ) {
         val session = sessionManager.get(conversationId) ?: return
@@ -252,7 +266,29 @@ class ChatService(
         } else {
             null
         }
-        val nodeId = subAgentMessageNodes[taskName]
+        val statusLabel = when (task.status) {
+            SubAgentStatus.RUNNING -> context.getString(R.string.sub_agent_status_running)
+            SubAgentStatus.DONE -> context.getString(R.string.sub_agent_status_done)
+            SubAgentStatus.FAILED -> context.getString(R.string.sub_agent_status_failed)
+            SubAgentStatus.CANCELLED -> context.getString(R.string.sub_agent_status_cancelled)
+        }
+        // 进度直接写进标题：主对话折叠时也能看到子 Agent 跑到第几步、调了多少次工具
+        val progress = context.getString(
+            R.string.sub_agent_progress,
+            task.stepCount,
+            task.toolCallCount,
+            task.elapsedSeconds,
+        )
+        val displayName = context.getString(R.string.sub_agent_streaming_name, task.name) +
+            " · " + statusLabel + " · " + progress
+        // 展示用的 part 组装逻辑单独放在 SubAgentDisplay.kt，便于单元测试与复用
+        val parts = buildSubAgentDisplayParts(
+            task = task,
+            streaming = streaming,
+            finished = finished,
+            noResultText = context.getString(R.string.sub_agent_tool_no_result),
+        )
+        val nodeId = subAgentMessageNodes[task.id]
         val current = session.state.value
         val updated = if (nodeId != null) {
             current.copy(
@@ -261,8 +297,9 @@ class ChatService(
                         node.copy(
                             messages = node.messages.map { message ->
                                 message.copy(
-                                    parts = listOf(UIMessagePart.Text(text)),
+                                    parts = parts,
                                     finishedAt = finishedAt,
+                                    modelSnapshot = message.modelSnapshot?.copy(displayName = displayName),
                                 )
                             }
                         )
@@ -276,16 +313,16 @@ class ChatService(
                 messages = listOf(
                     UIMessage(
                         role = MessageRole.ASSISTANT,
-                        parts = listOf(UIMessagePart.Text(text)),
+                        parts = parts,
                         modelSnapshot = ModelSnapshot(
                             modelId = "sub-agent",
-                            displayName = context.getString(R.string.sub_agent_streaming_name, taskName),
+                            displayName = displayName,
                         ),
                         finishedAt = finishedAt,
                     )
                 ),
             )
-            subAgentMessageNodes[taskName] = newNode.id
+            subAgentMessageNodes[task.id] = newNode.id
             current.copy(messageNodes = current.messageNodes + newNode)
         }
         session.update { updated }
@@ -1639,6 +1676,8 @@ class ChatService(
             session.inbox.pause()
             session.cancelJobs()
         }
+        // 用户停止本会话生成时，一并取消它派生出来的子 Agent（否则它们会在后台继续烧 token）
+        subAgentManager.cancelForConversation(conversationId)
         if (jobs.isEmpty()) return
         jobs.forEach { it.join() }
         if (session.isInitialized) finishInterruptedPendingTools(session)

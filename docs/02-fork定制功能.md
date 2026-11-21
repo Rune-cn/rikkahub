@@ -30,6 +30,25 @@
     - **回复节点语义（修复过）**：只有过滤后「最后一条是主 Agent 助手消息」才复用其节点；用户再发新消息（末尾是 USER）必须新建节点，否则回复会写进旧回复节点（表现为每次对话都在旧基础上继续改）。过滤后的 `history` 与 `nodes` 索引不再一一对应，定位用 `allHistory.indexOfFirst { it.id == lastMainAssistantMessage.id }` 回查原始索引再取 `nodes[i].id`；不要用 `indexOfLast { role == ASSISTANT }` 全局找最后一个助手消息。
     - `ChatMessageAssistantAvatar` 对子 Agent 消息直接 return（顶部已有子 Agent 标签行，避免误显示主 Agent 头像/名字，`useAssistantAvatar=true` 时曾踩过）。
 
+### 2.1 流式展示与执行约束（2026-11-21）
+
+- **主对话里的子 Agent 消息必须带工具调用**：`SubAgentManager.streamingMessages` 推送的是整条 `UIMessage`（含 `UIMessagePart.Tool`），ChatService 拷贝全部 parts 写入主对话。此前只推 `toText()`，而子 Agent 第一步常常全是工具调用、没有文本，于是主对话里完全看不到工具调用（用户报的 bug 即此）。
+- **定位用 `SubAgentTask.id`，不要用任务名**：任务名允许复用（send_message 续跑也复用同一 id），用名字会写错节点或丢更新；续跑重新进入 RUNNING 时把它从 `completedSubAgentTasks` 移除，否则不会再更新消息。
+- **收尾清理**：完成/取消时，没有结果的工具调用补一条 `sub_agent_tool_no_result` 文本并把 `approvalState` 置为 `Auto`，避免主对话里出现永远等不到审批的按钮。
+- **展示层**：`ChatMessage` 对 `modelId == "sub-agent"` 的消息把思考/工具链**全部展开**（主 Agent 仍折叠）；`SubAgentToolUI` 详情弹窗渲染完整转录（文本 + 每次工具调用的名称/参数摘要/结果预览），并显示「模型 · 步数 · 工具调用数 · 耗时」与状态胶囊。
+- **后台执行约束**：子 Agent 没有审批 UI，`ChatToolFactory.createTools(autoApproveTools = true)` 强制放行并剔除 `ask_user`；`maxSteps = 48`；并发上限 3；用户停止某会话生成时 `cancelForConversation()` 只取消该会话派生的任务。
+- **协议对齐**（参考 Codex multi-agent 与 DeepSeek Harness）：主对话只承载**展示消息**，模型上下文仍由 `Conversation.mainMessages` 过滤；`wait_agent` 返回 `progress`（steps / tool_calls / last_tool / elapsed_seconds）与 `timed_out`，转录截断为最后 12 条、每条 1200 字，避免把子 Agent 全文灌进主上下文（Codex 只回传 FINAL_ANSWER 的同一思路）。
+- **多条助手消息要拼起来，不能只显示"当前这条"**：子 Agent 每一步（一次模型调用）产生一条助手消息，工具结果回来后再开下一条。只把最新一条写进主对话，会让上一步的工具调用在进入下一步时消失——这才是「不显示工具调用」的完整根因。组装逻辑已抽成纯函数 `buildSubAgentDisplayParts()`（`data/ai/subagent/SubAgentDisplay.kt`），并用 `SubAgentDisplayTest` 覆盖：跨步累加、streaming 同一条消息去重、未执行工具补结果、失败追加错误。
+- **进度写进标题**：`Sub-Agent · name · 运行中 · 3 步 · 5 次工具调用 · 42 秒`（`sub_agent_progress`），折叠状态下也能判断它卡住还是在干活。
+- **执行规则写进 system prompt**：没人能回答提问（不许请求确认）、任务描述是唯一上下文、工具失败要换方案而不是重复调用、最终回答必须自包含。
+- **已结束任务只保留最近 12 个**（`MAX_RETAINED_FINISHED_TASKS`），列表与内存不会无限增长。
+
+### 2.2 参考实现（Codex / DeepSeek Harness）
+
+- **Codex**（`openai.com/index/unrolling-the-codex-agent-loop`）：一个 turn 内是单 Agent 循环——模型请求工具 → 执行并把输出追加进上下文 → 重新推理，直到模型给出助手消息为止；上下文窗口由 Agent 自己管理，工具执行受审批与沙箱约束。Codex CLI 没有"子 Agent"原语，本 fork 的 `spawn_agent` 相当于把同一套循环放进独立协程/独立上下文，再用 `wait_agent` 收结果。
+- **DeepSeek Harness（DSH）**（`github.com/ZSeven-W/dsh-crew`、npm `@deepseek-ai/dsh-workflow-ptc`）：子 Agent 是**独立 session/上下文**，结果以 JSON 回到父级；并发与总量有上限（`maxConcurrentAgents` / `maxTotalAgents`）、嵌套深度受限（crew 限 3 层）；取消是 **caller-owned**，取消时立即中止子级并清理；进度上报包含 running step、tool calls、token usage；子 Agent 普通失败对父级表现为可处理的 `null`，而不是抛异常。
+- 本 fork 已对齐的点：独立上下文、并发上限 3、步数上限 48、按会话取消、进度（steps/tool calls/elapsed）、结果文本自包含、失败写入 `error`；**未做**：token 统计与层级深度（子 Agent 已禁用 `spawn_agent`，深度固定为 1）。
+
 ## 3. AI 工作流 + 无限画布
 - 文件：
   - `data/ai/workflow/WorkflowRunner.kt`：执行引擎（顺序/并行/条件分支，节点替换 {{input}}/{{prev}}）。

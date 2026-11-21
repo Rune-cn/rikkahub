@@ -1300,6 +1300,8 @@
   <string name="extensions_page_sub_agent_section">子 Agent</string>
   <string name="extensions_page_multi_agent_enable">子 Agent</string>
   <string name="extensions_page_multi_agent_enable_desc">讓主 Agent 派生子 Agent 並行處理任務；子 Agent 的輸出會串流顯示在對話中</string>
+  <string name="sub_agent_tool_no_result">（中斷，未回傳結果）</string>
+  <string name="sub_agent_progress">%1$d 步 · %2$d 次工具呼叫 · %3$d 秒</string>
   <string name="extensions_page_retry_entry_desc">自動重試失敗的請求</string>
   <string name="extensions_page_retry_enable">自動重試</string>
   <string name="extensions_page_retry_enable_desc">網路錯誤或命中下方規則時自動重試失敗的模型請求</string>

@@ -1540,6 +1540,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="workflow_status_failed">失败</string>
   <string name="sub_agent_not_found">未找到该子 Agent</string>
   <string name="sub_agent_model_label">模型：%1$s</string>
+  <string name="sub_agent_progress">%1$d 步 · %2$d 次工具调用 · %3$d 秒</string>
   <string name="sub_agent_status_running">运行中</string>
   <string name="sub_agent_status_done">已完成</string>
   <string name="sub_agent_status_failed">失败</string>
@@ -1547,6 +1548,7 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="sub_agent_role_user">任务</string>
   <string name="sub_agent_role_assistant">助手</string>
   <string name="sub_agent_empty_result">（无输出）</string>
+  <string name="sub_agent_tool_no_result">（中断，未返回结果）</string>
   <string name="chat_message_tool_spawn_agent">启动子 Agent</string>
   <string name="chat_message_tool_spawn_agent_with_name">启动子 Agent：%1$s</string>
   <string name="chat_message_tool_wait_agent">等待子 Agent</string>

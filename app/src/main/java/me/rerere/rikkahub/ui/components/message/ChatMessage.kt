@@ -236,6 +236,7 @@ fun ChatMessage(
                 parts = message.parts,
                 annotations = message.annotations,
                 loading = loading,
+                isSubAgent = isSubAgent,
                 model = model,
                 onToolApproval = onToolApproval,
                 onToolAnswer = onToolAnswer,
@@ -358,6 +359,7 @@ private fun MessagePartsBlock(
     parts: List<UIMessagePart>,
     annotations: List<UIMessageAnnotation>,
     loading: Boolean,
+    isSubAgent: Boolean = false,
     onToolApproval: ((toolCallId: String, approved: Boolean, reason: String) -> Unit)? = null,
     onToolAnswer: ((toolCallId: String, answer: String) -> Unit)? = null,
     onUserMessageClick: (() -> Unit)? = null,
@@ -408,10 +410,12 @@ private fun MessagePartsBlock(
                     val isReasoningOnlyBlock = block.steps.fastAll { it is ThinkingStep.ReasoningStep }
                     // 等待审批的工具不能折叠起来，否则用户看不到审批按钮，这一轮会一直卡在等待审批
                     val firstPendingIndex = block.steps.indexOfFirst { it is ThinkingStep.ToolStep && it.tool.isPending }
-                    val collapsedVisibleCount = if (firstPendingIndex == -1) {
-                        COLLAPSED_VISIBLE_STEPS
-                    } else {
-                        maxOf(COLLAPSED_VISIBLE_STEPS, block.steps.size - firstPendingIndex)
+                    // 子 Agent 的工具调用是它的主要工作过程，全部展开显示；
+                    // 主 Agent 仍保持折叠，只留最近几步。
+                    val collapsedVisibleCount = when {
+                        isSubAgent -> block.steps.size
+                        firstPendingIndex == -1 -> COLLAPSED_VISIBLE_STEPS
+                        else -> maxOf(COLLAPSED_VISIBLE_STEPS, block.steps.size - firstPendingIndex)
                     }
                     ChainOfThought(
                         modifier = Modifier.animateContentSize(),
